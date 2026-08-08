@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#16A34A">
   <meta name="description" content="Billing app - QuickBill">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="QuickBill">
@@ -44,6 +44,9 @@
         <div class="sub" id="staffNameLabel">—</div>
       </div>
       <div class="right">
+        <button class="tutorial-toggle" id="tutorialToggleBtn" onclick="toggleTutorial()" title="Show app tutorial">
+          <span class="tt-icon">🎓</span><span class="tt-label">Tutorial</span>
+        </button>
         <span class="day-badge closed" id="dayBadge">Day Closed</span>
         <button class="logout-btn" onclick="doLogout()" title="Logout">⏻</button>
       </div>
@@ -58,7 +61,7 @@
         <div class="quick-grid" id="quickItemsGrid"></div>
       </div>
 
-      <div class="card">
+      <div class="card" id="manualAddCard">
         <h3>Add Item Manually</h3>
         <div class="form-row">
           <div class="field-inline" style="flex:2">
@@ -85,12 +88,12 @@
         <button class="btn secondary" onclick="addManualItem()">+ Add to Bill</button>
       </div>
 
-      <div class="card">
+      <div class="card" id="currentBillCard">
         <h3>Current Bill</h3>
         <div id="billItemsList"><div class="empty-state">No items added yet</div></div>
       </div>
 
-      <div class="card">
+      <div class="card" id="billDetailsCard">
         <h3>Bill Details</h3>
         <div class="field">
           <label>Customer Name (optional)</label>
@@ -155,7 +158,7 @@
     <!-- TAB: CREDITS -->
     <div class="tab-content hidden" id="tab-credits">
       <div class="section-title">Udhaar / Credit Ledger</div>
-      <div class="card">
+      <div class="card" id="creditAddCard">
         <h3>Add Entry</h3>
         <div class="field"><label>Customer Name</label><input type="text" id="crName" placeholder="Customer name"></div>
         <div class="field"><label>Phone (optional)</label><input type="text" id="crPhone" placeholder="10-digit number"></div>
@@ -167,7 +170,7 @@
         <div class="field"><label>Notes (optional)</label><input type="text" id="crNotes" placeholder="e.g. groceries for the week"></div>
         <button class="btn secondary" onclick="submitCredit()">+ Save Entry</button>
       </div>
-      <div class="card">
+      <div class="card" id="creditLedgerCard">
         <h3>Outstanding Balances</h3>
         <div id="creditLedgerList"><div class="empty-state">No outstanding balances</div></div>
       </div>
@@ -176,13 +179,13 @@
     <!-- TAB: REPORTS -->
     <div class="tab-content hidden" id="tab-reports">
       <div class="section-title">Reports</div>
-      <div class="card">
+      <div class="card" id="dailyReportCard">
         <h3>Daily Report</h3>
         <div class="field"><label>Select Date</label><input type="date" id="reportDate"></div>
         <button class="btn secondary" onclick="loadDailyReport()">View Report</button>
         <div id="dailyReportResult"></div>
       </div>
-      <div class="card">
+      <div class="card" id="monthlyReportCard">
         <h3>Monthly Report</h3>
         <div class="field"><label>Select Month</label><input type="month" id="reportMonth"></div>
         <button class="btn secondary" onclick="loadMonthlyReport()">View Report</button>
@@ -193,7 +196,7 @@
     <!-- TAB: ADMIN -->
     <div class="tab-content hidden" id="tab-admin">
       <div class="section-title">Admin Panel</div>
-      <div class="card">
+      <div class="card" id="addStaffCard">
         <h3>Add Staff Login</h3>
         <div class="field"><label>Full Name</label><input type="text" id="newUserFullName"></div>
         <div class="field"><label>Username</label><input type="text" id="newUserUsername"></div>
@@ -208,7 +211,7 @@
         <h3>Existing Staff</h3>
         <div id="usersList"></div>
       </div>
-      <div class="card">
+      <div class="card" id="addQuickItemCard">
         <h3>Add Quick Item</h3>
         <div class="form-row">
           <div class="field-inline"><label>Item Name</label><input type="text" id="qiName"></div>
@@ -234,11 +237,26 @@
     </div>
 
     <div class="bottom-nav" id="bottomNav">
-      <button class="nav-btn active" data-tab="billing" onclick="switchTab('billing')"><span class="icon">🧾</span>Bill</button>
-      <button class="nav-btn" data-tab="day" onclick="switchTab('day')"><span class="icon">🔑</span>Day</button>
-      <button class="nav-btn" data-tab="credits" onclick="switchTab('credits')"><span class="icon">📒</span>Udhaar</button>
-      <button class="nav-btn" data-tab="reports" onclick="switchTab('reports')"><span class="icon">📊</span>Reports</button>
-      <button class="nav-btn hidden" id="adminNavBtn" data-tab="admin" onclick="switchTab('admin')"><span class="icon">⚙️</span>Admin</button>
+      <button class="nav-btn active" data-tab="billing" onclick="switchTab('billing')">
+        <span class="icon-wrap"><span class="icon">🧾</span></span>
+        <span class="label">Bill</span>
+      </button>
+      <button class="nav-btn" data-tab="day" onclick="switchTab('day')">
+        <span class="icon-wrap"><span class="icon">🔑</span></span>
+        <span class="label">Day</span>
+      </button>
+      <button class="nav-btn" data-tab="credits" onclick="switchTab('credits')">
+        <span class="icon-wrap"><span class="icon">📒</span></span>
+        <span class="label">Udhaar</span>
+      </button>
+      <button class="nav-btn" data-tab="reports" onclick="switchTab('reports')">
+        <span class="icon-wrap"><span class="icon">📊</span></span>
+        <span class="label">Reports</span>
+      </button>
+      <button class="nav-btn hidden" id="adminNavBtn" data-tab="admin" onclick="switchTab('admin')">
+        <span class="icon-wrap"><span class="icon">⚙️</span></span>
+        <span class="label">Admin</span>
+      </button>
     </div>
   </div>
 
