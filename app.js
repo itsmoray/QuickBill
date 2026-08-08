@@ -51,6 +51,8 @@ var session = { token: null, role: null, fullName: null };
 var currentBillItems = [];
 var entryMode = 'piece';
 var creditType = 'Credit';
+var discountType = 'flat';
+var lastBill = null; // { billId, items, customerName, customerPhone, paymentMode, subtotal, discount, total }
 
 window.onload = function () {
   if (APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
@@ -236,7 +238,8 @@ function loadQuickItems() {
       var grid = document.getElementById('quickItemsGrid');
       if (items.length === 0) { grid.innerHTML = '<div class="empty-state">No quick items set up yet</div>'; return; }
       grid.innerHTML = items.map(function (it, idx) {
-        return '<div class="quick-item-btn" onclick="quickAdd(' + idx + ')">' + it.ItemName + '<span class="price">₹' + it.DefaultPrice + '/' + it.Unit + '</span></div>';
+        var dot = it.LowStock ? '<span class="low-stock-dot" title="Low stock"></span>' : '';
+        return '<div class="quick-item-btn" onclick="quickAdd(' + idx + ')">' + dot + it.ItemName + '<span class="price">₹' + it.DefaultPrice + '/' + it.Unit + '</span></div>';
       }).join('');
       window._quickItemsCache = items;
     })
@@ -312,9 +315,25 @@ function renderBillItems() {
   updateTotals();
 }
 
+function setDiscountType(type) {
+  discountType = type;
+  document.getElementById('discTypeFlat').classList.toggle('selected', type === 'flat');
+  document.getElementById('discTypePercent').classList.toggle('selected', type === 'percent');
+  document.getElementById('discount').placeholder = type === 'percent' ? 'e.g. 10 for 10%' : '';
+  updateTotals();
+}
+
+function computeDiscountAmount(subtotal) {
+  var raw = Number(document.getElementById('discount').value) || 0;
+  if (discountType === 'percent') {
+    return Math.min(subtotal * (raw / 100), subtotal);
+  }
+  return Math.min(raw, subtotal);
+}
+
 function updateTotals() {
   var subtotal = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
-  var discount = Number(document.getElementById('discount').value) || 0;
+  var discount = computeDiscountAmount(subtotal);
   var total = Math.max(subtotal - discount, 0);
   document.getElementById('subtotalDisplay').innerText = '₹' + subtotal.toFixed(2);
   document.getElementById('discountDisplay').innerText = '₹' + discount.toFixed(2);
@@ -326,12 +345,16 @@ function completeBill() {
   if (currentBillItems.length === 0) { showToast('Add at least one item.'); return; }
   var paymentMode = document.getElementById('paymentMode').value;
   var custName = document.getElementById('custName').value.trim();
+  var custPhone = document.getElementById('custPhone').value.trim();
   if (paymentMode === 'Credit' && !custName) { showToast('Customer name is required for credit sales.'); return; }
+  var subtotal = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
+  var discountAmt = computeDiscountAmount(subtotal);
+  var itemsSnapshot = currentBillItems.slice(); // keep a copy before we clear the cart
   var billData = {
     customerName: custName,
-    customerPhone: document.getElementById('custPhone').value.trim(),
+    customerPhone: custPhone,
     paymentMode: paymentMode,
-    discount: Number(document.getElementById('discount').value) || 0,
+    discount: discountAmt,
     items: currentBillItems
   };
   var btn = document.getElementById('completeBillBtn');
@@ -341,11 +364,17 @@ function completeBill() {
       btn.disabled = false; btn.innerText = 'Complete Bill';
       if (res.success) {
         showToast('Bill saved! Total ₹' + res.total.toFixed(2));
+        lastBill = {
+          billId: res.billId, items: itemsSnapshot, customerName: custName, customerPhone: custPhone,
+          paymentMode: paymentMode, subtotal: res.subtotal, discount: res.discount, total: res.total
+        };
+        renderLastBillCard();
         currentBillItems = [];
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
         document.getElementById('discount').value = 0;
         document.getElementById('paymentMode').value = 'Cash';
+        setDiscountType('flat');
         renderBillItems();
       } else {
         showToast(res.message);
@@ -355,6 +384,80 @@ function completeBill() {
       btn.disabled = false; btn.innerText = 'Complete Bill';
       if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message);
     });
+}
+
+// ---------- LAST BILL: SHARE / EDIT / VOID ----------
+function renderLastBillCard() {
+  var card = document.getElementById('lastBillCard');
+  if (!lastBill) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  document.getElementById('lastBillSummary').innerHTML =
+    '<div class="stat-row"><span>Bill ID</span><span class="val">' + lastBill.billId + '</span></div>' +
+    '<div class="stat-row"><span>Customer</span><span class="val">' + (lastBill.customerName || 'Walk-in') + '</span></div>' +
+    '<div class="stat-row"><span>Items</span><span class="val">' + lastBill.items.length + '</span></div>' +
+    '<div class="stat-row"><span>Total</span><span class="val">₹' + Number(lastBill.total).toFixed(2) + '</span></div>';
+}
+
+function buildReceiptText() {
+  if (!lastBill) return '';
+  var lines = [];
+  lines.push('🧾 QuickBill Receipt');
+  lines.push('Bill: ' + lastBill.billId);
+  lines.push('Customer: ' + (lastBill.customerName || 'Walk-in'));
+  lines.push('--------------------------');
+  lastBill.items.forEach(function (it) {
+    var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
+    lines.push(it.name + ' (' + qtyStr + ') = ₹' + Number(it.lineTotal).toFixed(2));
+  });
+  lines.push('--------------------------');
+  lines.push('Subtotal: ₹' + Number(lastBill.subtotal).toFixed(2));
+  if (Number(lastBill.discount) > 0) lines.push('Discount: -₹' + Number(lastBill.discount).toFixed(2));
+  lines.push('Total: ₹' + Number(lastBill.total).toFixed(2));
+  lines.push('Payment: ' + lastBill.paymentMode);
+  lines.push('');
+  lines.push('Thank you for shopping with us!');
+  return lines.join('\n');
+}
+
+function shareLastBillWhatsApp() {
+  if (!lastBill) return;
+  var text = encodeURIComponent(buildReceiptText());
+  var phone = (lastBill.customerPhone || '').replace(/\D/g, '');
+  var url = phone ? ('https://wa.me/91' + phone + '?text=' + text) : ('https://wa.me/?text=' + text);
+  window.open(url, '_blank');
+}
+
+function editLastBill() {
+  if (!lastBill) return;
+  if (!confirm('This will void the last bill and reload its items so you can fix them. Continue?')) return;
+  callAPI('voidBill', { token: session.token, billId: lastBill.billId })
+    .then(function (res) {
+      if (!res.success) { showToast(res.message); return; }
+      currentBillItems = lastBill.items.slice();
+      document.getElementById('custName').value = lastBill.customerName || '';
+      document.getElementById('custPhone').value = lastBill.customerPhone || '';
+      document.getElementById('paymentMode').value = lastBill.paymentMode || 'Cash';
+      renderBillItems();
+      lastBill = null;
+      renderLastBillCard();
+      showToast('Last bill voided — edit the items below and complete the bill again.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    })
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+}
+
+function voidLastBill() {
+  if (!lastBill) return;
+  if (!confirm('Void this bill? This cannot be undone.')) return;
+  callAPI('voidBill', { token: session.token, billId: lastBill.billId })
+    .then(function (res) {
+      if (res.success) {
+        showToast('Bill voided.');
+        lastBill = null;
+        renderLastBillCard();
+      } else showToast(res.message);
+    })
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
 }
 
 // ---------- CREDITS ----------
@@ -512,13 +615,15 @@ function submitNewQuickItem() {
   var price = document.getElementById('qiPrice').value;
   var unit = document.getElementById('qiUnit').value;
   var category = document.getElementById('qiCategory').value.trim();
+  var lowStock = document.getElementById('qiLowStock').checked;
   if (!name || !price) { showToast('Enter item name and price.'); return; }
-  callAPI('addQuickItem', { token: session.token, name: name, price: price, unit: unit, category: category })
+  callAPI('addQuickItem', { token: session.token, name: name, price: price, unit: unit, category: category, lowStock: lowStock })
     .then(function () {
       showToast('Quick item added.');
       document.getElementById('qiName').value = '';
       document.getElementById('qiPrice').value = '';
       document.getElementById('qiCategory').value = '';
+      document.getElementById('qiLowStock').checked = false;
       loadQuickItemsAdmin();
       loadQuickItems();
     })
@@ -530,11 +635,21 @@ function loadQuickItemsAdmin() {
     .then(function (list) {
       var el = document.getElementById('quickItemsAdminList');
       el.innerHTML = list.map(function (it) {
-        return '<div class="stat-row"><span>' + it.ItemName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + '</span>' +
-          '<button class="btn small danger" onclick="deleteQI(\'' + it.ItemName + '\')">Delete</button></div>';
+        var lowTag = it.LowStock ? '<span class="low-stock-tag">⚠ LOW STOCK</span>' : '';
+        return '<div class="stat-row"><span>' + it.ItemName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + lowTag + '</span>' +
+          '<span>' +
+          '<button class="btn small ' + (it.LowStock ? '' : 'secondary') + '" onclick="toggleLowStock(\'' + it.ItemName + '\',' + (!it.LowStock) + ')">' + (it.LowStock ? 'Clear Low Stock' : 'Mark Low Stock') + '</button> ' +
+          '<button class="btn small danger" onclick="deleteQI(\'' + it.ItemName + '\')">Delete</button>' +
+          '</span></div>';
       }).join('');
     })
     .catch(function () {});
+}
+
+function toggleLowStock(name, lowStock) {
+  callAPI('setQuickItemLowStock', { token: session.token, name: name, lowStock: lowStock })
+    .then(function () { loadQuickItemsAdmin(); loadQuickItems(); })
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
 }
 
 function deleteQI(name) {
