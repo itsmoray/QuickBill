@@ -113,6 +113,7 @@ function doLogout() {
   if (session.token) callAPI('logout', { token: session.token }).catch(function () {});
   localStorage.removeItem('grocerySession');
   session = { token: null, role: null, fullName: null };
+  endTutorial();
   document.getElementById('appScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginUsername').value = '';
@@ -657,4 +658,184 @@ function deleteQI(name) {
   callAPI('deleteQuickItem', { token: session.token, name: name })
     .then(function () { loadQuickItemsAdmin(); loadQuickItems(); })
     .catch(function () {});
+}
+
+// ======================================================
+// ---------- TUTORIAL WALKTHROUGH ----------
+// Interactive guided tour: dims the screen, spotlights one
+// section at a time, and shows a speech-bubble explanation.
+// ======================================================
+var tutorialBaseSteps = [
+  { tab: 'billing', target: '#quickItemsCard', title: 'Quick Add', text: 'Tap any item card here to instantly add it to the bill — great for your most-sold items.' },
+  { tab: 'billing', target: '#manualAddCard', title: 'Add Items Manually', text: "Don't have a quick item set up? Add anything by name, choose pieces or weight, and set the price." },
+  { tab: 'billing', target: '#currentBillCard', title: 'Current Bill', text: 'Everything you add shows up here. Tap ✕ next to any item to remove it.' },
+  { tab: 'billing', target: '#billDetailsCard', title: 'Bill Details & Total', text: "Add the customer's name & phone (needed for credit sales), pick a payment mode, apply a discount, then hit Complete Bill." },
+  { tab: 'billing', target: '#bottomNav', title: 'Switch Between Sections', text: 'Use these bubbles to move between Billing, Day, Udhaar and Reports.' },
+  { tab: 'day', target: '#dayStatusCard', title: 'Open & Close Your Day', text: 'Start your day by entering opening cash. At the end, close the day and count your cash — QuickBill tells you if it matches.' },
+  { tab: 'day', target: '#expenseCard', title: 'Log Expenses', text: 'Spent money during the day — auto fare, packing bags? Log it here so your reports stay accurate.' },
+  { tab: 'credits', target: '#creditAddCard', title: 'Udhaar / Credit Ledger', text: 'Track money customers owe you. Add a "They owe more" entry when giving credit, or "They paid back" when they settle up.' },
+  { tab: 'credits', target: '#creditLedgerCard', title: 'Outstanding Balances', text: "See every customer's current balance at a glance." },
+  { tab: 'reports', target: '#dailyReportCard', title: 'Daily Report', text: 'Pick any date to see total sales, expenses and every bill from that day — download it as Excel too.' },
+  { tab: 'reports', target: '#monthlyReportCard', title: 'Monthly Report', text: "Get a full month's sales, expenses and net profit in one view." }
+];
+
+var tutorialActive = false;
+var tutorialStep = 0;
+var tutorialOverlayEl = null;
+
+function buildTutorialSteps() {
+  var steps = tutorialBaseSteps.slice();
+  if (session.role === 'Manager') {
+    steps.push({ tab: 'admin', target: '#addStaffCard', title: 'Manage Staff (Admin)', text: 'As a Manager, add staff logins here and control who can access QuickBill.' });
+    steps.push({ tab: 'admin', target: '#addQuickItemCard', title: 'Manage Quick Items (Admin)', text: "Add, edit or mark items low-stock — they'll show up in the Quick Add grid for everyone." });
+  }
+  return steps;
+}
+
+function ensureTutorialOverlay() {
+  if (tutorialOverlayEl) return tutorialOverlayEl;
+  var overlay = document.createElement('div');
+  overlay.className = 'tutorial-overlay hidden';
+  overlay.innerHTML =
+    '<div class="tutorial-mask tm-top"></div>' +
+    '<div class="tutorial-mask tm-bottom"></div>' +
+    '<div class="tutorial-mask tm-left"></div>' +
+    '<div class="tutorial-mask tm-right"></div>' +
+    '<div class="tutorial-bubble" id="tutorialBubble">' +
+      '<div class="tutorial-bubble-arrow" id="tutorialArrow"></div>' +
+      '<div class="tutorial-step-count" id="tutorialStepCount"></div>' +
+      '<h4 id="tutorialTitle"></h4>' +
+      '<p id="tutorialText"></p>' +
+      '<div class="tutorial-controls">' +
+        '<button class="tutorial-skip" onclick="endTutorial()">Skip tour</button>' +
+        '<div class="tutorial-nav-btns">' +
+          '<button class="tutorial-btn-secondary" id="tutorialBackBtn" onclick="prevTutorialStep()">Back</button>' +
+          '<button class="tutorial-btn-primary" id="tutorialNextBtn" onclick="nextTutorialStep()">Next</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  tutorialOverlayEl = overlay;
+  window.addEventListener('resize', function () { if (tutorialActive) positionTutorialStep(); });
+  return overlay;
+}
+
+function toggleTutorial() {
+  if (tutorialActive) { endTutorial(); return; }
+  startTutorial();
+}
+
+function startTutorial() {
+  ensureTutorialOverlay();
+  tutorialActive = true;
+  tutorialStep = 0;
+  tutorialOverlayEl.classList.remove('hidden');
+  document.getElementById('tutorialToggleBtn').classList.add('active');
+  showTutorialStep(0);
+}
+
+function endTutorial() {
+  tutorialActive = false;
+  if (tutorialOverlayEl) tutorialOverlayEl.classList.add('hidden');
+  var btn = document.getElementById('tutorialToggleBtn');
+  if (btn) btn.classList.remove('active');
+  document.querySelectorAll('.tutorial-target-highlight').forEach(function (el) { el.classList.remove('tutorial-target-highlight'); });
+}
+
+function nextTutorialStep() {
+  var steps = buildTutorialSteps();
+  if (tutorialStep >= steps.length - 1) { endTutorial(); return; }
+  showTutorialStep(tutorialStep + 1);
+}
+
+function prevTutorialStep() {
+  if (tutorialStep <= 0) return;
+  showTutorialStep(tutorialStep - 1);
+}
+
+function showTutorialStep(i) {
+  var steps = buildTutorialSteps();
+  var step = steps[i];
+  if (!step) { endTutorial(); return; }
+  tutorialStep = i;
+  document.querySelectorAll('.tutorial-target-highlight').forEach(function (el) { el.classList.remove('tutorial-target-highlight'); });
+  if (step.tab) switchTab(step.tab);
+  // small delay so the tab content is rendered/visible before we measure positions
+  setTimeout(positionTutorialStep, 60);
+}
+
+function setMask(top, left, right, bottom) {
+  var vw = window.innerWidth, vh = window.innerHeight;
+  document.querySelector('.tm-top').style.cssText = 'top:0;left:0;width:' + vw + 'px;height:' + Math.max(0, top) + 'px;';
+  document.querySelector('.tm-bottom').style.cssText = 'top:' + Math.max(0, bottom) + 'px;left:0;width:' + vw + 'px;height:' + Math.max(0, vh - bottom) + 'px;';
+  document.querySelector('.tm-left').style.cssText = 'top:' + Math.max(0, top) + 'px;left:0;width:' + Math.max(0, left) + 'px;height:' + Math.max(0, bottom - top) + 'px;';
+  document.querySelector('.tm-right').style.cssText = 'top:' + Math.max(0, top) + 'px;left:' + Math.max(0, right) + 'px;width:' + Math.max(0, vw - right) + 'px;height:' + Math.max(0, bottom - top) + 'px;';
+}
+
+function positionTutorialStep() {
+  if (!tutorialActive) return;
+  var steps = buildTutorialSteps();
+  var step = steps[tutorialStep];
+  if (!step) return;
+
+  document.getElementById('tutorialStepCount').innerText = 'Step ' + (tutorialStep + 1) + ' of ' + steps.length;
+  document.getElementById('tutorialTitle').innerText = step.title;
+  document.getElementById('tutorialText').innerText = step.text;
+  document.getElementById('tutorialBackBtn').style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
+  document.getElementById('tutorialNextBtn').innerText = tutorialStep === steps.length - 1 ? 'Finish' : 'Next';
+
+  var target = document.querySelector(step.target);
+  var bubble = document.getElementById('tutorialBubble');
+  var arrow = document.getElementById('tutorialArrow');
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var pad = 8;
+
+  if (!target) {
+    setMask(vh, 0, vw, vh); // dim everything, no cutout
+    bubble.style.width = Math.min(320, vw - 32) + 'px';
+    bubble.style.left = '50%';
+    bubble.style.top = '50%';
+    bubble.style.transform = 'translate(-50%, -50%)';
+    arrow.style.display = 'none';
+    return;
+  }
+
+  if (target.scrollIntoView) target.scrollIntoView({ block: 'center' });
+
+  requestAnimationFrame(function () {
+    var rect = target.getBoundingClientRect();
+    var top = rect.top - pad, left = rect.left - pad, right = rect.right + pad, bottom = rect.bottom + pad;
+    setMask(top, left, right, bottom);
+    target.classList.add('tutorial-target-highlight');
+
+    var bubbleWidth = Math.min(320, vw - 32);
+    bubble.style.transform = 'none';
+    bubble.style.width = bubbleWidth + 'px';
+    arrow.style.display = 'block';
+
+    var spaceBelow = vh - bottom;
+    var spaceAbove = top;
+    var bubbleLeft = Math.min(Math.max(14, rect.left), vw - bubbleWidth - 14);
+    bubble.style.left = bubbleLeft + 'px';
+
+    if (spaceBelow >= spaceAbove) {
+      bubble.style.top = Math.min(bottom + 14, vh - 40) + 'px';
+      arrow.className = 'tutorial-bubble-arrow arrow-up';
+    } else {
+      bubble.style.top = '-9999px'; // measure height first
+      arrow.className = 'tutorial-bubble-arrow arrow-down';
+    }
+
+    requestAnimationFrame(function () {
+      var bh = bubble.offsetHeight;
+      if (spaceBelow < spaceAbove) {
+        bubble.style.top = Math.max(14, top - 14 - bh) + 'px';
+      }
+      // final clamp so it never runs off-screen
+      var curTop = parseFloat(bubble.style.top) || 14;
+      if (curTop + bh > vh - 14) bubble.style.top = Math.max(14, vh - bh - 14) + 'px';
+      var arrowLeft = Math.max(16, Math.min(bubbleWidth - 32, (rect.left + rect.width / 2) - bubbleLeft - 8));
+      arrow.style.left = arrowLeft + 'px';
+    });
+  });
 }
