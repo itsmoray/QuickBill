@@ -2,14 +2,14 @@
 // and installability. Live data (billing, reports) always goes over the network to
 // the Apps Script backend — nothing about sales data is cached here.
 
-const CACHE_NAME = 'grocery-billing-shell-v1';
+const CACHE_NAME = 'grocery-billing-shell-v2';
 const SHELL_FILES = [
   './index.html',
   './style.css',
   './app.js',
   './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
