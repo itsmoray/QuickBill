@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#16A34A">
   <meta name="description" content="Billing app - QuickBill">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="QuickBill">
@@ -110,9 +110,13 @@
             </select>
           </div>
           <div class="field-inline">
-            <label>Discount (₹)</label>
+            <label>Discount</label>
             <input type="number" id="discount" min="0" step="0.01" value="0">
           </div>
+        </div>
+        <div class="tag-row">
+          <div class="tag-btn selected" id="discTypeFlat" onclick="setDiscountType('flat')">₹ Flat</div>
+          <div class="tag-btn" id="discTypePercent" onclick="setDiscountType('percent')">% Percent</div>
         </div>
         <div class="stat-row"><span>Subtotal</span><span class="val" id="subtotalDisplay">₹0.00</span></div>
         <div class="stat-row"><span>Discount</span><span class="val" id="discountDisplay">₹0.00</span></div>
@@ -121,6 +125,14 @@
           <div class="amount" id="totalDisplay">₹0.00</div>
         </div>
         <button class="btn" id="completeBillBtn" onclick="completeBill()">Complete Bill</button>
+      </div>
+
+      <div class="card hidden" id="lastBillCard">
+        <h3>Last Bill</h3>
+        <div id="lastBillSummary"></div>
+        <button class="btn secondary" style="margin-top:10px" onclick="shareLastBillWhatsApp()">📤 Share via WhatsApp</button>
+        <button class="btn secondary" style="margin-top:10px" onclick="editLastBill()">✏️ Edit This Bill</button>
+        <button class="btn danger" style="margin-top:10px" onclick="voidLastBill()">🗑 Void This Bill</button>
       </div>
     </div>
 
@@ -208,6 +220,10 @@
             <select id="qiUnit"><option value="kg">kg</option><option value="piece">piece</option></select>
           </div>
           <div class="field-inline"><label>Category (optional)</label><input type="text" id="qiCategory"></div>
+        </div>
+        <div class="field" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="qiLowStock" style="width:auto">
+          <label style="margin:0" for="qiLowStock">Mark as low stock</label>
         </div>
         <button class="btn secondary" onclick="submitNewQuickItem()">+ Add Quick Item</button>
       </div>
