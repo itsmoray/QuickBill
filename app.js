@@ -8,23 +8,42 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4KDUXcyXie9qiXFPyyZ90Kk0C5elfoDWU-6CpIAzbAU-y4upv7gNH4go2mVINSp1k/exec';
 
 // ---------- API HELPER ----------
+// NOTE: uses XMLHttpRequest instead of fetch() on purpose. Apps Script's /exec
+// URL always 302-redirects to script.googleusercontent.com, and Safari's fetch()
+// frequently fails to follow that redirect on POST requests (throws a generic
+// "Load failed" TypeError). XHR follows it correctly across all browsers.
 function callAPI(action, params) {
   var payload = Object.assign({ action: action }, params || {});
-  return fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', APPS_SCRIPT_URL, true);
     // text/plain avoids a CORS preflight (Apps Script can't respond to OPTIONS requests)
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  })
-    .then(function (r) { return r.json(); })
-    .then(function (res) {
+    xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
+    xhr.onload = function () {
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new Error('Server returned status ' + xhr.status));
+        return;
+      }
+      var res;
+      try {
+        res = JSON.parse(xhr.responseText);
+      } catch (e) {
+        reject(new Error('Unexpected response from server.'));
+        return;
+      }
       if (res && res.message === 'SESSION_EXPIRED') {
         showToast('Session expired. Please log in again.');
         doLogout();
-        throw new Error('SESSION_EXPIRED');
+        reject(new Error('SESSION_EXPIRED'));
+        return;
       }
-      return res;
-    });
+      resolve(res);
+    };
+    xhr.onerror = function () {
+      reject(new Error('Network request failed. Check your internet connection.'));
+    };
+    xhr.send(JSON.stringify(payload));
+  });
 }
 
 // ---------- STATE ----------
