@@ -9,6 +9,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="QuickBill">
@@ -35,10 +36,73 @@
     input, select, button { font-family: inherit; }
     .hidden { display: none !important; }
 
+    /* ---------- SPLASH SCREEN ---------- */
+    #splashScreen {
+      position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 18px; background: linear-gradient(160deg, var(--green) 0%, var(--green-dark) 100%);
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+    }
+    #splashScreen.splash-fade { opacity: 0; visibility: hidden; pointer-events: none; }
+    .splash-logo {
+      font-size: 54px; width: 92px; height: 92px; border-radius: 26px; background: rgba(255,255,255,0.14);
+      display: flex; align-items: center; justify-content: center; animation: splash-pop 0.6s cubic-bezier(.2,.8,.2,1);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+    @keyframes splash-pop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .splash-title { color: #fff; font-size: 22px; font-weight: 800; letter-spacing: 0.3px; }
+    .splash-dots { display: flex; gap: 7px; margin-top: 4px; }
+    .splash-dots span {
+      width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.85);
+      animation: splash-bounce 1.1s ease-in-out infinite;
+    }
+    .splash-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .splash-dots span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes splash-bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+      40% { transform: translateY(-8px); opacity: 1; }
+    }
+
+    /* ---------- TOP PROGRESS BAR (shown during any in-flight action) ---------- */
+    #topProgressBar {
+      position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 400; overflow: hidden;
+      background: transparent; opacity: 0; transition: opacity 0.2s ease;
+    }
+    #topProgressBar.active { opacity: 1; }
+    #topProgressBar .bar {
+      position: absolute; top: 0; left: 0; height: 100%; width: 40%; background: var(--green);
+      border-radius: 0 4px 4px 0; animation: topbar-slide 1.1s ease-in-out infinite;
+    }
+    #topProgressBar.on-dark .bar { background: #fff; }
+    @keyframes topbar-slide {
+      0% { left: -40%; }
+      100% { left: 100%; }
+    }
+
+    /* ---------- BUTTON LOADING STATE ---------- */
+    .btn-spinner {
+      display: inline-block; width: 15px; height: 15px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.5); border-top-color: #fff; vertical-align: -3px;
+      margin-right: 7px; animation: spin 0.7s linear infinite;
+    }
+    .btn.secondary .btn-spinner, .btn.danger .btn-spinner { border-color: rgba(22,163,74,0.3); border-top-color: var(--green-dark); }
+    .btn.danger .btn-spinner { border-color: rgba(255,255,255,0.5); border-top-color: #fff; }
+
+    /* ---------- FULL-SCREEN ACTION OVERLAY (blocking, longer operations) ---------- */
+    #actionOverlay {
+      position: fixed; inset: 0; z-index: 250; background: rgba(15,23,42,0.35); backdrop-filter: blur(1px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .action-overlay-card {
+      background: #fff; border-radius: 16px; padding: 22px 28px; display: flex; flex-direction: column;
+      align-items: center; gap: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); min-width: 160px;
+    }
+    .action-overlay-card .spinner { margin: 0; }
+    .action-overlay-card span { font-size: 13.5px; color: var(--muted); font-weight: 600; }
+
     /* ---------- LOGIN ---------- */
     #loginScreen {
       min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: linear-gradient(160deg, var(--green) 0%, var(--green-dark) 100%); padding: 24px;
+      background: linear-gradient(160deg, var(--green) 0%, var(--green-dark) 100%); padding: 24px; position: relative;
     }
     .login-card {
       background: var(--card); border-radius: 20px; padding: 32px 24px; width: 100%; max-width: 360px;
@@ -133,6 +197,41 @@
     .nav-btn:active .icon-wrap { transform: scale(0.88); }
     .nav-btn.active { color: var(--green-dark); }
     .nav-btn.active .icon-wrap { background: var(--green-light); transform: scale(1.04); }
+
+    /* ---------- BILLING: split into two clear steps ---------- */
+    .billing-subnav {
+      display: flex; gap: 8px; background: #fff; border: 1px solid var(--border); border-radius: 14px;
+      padding: 5px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .billing-subnav-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 6px;
+      border: none; border-radius: 10px; background: none; cursor: pointer; font-size: 13.5px; font-weight: 700;
+      color: var(--muted); position: relative;
+    }
+    .billing-subnav-btn.active { background: var(--green-light); color: var(--green-dark); }
+    .billing-subnav-btn .icon { font-size: 15px; }
+    .subnav-badge {
+      background: var(--green); color: #fff; font-size: 11px; font-weight: 800; border-radius: 10px;
+      padding: 1px 7px; min-width: 18px; text-align: center;
+    }
+    .billing-subnav-btn:not(.active) .subnav-badge { background: var(--red); }
+    .subnav-total { font-size: 11.5px; font-weight: 800; color: inherit; opacity: 0.85; }
+    .billing-step.hidden { display: none; }
+
+    .sticky-continue-bar {
+      position: sticky; bottom: 90px; margin: 4px 0 0; background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 5;
+    }
+    .sticky-continue-bar .cb-info { line-height: 1.3; }
+    .sticky-continue-bar .cb-count { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+    .sticky-continue-bar .cb-amount { font-size: 17px; font-weight: 800; color: var(--green-dark); }
+    .sticky-continue-bar .btn { width: auto; margin: 0; padding: 11px 18px; }
+    .step-hint { font-size: 12.5px; color: var(--muted); margin: -8px 0 14px; }
+    .back-to-items-link {
+      background: none; border: none; color: var(--green-dark); font-weight: 700; font-size: 13px;
+      cursor: pointer; padding: 0; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 4px;
+    }
 
     /* Quick items grid */
     .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
@@ -264,6 +363,20 @@
 </head>
 <body>
 
+  <!-- ===================== SPLASH SCREEN ===================== -->
+  <div id="splashScreen">
+    <div class="splash-logo">🛒</div>
+    <div class="splash-title">QuickBill</div>
+    <div class="splash-dots"><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- Slim animated bar shown at the top of the screen while any request is in flight -->
+  <div id="topProgressBar"><div class="bar"></div></div>
+
+  <!-- Full-screen overlay for actions with no specific button to show a spinner on -->
+  <div id="actionOverlay" class="hidden">
+    <div class="action-overlay-card"><div class="spinner"></div><span id="actionOverlayText">Please wait...</span></div>
+  </div>
 
   <!-- ===================== LOGIN SCREEN ===================== -->
   <div id="loginScreen">
@@ -317,88 +430,124 @@
     <div class="tab-content" id="tab-billing">
       <div class="section-title">New Bill</div>
 
-      <div class="card" id="quickItemsCard">
-        <h3>Quick Add</h3>
-        <div class="quick-grid" id="quickItemsGrid"></div>
+      <!-- Two clear steps: pick items first, then review & take payment -->
+      <div class="billing-subnav" id="billingSubnav">
+        <button class="billing-subnav-btn active" data-step="items" onclick="switchBillingStep('items')">
+          <span class="icon">🛒</span> Add Items
+        </button>
+        <button class="billing-subnav-btn" data-step="checkout" onclick="switchBillingStep('checkout')">
+          <span class="icon">🧾</span> Review &amp; Pay
+          <span class="subnav-badge hidden" id="billingItemCountBadge">0</span>
+        </button>
       </div>
 
-      <div class="card" id="manualAddCard">
-        <h3>Add Item Manually</h3>
-        <div class="form-row">
-          <div class="field-inline" style="flex:2">
-            <label>Item Name</label>
-            <input type="text" id="manualName" placeholder="e.g. Onion">
+      <!-- STEP 1: ADD ITEMS -->
+      <div class="billing-step" id="billingStepItems">
+        <div class="card" id="quickItemsCard">
+          <h3>Quick Add</h3>
+          <div class="quick-grid" id="quickItemsGrid"></div>
+        </div>
+
+        <div class="card" id="manualAddCard">
+          <h3>Add Item Manually</h3>
+          <div class="form-row">
+            <div class="field-inline" style="flex:2">
+              <label>Item Name</label>
+              <input type="text" id="manualName" placeholder="e.g. Onion">
+            </div>
           </div>
-        </div>
-        <div class="tag-row">
-          <div class="tag-btn selected" id="modePiece" onclick="setEntryMode('piece')">Qty (pieces)</div>
-          <div class="tag-btn" id="modeWeight" onclick="setEntryMode('weight')">Weight (kg/g)</div>
-        </div>
-        <div class="form-row" id="pieceRow">
-          <div class="field-inline"><label>Quantity</label><input type="number" id="manualQty" min="1" value="1"></div>
-          <div class="field-inline"><label>Price per piece (₹)</label><input type="number" id="manualPricePiece" min="0" step="0.01"></div>
-        </div>
-        <div class="form-row hidden" id="weightRow">
-          <div class="field-inline"><label>Weight</label><input type="number" id="manualWeight" min="0" step="0.01" placeholder="e.g. 0.5"></div>
-          <div class="field-inline">
-            <label>Unit</label>
-            <select id="manualUnit"><option value="kg">kg</option><option value="g">g</option></select>
+          <div class="tag-row">
+            <div class="tag-btn selected" id="modePiece" onclick="setEntryMode('piece')">Qty (pieces)</div>
+            <div class="tag-btn" id="modeWeight" onclick="setEntryMode('weight')">Weight (kg/g)</div>
           </div>
-          <div class="field-inline"><label>Price per kg (₹)</label><input type="number" id="manualPriceWeight" min="0" step="0.01"></div>
+          <div class="form-row" id="pieceRow">
+            <div class="field-inline"><label>Quantity</label><input type="number" id="manualQty" min="1" value="1"></div>
+            <div class="field-inline"><label>Price per piece (₹)</label><input type="number" id="manualPricePiece" min="0" step="0.01"></div>
+          </div>
+          <div class="form-row hidden" id="weightRow">
+            <div class="field-inline"><label>Weight</label><input type="number" id="manualWeight" min="0" step="0.01" placeholder="e.g. 0.5"></div>
+            <div class="field-inline">
+              <label>Unit</label>
+              <select id="manualUnit"><option value="kg">kg</option><option value="g">g</option></select>
+            </div>
+            <div class="field-inline"><label>Price per kg (₹)</label><input type="number" id="manualPriceWeight" min="0" step="0.01"></div>
+          </div>
+          <button class="btn secondary" onclick="addManualItem()">+ Add to Bill</button>
         </div>
-        <button class="btn secondary" onclick="addManualItem()">+ Add to Bill</button>
+
+        <div class="card" id="currentBillCard">
+          <h3>Items Added So Far</h3>
+          <div id="billItemsListPreview"><div class="empty-state">No items added yet</div></div>
+        </div>
+
+        <div class="sticky-continue-bar hidden" id="itemsContinueBar">
+          <div class="cb-info">
+            <div class="cb-count" id="itemsContinueCount">0 items</div>
+            <div class="cb-amount" id="itemsContinueTotal">₹0.00</div>
+          </div>
+          <button class="btn" id="goToCheckoutBtn" onclick="switchBillingStep('checkout')">Review &amp; Pay →</button>
+        </div>
       </div>
 
-      <div class="card" id="currentBillCard">
-        <h3>Current Bill</h3>
-        <div id="billItemsList"><div class="empty-state">No items added yet</div></div>
-      </div>
+      <!-- STEP 2: REVIEW & PAY -->
+      <div class="billing-step hidden" id="billingStepCheckout">
+        <button class="back-to-items-link" onclick="switchBillingStep('items')">← Back to Add Items</button>
 
-      <div class="card" id="billDetailsCard">
-        <h3>Bill Details</h3>
-        <div class="field autocomplete-wrap">
-          <label>Customer Name (optional)</label>
-          <input type="text" id="custName" placeholder="Walk-in customer" autocomplete="off">
-          <input type="hidden" id="custId">
-          <div class="autocomplete-dropdown hidden" id="custNameDropdown"></div>
+        <div class="card" id="currentBillReviewCard">
+          <h3>Current Bill</h3>
+          <div id="billItemsList"><div class="empty-state">No items added yet</div></div>
         </div>
-        <div class="field">
-          <label>Phone (optional, for credit)</label>
-          <input type="text" id="custPhone" placeholder="10-digit number">
-        </div>
-        <div class="form-row">
-          <div class="field-inline">
-            <label>Payment Mode</label>
-            <select id="paymentMode">
-              <option value="Cash">Cash</option>
-              <option value="UPI">UPI</option>
-              <option value="Credit">Credit (Udhaar)</option>
-            </select>
+
+        <div class="card" id="billDetailsCard">
+          <h3>Customer &amp; Payment</h3>
+          <div class="field autocomplete-wrap">
+            <label>Customer Name (optional)</label>
+            <input type="text" id="custName" placeholder="Walk-in customer" autocomplete="off">
+            <input type="hidden" id="custId">
+            <div class="autocomplete-dropdown hidden" id="custNameDropdown"></div>
           </div>
-          <div class="field-inline">
-            <label>Discount</label>
-            <input type="number" id="discount" min="0" step="0.01" value="0">
+          <div class="field">
+            <label>Phone (optional, for credit)</label>
+            <input type="text" id="custPhone" placeholder="10-digit number">
+          </div>
+          <div class="form-row">
+            <div class="field-inline">
+              <label>Payment Mode</label>
+              <select id="paymentMode">
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI</option>
+                <option value="Credit">Credit (Udhaar)</option>
+              </select>
+            </div>
+            <div class="field-inline">
+              <label>Discount</label>
+              <input type="number" id="discount" min="0" step="0.01" value="0">
+            </div>
+          </div>
+          <div class="tag-row">
+            <div class="tag-btn selected" id="discTypeFlat" onclick="setDiscountType('flat')">₹ Flat</div>
+            <div class="tag-btn" id="discTypePercent" onclick="setDiscountType('percent')">% Percent</div>
           </div>
         </div>
-        <div class="tag-row">
-          <div class="tag-btn selected" id="discTypeFlat" onclick="setDiscountType('flat')">₹ Flat</div>
-          <div class="tag-btn" id="discTypePercent" onclick="setDiscountType('percent')">% Percent</div>
+
+        <div class="card" id="billTotalsCard">
+          <h3>Total</h3>
+          <div class="stat-row"><span>Subtotal</span><span class="val" id="subtotalDisplay">₹0.00</span></div>
+          <div class="stat-row"><span>Discount</span><span class="val" id="discountDisplay">₹0.00</span></div>
+          <div class="big-total">
+            <div class="label">Total Payable</div>
+            <div class="amount" id="totalDisplay">₹0.00</div>
+          </div>
+          <button class="btn" id="completeBillBtn" onclick="completeBill()">Complete Bill</button>
         </div>
-        <div class="stat-row"><span>Subtotal</span><span class="val" id="subtotalDisplay">₹0.00</span></div>
-        <div class="stat-row"><span>Discount</span><span class="val" id="discountDisplay">₹0.00</span></div>
-        <div class="big-total">
-          <div class="label">Total Payable</div>
-          <div class="amount" id="totalDisplay">₹0.00</div>
-        </div>
-        <button class="btn" id="completeBillBtn" onclick="completeBill()">Complete Bill</button>
       </div>
 
       <div class="card hidden" id="lastBillCard">
         <h3>Last Bill</h3>
         <div id="lastBillSummary"></div>
-        <button class="btn secondary" style="margin-top:10px" onclick="shareLastBillWhatsApp()">📤 Share via WhatsApp</button>
-        <button class="btn secondary" style="margin-top:10px" onclick="editLastBill()">✏️ Edit This Bill</button>
-        <button class="btn danger" style="margin-top:10px" onclick="voidLastBill()">🗑 Void This Bill</button>
+        <button class="btn secondary" id="shareBillBtn" style="margin-top:10px" onclick="shareLastBillWhatsApp()">📤 Share Bill</button>
+        <button class="btn secondary" id="editLastBillBtn" style="margin-top:10px" onclick="editLastBill(this)">✏️ Edit This Bill</button>
+        <button class="btn danger" id="voidLastBillBtn" style="margin-top:10px" onclick="voidLastBill(this)">🗑 Void This Bill</button>
       </div>
     </div>
 
@@ -410,7 +559,7 @@
         <h3>Log an Expense</h3>
         <div class="field"><label>Description</label><input type="text" id="expDesc" placeholder="e.g. Auto fare, packing bags"></div>
         <div class="field"><label>Amount (₹)</label><input type="number" id="expAmount" min="0" step="0.01"></div>
-        <button class="btn secondary" onclick="submitExpense()">+ Add Expense</button>
+        <button class="btn secondary" onclick="submitExpense(this)">+ Add Expense</button>
       </div>
       <div class="card">
         <h3>Today's Expenses</h3>
@@ -436,7 +585,7 @@
         </div>
         <div class="field"><label>Amount (₹)</label><input type="number" id="crAmount" min="0" step="0.01"></div>
         <div class="field"><label>Notes (optional)</label><input type="text" id="crNotes" placeholder="e.g. groceries for the week"></div>
-        <button class="btn secondary" onclick="submitCredit()">+ Save Entry</button>
+        <button class="btn secondary" onclick="submitCredit(this)">+ Save Entry</button>
       </div>
       <div class="card" id="creditLedgerCard">
         <h3>Outstanding Balances</h3>
@@ -450,13 +599,13 @@
       <div class="card" id="dailyReportCard">
         <h3>Daily Report</h3>
         <div class="field"><label>Select Date</label><input type="date" id="reportDate"></div>
-        <button class="btn secondary" onclick="loadDailyReport()">View Report</button>
+        <button class="btn secondary" onclick="loadDailyReport(this)">View Report</button>
         <div id="dailyReportResult"></div>
       </div>
       <div class="card" id="monthlyReportCard">
         <h3>Monthly Report</h3>
         <div class="field"><label>Select Month</label><input type="month" id="reportMonth"></div>
-        <button class="btn secondary" onclick="loadMonthlyReport()">View Report</button>
+        <button class="btn secondary" onclick="loadMonthlyReport(this)">View Report</button>
         <div id="monthlyReportResult"></div>
       </div>
     </div>
@@ -473,14 +622,15 @@
           <label>Role</label>
           <select id="newUserRole"><option value="Staff">Staff</option><option value="Manager">Manager</option></select>
         </div>
-        <button class="btn secondary" onclick="submitNewUser()">+ Add User</button>
+        <button class="btn secondary" onclick="submitNewUser(this)">+ Add User</button>
       </div>
       <div class="card">
         <h3>Existing Staff</h3>
         <div id="usersList"></div>
       </div>
       <div class="card" id="addQuickItemCard">
-        <h3>Add Quick Item</h3>
+        <h3 id="quickItemFormTitle">Add Quick Item</h3>
+        <input type="hidden" id="qiOriginalName" value="">
         <div class="form-row">
           <div class="field-inline"><label>Item Name</label><input type="text" id="qiName"></div>
           <div class="field-inline"><label>Price (₹)</label><input type="number" id="qiPrice" step="0.01"></div>
@@ -492,7 +642,8 @@
           </div>
           <div class="field-inline"><label>Category (optional)</label><input type="text" id="qiCategory"></div>
         </div>
-        <button class="btn secondary" onclick="submitNewQuickItem()">+ Add Quick Item</button>
+        <button class="btn secondary" id="qiSubmitBtn" onclick="submitQuickItemForm(this)">+ Add Quick Item</button>
+        <button class="btn secondary hidden" id="qiCancelBtn" style="margin-top:8px" onclick="cancelQuickItemEdit()">Cancel Edit</button>
       </div>
       <div class="card">
         <h3>Existing Quick Items</h3>
@@ -534,6 +685,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4KDUXcyXie9qi
 // "Load failed" TypeError). XHR follows it correctly across all browsers.
 function callAPI(action, params) {
   var payload = Object.assign({ action: action }, params || {});
+  bumpTopProgress(1);
   return new Promise(function (resolve, reject) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', APPS_SCRIPT_URL, true);
@@ -563,7 +715,7 @@ function callAPI(action, params) {
       reject(new Error('Network request failed. Check your internet connection.'));
     };
     xhr.send(JSON.stringify(payload));
-  });
+  }).finally(function () { bumpTopProgress(-1); });
 }
 
 // ---------- STATE ----------
@@ -573,6 +725,24 @@ var entryMode = 'piece';
 var creditType = 'Credit';
 var discountType = 'flat';
 var lastBill = null; // { billId, items, customerName, customerPhone, paymentMode, subtotal, discount, total }
+
+// ---------- SPLASH SCREEN ----------
+// Shown the instant the app opens (before we know if there's a saved session
+// or the login screen should appear) so it never feels like a blank flash.
+var SPLASH_MIN_MS = 700; // keep it visible at least this long so it doesn't just flicker
+var splashStartTime = Date.now();
+
+function hideSplash() {
+  var elapsed = Date.now() - splashStartTime;
+  var wait = Math.max(0, SPLASH_MIN_MS - elapsed);
+  setTimeout(function () {
+    var splash = document.getElementById('splashScreen');
+    if (splash) {
+      splash.classList.add('splash-fade');
+      setTimeout(function () { splash.remove(); }, 500);
+    }
+  }, wait);
+}
 
 window.onload = function () {
   if (APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
@@ -588,6 +758,7 @@ window.onload = function () {
   }
   document.getElementById('reportDate').valueAsDate = new Date();
   document.getElementById('reportMonth').value = new Date().toISOString().slice(0, 7);
+  if (!saved) document.getElementById('topProgressBar').classList.add('on-dark');
   document.getElementById('loginPassword').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
   attachCustomerAutocomplete('custName', 'custPhone', 'custId', 'custNameDropdown');
   attachCustomerAutocomplete('crName', 'crPhone', 'crCustId', 'crNameDropdown');
@@ -595,6 +766,8 @@ window.onload = function () {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(function (err) { console.warn('SW registration failed', err); });
   }
+
+  hideSplash();
 };
 
 function showToast(msg) {
@@ -605,6 +778,55 @@ function showToast(msg) {
   setTimeout(function () { t.remove(); }, 2600);
 }
 
+// ---------- LOADING HELPERS ----------
+// Generic: puts a spinner + label on a button and disables it while an async
+// action runs, then restores it automatically — whether the action succeeds
+// or fails. Pass any function that returns a Promise (or nothing).
+function withLoading(btn, label, fn) {
+  if (!btn) { return fn(); }
+  var original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span>' + (label || 'Please wait...');
+  function restore() { btn.disabled = false; btn.innerHTML = original; }
+  var result;
+  try {
+    result = fn();
+  } catch (e) {
+    restore();
+    throw e;
+  }
+  if (result && typeof result.finally === 'function') {
+    result.finally(restore);
+  } else {
+    restore();
+  }
+  return result;
+}
+
+// Full-screen overlay for actions that aren't tied to one specific button
+// (e.g. a background task) so the app never looks like it has silently frozen.
+var actionOverlayDepth = 0;
+function showActionOverlay(text) {
+  actionOverlayDepth++;
+  var el = document.getElementById('actionOverlay');
+  document.getElementById('actionOverlayText').innerText = text || 'Please wait...';
+  el.classList.remove('hidden');
+}
+function hideActionOverlay() {
+  actionOverlayDepth = Math.max(0, actionOverlayDepth - 1);
+  if (actionOverlayDepth === 0) document.getElementById('actionOverlay').classList.add('hidden');
+}
+
+// Slim top progress bar that lights up automatically whenever an API call is
+// in flight, so even background/tab-load fetches give some visual feedback.
+var pendingApiCalls = 0;
+function bumpTopProgress(delta) {
+  pendingApiCalls = Math.max(0, pendingApiCalls + delta);
+  var bar = document.getElementById('topProgressBar');
+  if (pendingApiCalls > 0) bar.classList.add('active');
+  else bar.classList.remove('active');
+}
+
 // ---------- LOGIN / LOGOUT ----------
 function doLogin() {
   var u = document.getElementById('loginUsername').value.trim();
@@ -613,20 +835,31 @@ function doLogin() {
   errEl.innerText = '';
   if (!u || !p) { errEl.innerText = 'Please enter username and password.'; return; }
   var btn = document.getElementById('loginBtn');
-  btn.disabled = true; btn.innerText = 'Signing in...';
+  var original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span>Signing in...';
+  document.getElementById('topProgressBar').classList.add('active');
   callAPI('login', { username: u, password: p })
     .then(function (res) {
-      btn.disabled = false; btn.innerText = 'Login';
       if (res.success) {
+        // leave the button/progress bar in their loading state through the
+        // hand-off to the app screen, so there's no "flash of restored button"
         session = { token: res.token, role: res.role, fullName: res.fullName };
         localStorage.setItem('grocerySession', JSON.stringify(session));
         showApp();
+        setTimeout(function () {
+          btn.disabled = false; btn.innerHTML = original;
+          document.getElementById('topProgressBar').classList.remove('active');
+        }, 300);
       } else {
+        btn.disabled = false; btn.innerHTML = original;
+        document.getElementById('topProgressBar').classList.remove('active');
         errEl.innerText = res.message || 'Login failed.';
       }
     })
     .catch(function (err) {
-      btn.disabled = false; btn.innerText = 'Login';
+      btn.disabled = false; btn.innerHTML = original;
+      document.getElementById('topProgressBar').classList.remove('active');
       if (err.message !== 'SESSION_EXPIRED') errEl.innerText = 'Connection error: ' + err.message;
     });
 }
@@ -640,11 +873,13 @@ function doLogout() {
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginUsername').value = '';
   document.getElementById('loginPassword').value = '';
+  document.getElementById('topProgressBar').classList.add('on-dark');
 }
 
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'block';
+  document.getElementById('topProgressBar').classList.remove('on-dark');
   document.getElementById('staffNameLabel').innerText = session.fullName + ' • ' + session.role;
   if (session.role === 'Manager') document.getElementById('adminMenuItem').classList.remove('hidden');
   refreshDayStatus();
@@ -733,7 +968,7 @@ function renderDayCard(status) {
       '<div class="stat-row"><span>Opening Time</span><span class="val">' + status.openTime + '</span></div>' +
       '<div class="stat-row"><span>Opening Cash</span><span class="val">₹' + Number(status.openingCash).toFixed(2) + '</span></div>' +
       '<div class="field" style="margin-top:14px"><label>Closing Cash Count (₹)</label><input type="number" id="closingCashInput" min="0" step="0.01"></div>' +
-      '<button class="btn danger" onclick="submitCloseDay()">Close Day</button>';
+      '<button class="btn danger" onclick="submitCloseDay(this)">Close Day</button>';
   } else if (status.status === 'Closed') {
     el.innerHTML =
       '<h3>Day Closed</h3>' +
@@ -745,49 +980,55 @@ function renderDayCard(status) {
     el.innerHTML =
       '<h3>Day Not Opened Yet</h3>' +
       '<div class="field"><label>Opening Cash (₹)</label><input type="number" id="openingCashInput" min="0" step="0.01" value="0"></div>' +
-      '<button class="btn" onclick="submitOpenDay()">Open Day</button>';
+      '<button class="btn" onclick="submitOpenDay(this)">Open Day</button>';
   }
 }
 
-function submitOpenDay() {
+function submitOpenDay(btn) {
   var cash = document.getElementById('openingCashInput').value || 0;
-  callAPI('openDay', { token: session.token, openingCash: cash })
-    .then(function (res) {
-      if (res.success) { showToast('Day opened.'); refreshDayStatus(); }
-      else showToast(res.message);
-    })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  withLoading(btn, 'Opening...', function () {
+    return callAPI('openDay', { token: session.token, openingCash: cash })
+      .then(function (res) {
+        if (res.success) { showToast('Day opened.'); refreshDayStatus(); }
+        else showToast(res.message);
+      })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  });
 }
 
-function submitCloseDay() {
+function submitCloseDay(btn) {
   var cash = document.getElementById('closingCashInput').value;
   if (cash === '' || cash === null) { showToast('Please enter the counted closing cash.'); return; }
   if (!confirm('Close the day? This cannot be undone.')) return;
-  callAPI('closeDay', { token: session.token, closingCash: cash })
-    .then(function (res) {
-      if (res.success) {
-        var diffMsg = res.difference === 0 ? 'Cash matches exactly!' :
-          (res.difference > 0 ? '₹' + res.difference.toFixed(2) + ' more than expected.' : '₹' + Math.abs(res.difference).toFixed(2) + ' short.');
-        showToast('Day closed. Sales: ₹' + res.totalSales.toFixed(2) + '. ' + diffMsg);
-        refreshDayStatus();
-      } else showToast(res.message);
-    })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  withLoading(btn, 'Closing...', function () {
+    return callAPI('closeDay', { token: session.token, closingCash: cash })
+      .then(function (res) {
+        if (res.success) {
+          var diffMsg = res.difference === 0 ? 'Cash matches exactly!' :
+            (res.difference > 0 ? '₹' + res.difference.toFixed(2) + ' more than expected.' : '₹' + Math.abs(res.difference).toFixed(2) + ' short.');
+          showToast('Day closed. Sales: ₹' + res.totalSales.toFixed(2) + '. ' + diffMsg);
+          refreshDayStatus();
+        } else showToast(res.message);
+      })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  });
 }
 
 // ---------- EXPENSES ----------
-function submitExpense() {
+function submitExpense(btn) {
   var desc = document.getElementById('expDesc').value.trim();
   var amt = document.getElementById('expAmount').value;
   if (!desc || !amt) { showToast('Enter description and amount.'); return; }
-  callAPI('addExpense', { token: session.token, description: desc, amount: amt })
-    .then(function () {
-      showToast('Expense added.');
-      document.getElementById('expDesc').value = '';
-      document.getElementById('expAmount').value = '';
-      loadTodayExpenses();
-    })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  withLoading(btn, 'Adding...', function () {
+    return callAPI('addExpense', { token: session.token, description: desc, amount: amt })
+      .then(function () {
+        showToast('Expense added.');
+        document.getElementById('expDesc').value = '';
+        document.getElementById('expAmount').value = '';
+        loadTodayExpenses();
+      })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  });
 }
 
 function loadTodayExpenses() {
@@ -928,16 +1169,31 @@ function removeBillItem(idx) {
 }
 
 function renderBillItems() {
-  var el = document.getElementById('billItemsList');
-  if (currentBillItems.length === 0) {
-    el.innerHTML = '<div class="empty-state">No items added yet</div>';
-  } else {
-    el.innerHTML = currentBillItems.map(function (it, idx) {
-      var meta = it.qty ? (it.qty + ' × ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
-      return '<div class="bill-item-row"><div class="info"><div class="name">' + it.name + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + it.lineTotal.toFixed(2) + '</div><button class="del-btn" onclick="removeBillItem(' + idx + ')">✕</button></div>';
-    }).join('');
-  }
+  var emptyHtml = '<div class="empty-state">No items added yet</div>';
+  var rowsHtml = currentBillItems.length === 0 ? '' : currentBillItems.map(function (it, idx) {
+    var meta = it.qty ? (it.qty + ' × ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
+    return '<div class="bill-item-row"><div class="info"><div class="name">' + it.name + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + it.lineTotal.toFixed(2) + '</div><button class="del-btn" onclick="removeBillItem(' + idx + ')">✕</button></div>';
+  }).join('');
+
+  // Full editable list, shown on the Review & Pay step
+  document.getElementById('billItemsList').innerHTML = currentBillItems.length === 0 ? emptyHtml : rowsHtml;
+  // Read-only preview, shown on the Add Items step so staff can see what's
+  // already in the cart without leaving the item-picking screen
+  document.getElementById('billItemsListPreview').innerHTML = currentBillItems.length === 0 ? emptyHtml : rowsHtml;
+
   updateTotals();
+}
+
+// ---------- BILLING STEPS: Add Items -> Review & Pay ----------
+var billingStep = 'items';
+function switchBillingStep(step) {
+  billingStep = step;
+  document.getElementById('billingStepItems').classList.toggle('hidden', step !== 'items');
+  document.getElementById('billingStepCheckout').classList.toggle('hidden', step !== 'checkout');
+  document.querySelectorAll('.billing-subnav-btn').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.step === step);
+  });
+  document.getElementById('tab-billing').scrollIntoView({ block: 'start' });
 }
 
 function setDiscountType(type) {
@@ -963,6 +1219,16 @@ function updateTotals() {
   document.getElementById('subtotalDisplay').innerText = '₹' + subtotal.toFixed(2);
   document.getElementById('discountDisplay').innerText = '₹' + discount.toFixed(2);
   document.getElementById('totalDisplay').innerText = '₹' + total.toFixed(2);
+
+  // Keep the Add Items step's sticky bar and the Review & Pay badge in sync
+  var count = currentBillItems.length;
+  var rawSubtotal = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
+  document.getElementById('itemsContinueCount').innerText = count + (count === 1 ? ' item' : ' items');
+  document.getElementById('itemsContinueTotal').innerText = '₹' + rawSubtotal.toFixed(2);
+  document.getElementById('itemsContinueBar').classList.toggle('hidden', count === 0);
+  var badge = document.getElementById('billingItemCountBadge');
+  badge.innerText = count;
+  badge.classList.toggle('hidden', count === 0);
 }
 document.addEventListener('input', function (e) { if (e.target && e.target.id === 'discount') updateTotals(); });
 
@@ -983,10 +1249,11 @@ function completeBill() {
     items: currentBillItems
   };
   var btn = document.getElementById('completeBillBtn');
-  btn.disabled = true; btn.innerText = 'Saving...';
+  var btnOriginal = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Saving...';
   callAPI('saveBill', { token: session.token, billData: billData })
     .then(function (res) {
-      btn.disabled = false; btn.innerText = 'Complete Bill';
+      btn.disabled = false; btn.innerHTML = btnOriginal;
       if (res.success) {
         showToast('Bill saved! Total ₹' + res.total.toFixed(2));
         lastBill = {
@@ -1002,13 +1269,14 @@ function completeBill() {
         document.getElementById('paymentMode').value = 'Cash';
         setDiscountType('flat');
         renderBillItems();
+        switchBillingStep('items');
         if (custName) loadCustomers();
       } else {
         showToast(res.message);
       }
     })
     .catch(function (err) {
-      btn.disabled = false; btn.innerText = 'Complete Bill';
+      btn.disabled = false; btn.innerHTML = btnOriginal;
       if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message);
     });
 }
@@ -1046,18 +1314,93 @@ function buildReceiptText() {
   return lines.join('\n');
 }
 
-function shareLastBillWhatsApp() {
-  if (!lastBill) return;
-  var text = encodeURIComponent(buildReceiptText());
-  var phone = (lastBill.customerPhone || '').replace(/\D/g, '');
-  var url = phone ? ('https://wa.me/91' + phone + '?text=' + text) : ('https://wa.me/?text=' + text);
-  window.open(url, '_blank');
+// Renders the last bill as a simple one-page PDF receipt and returns a Blob.
+function buildReceiptPDFBlob() {
+  if (!lastBill || !window.jspdf) return null;
+  var doc = new window.jspdf.jsPDF({ unit: 'pt', format: [280, 500 + lastBill.items.length * 16] });
+  var x = 18, y = 28;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+  doc.text('QuickBill Receipt', x, y); y += 20;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text('Bill: ' + lastBill.billId, x, y); y += 14;
+  doc.text('Customer: ' + (lastBill.customerName || 'Walk-in'), x, y); y += 10;
+  doc.setLineWidth(0.5); doc.line(x, y, 262, y); y += 16;
+  lastBill.items.forEach(function (it) {
+    var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
+    doc.text(it.name, x, y);
+    doc.text('₹' + Number(it.lineTotal).toFixed(2), 262, y, { align: 'right' });
+    y += 12;
+    doc.setFontSize(8); doc.setTextColor(120);
+    doc.text(qtyStr, x, y); y += 14;
+    doc.setFontSize(10); doc.setTextColor(0);
+  });
+  doc.line(x, y, 262, y); y += 16;
+  doc.text('Subtotal', x, y); doc.text('₹' + Number(lastBill.subtotal).toFixed(2), 262, y, { align: 'right' }); y += 14;
+  if (Number(lastBill.discount) > 0) {
+    doc.text('Discount', x, y); doc.text('-₹' + Number(lastBill.discount).toFixed(2), 262, y, { align: 'right' }); y += 14;
+  }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text('Total', x, y); doc.text('₹' + Number(lastBill.total).toFixed(2), 262, y, { align: 'right' }); y += 18;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.text('Payment: ' + lastBill.paymentMode, x, y); y += 20;
+  doc.setFontSize(9); doc.setTextColor(100);
+  doc.text('Thank you for shopping with us!', x, y);
+  return doc.output('blob');
 }
 
-function editLastBill() {
+function shareLastBillWhatsApp() {
+  if (!lastBill) return;
+  var btn = document.getElementById('shareBillBtn');
+  withLoading(btn, 'Preparing PDF...', function () {
+    return new Promise(function (resolve) {
+      // Slight delay so the spinner actually shows even on very fast devices —
+      // PDF generation itself can otherwise finish in the same tick.
+      setTimeout(function () {
+        var blob = buildReceiptPDFBlob();
+        if (!blob) {
+          showToast('Could not prepare the PDF. Sharing as text instead.');
+          var text = encodeURIComponent(buildReceiptText());
+          var phone = (lastBill.customerPhone || '').replace(/\D/g, '');
+          window.open(phone ? ('https://wa.me/91' + phone + '?text=' + text) : ('https://wa.me/?text=' + text), '_blank');
+          resolve();
+          return;
+        }
+        var filename = 'Receipt-' + lastBill.billId + '.pdf';
+        var file = new File([blob], filename, { type: 'application/pdf' });
+
+        // Web Share API (with file support) opens the phone's native share sheet —
+        // WhatsApp, email, Bluetooth, etc. are all offered, and the user picks.
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({
+            files: [file],
+            title: 'QuickBill Receipt',
+            text: 'Receipt for Bill ' + lastBill.billId
+          }).catch(function (err) {
+            if (err && err.name !== 'AbortError') showToast('Could not open the share menu.');
+          }).finally(resolve);
+        } else {
+          // Fallback for browsers without file-sharing support: download the PDF
+          // and open WhatsApp so it can be attached manually from Downloads.
+          var url = URL.createObjectURL(blob);
+          var link = document.createElement('a');
+          link.href = url; link.download = filename;
+          document.body.appendChild(link); link.click(); link.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          showToast('PDF downloaded — attach it in WhatsApp from your Downloads.');
+          var phone2 = (lastBill.customerPhone || '').replace(/\D/g, '');
+          window.open(phone2 ? ('https://wa.me/91' + phone2) : 'https://wa.me/', '_blank');
+          resolve();
+        }
+      }, 150);
+    });
+  });
+}
+
+function editLastBill(btn) {
   if (!lastBill) return;
   if (!confirm('This will void the last bill and reload its items so you can fix them. Continue?')) return;
-  callAPI('voidBill', { token: session.token, billId: lastBill.billId })
+  withLoading(btn, 'Voiding...', function () {
+  return callAPI('voidBill', { token: session.token, billId: lastBill.billId })
     .then(function (res) {
       if (!res.success) { showToast(res.message); return; }
       currentBillItems = lastBill.items.slice();
@@ -1065,18 +1408,21 @@ function editLastBill() {
       document.getElementById('custPhone').value = lastBill.customerPhone || '';
       document.getElementById('paymentMode').value = lastBill.paymentMode || 'Cash';
       renderBillItems();
+      switchBillingStep('items');
       lastBill = null;
       renderLastBillCard();
       showToast('Last bill voided — edit the items below and complete the bill again.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     })
     .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  });
 }
 
-function voidLastBill() {
+function voidLastBill(btn) {
   if (!lastBill) return;
   if (!confirm('Void this bill? This cannot be undone.')) return;
-  callAPI('voidBill', { token: session.token, billId: lastBill.billId })
+  withLoading(btn, 'Voiding...', function () {
+  return callAPI('voidBill', { token: session.token, billId: lastBill.billId })
     .then(function (res) {
       if (res.success) {
         showToast('Bill voided.');
@@ -1085,6 +1431,7 @@ function voidLastBill() {
       } else showToast(res.message);
     })
     .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  });
 }
 
 // ---------- CREDITS ----------
@@ -1094,27 +1441,29 @@ function setCreditType(type) {
   document.getElementById('crTypePayment').classList.toggle('selected', type === 'Payment');
 }
 
-function submitCredit() {
+function submitCredit(btn) {
   var name = document.getElementById('crName').value.trim();
   var amount = document.getElementById('crAmount').value;
   if (!name || !amount) { showToast('Enter customer name and amount.'); return; }
-  callAPI('addCreditEntry', {
-    token: session.token, customerName: name, phone: document.getElementById('crPhone').value.trim(),
-    type: creditType, amount: amount, notes: document.getElementById('crNotes').value.trim()
-  })
-    .then(function (res) {
-      if (res.success) {
-        showToast('Saved. New balance: ₹' + res.newBalance.toFixed(2));
-        document.getElementById('crName').value = '';
-        document.getElementById('crPhone').value = '';
-        document.getElementById('crCustId').value = '';
-        document.getElementById('crAmount').value = '';
-        document.getElementById('crNotes').value = '';
-        loadCreditLedger();
-        loadCustomers();
-      } else showToast(res.message);
+  withLoading(btn, 'Saving...', function () {
+    return callAPI('addCreditEntry', {
+      token: session.token, customerName: name, phone: document.getElementById('crPhone').value.trim(),
+      type: creditType, amount: amount, notes: document.getElementById('crNotes').value.trim()
     })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+      .then(function (res) {
+        if (res.success) {
+          showToast('Saved. New balance: ₹' + res.newBalance.toFixed(2));
+          document.getElementById('crName').value = '';
+          document.getElementById('crPhone').value = '';
+          document.getElementById('crCustId').value = '';
+          document.getElementById('crAmount').value = '';
+          document.getElementById('crNotes').value = '';
+          loadCreditLedger();
+          loadCustomers();
+        } else showToast(res.message);
+      })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  });
 }
 
 function loadCreditLedger() {
@@ -1130,12 +1479,13 @@ function loadCreditLedger() {
 }
 
 // ---------- REPORTS ----------
-function loadDailyReport() {
+function loadDailyReport(btn) {
   var date = document.getElementById('reportDate').value;
   if (!date) return;
   var el = document.getElementById('dailyReportResult');
   el.innerHTML = '<div class="spinner"></div>';
-  callAPI('getDailyReport', { token: session.token, date: date })
+  withLoading(btn, 'Loading...', function () {
+  return callAPI('getDailyReport', { token: session.token, date: date })
     .then(function (r) {
       var statusClass = r.dayStatus.toLowerCase().replace(' ', '');
       var html = '<div class="stat-row"><span>Day Status</span><span class="pill ' + statusClass + '">' + r.dayStatus + '</span></div>' +
@@ -1143,7 +1493,7 @@ function loadDailyReport() {
         '<div class="stat-row"><span>Total Expenses</span><span class="val">₹' + r.totalExpenses.toFixed(2) + '</span></div>' +
         '<div class="stat-row"><span>Net</span><span class="val">₹' + (r.totalSales - r.totalExpenses).toFixed(2) + '</span></div>' +
         '<div class="stat-row"><span>Bills</span><span class="val">' + r.billCount + '</span></div>' +
-        '<button class="btn secondary" style="margin-top:10px" onclick="downloadDayExcel(\'' + date + '\')">⬇ Download Excel</button>';
+        '<button class="btn secondary" style="margin-top:10px" onclick="downloadDayExcel(this, \'' + date + '\')">⬇ Download Excel</button>';
       if (r.bills.length > 0) {
         html += '<div style="overflow-x:auto;margin-top:14px"><table class="report-table"><tr><th>Time</th><th>Staff</th><th>Customer</th><th>Mode</th><th>Total</th></tr>' +
           r.bills.map(function (b) {
@@ -1153,20 +1503,22 @@ function loadDailyReport() {
       el.innerHTML = html;
     })
     .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') el.innerHTML = 'Error loading report.'; });
+  });
 }
 
-function loadMonthlyReport() {
+function loadMonthlyReport(btn) {
   var month = document.getElementById('reportMonth').value;
   if (!month) return;
   var el = document.getElementById('monthlyReportResult');
   el.innerHTML = '<div class="spinner"></div>';
-  callAPI('getMonthlyReport', { token: session.token, yearMonth: month })
+  withLoading(btn, 'Loading...', function () {
+  return callAPI('getMonthlyReport', { token: session.token, yearMonth: month })
     .then(function (r) {
       var html = '<div class="stat-row"><span>Days Operated</span><span class="val">' + r.daysOperated + '</span></div>' +
         '<div class="stat-row"><span>Total Sales</span><span class="val">₹' + r.totalSales.toFixed(2) + '</span></div>' +
         '<div class="stat-row"><span>Total Expenses</span><span class="val">₹' + r.totalExpenses.toFixed(2) + '</span></div>' +
         '<div class="stat-row"><span>Net Profit</span><span class="val">₹' + r.netProfit.toFixed(2) + '</span></div>' +
-        '<button class="btn secondary" style="margin-top:10px" onclick="downloadMonthExcel(\'' + month + '\')">⬇ Download Excel</button>';
+        '<button class="btn secondary" style="margin-top:10px" onclick="downloadMonthExcel(this, \'' + month + '\')">⬇ Download Excel</button>';
       if (r.days.length > 0) {
         html += '<div style="overflow-x:auto;margin-top:14px"><table class="report-table"><tr><th>Date</th><th>Status</th><th>Sales</th><th>Expenses</th><th>Net</th></tr>' +
           r.days.map(function (d) {
@@ -1176,6 +1528,7 @@ function loadMonthlyReport() {
       el.innerHTML = html;
     })
     .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') el.innerHTML = 'Error loading report.'; });
+  });
 }
 
 function downloadFile(base64, filename) {
@@ -1187,38 +1540,42 @@ function downloadFile(base64, filename) {
   link.remove();
 }
 
-function downloadDayExcel(date) {
-  showToast('Preparing Excel file...');
-  callAPI('exportDayToExcel', { token: session.token, date: date })
-    .then(function (res) { downloadFile(res.base64, res.filename); })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Export failed: ' + err.message); });
+function downloadDayExcel(btn, date) {
+  withLoading(btn, 'Preparing...', function () {
+    return callAPI('exportDayToExcel', { token: session.token, date: date })
+      .then(function (res) { downloadFile(res.base64, res.filename); })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Export failed: ' + err.message); });
+  });
 }
 
-function downloadMonthExcel(month) {
-  showToast('Preparing Excel file...');
-  callAPI('exportMonthToExcel', { token: session.token, yearMonth: month })
-    .then(function (res) { downloadFile(res.base64, res.filename); })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Export failed: ' + err.message); });
+function downloadMonthExcel(btn, month) {
+  withLoading(btn, 'Preparing...', function () {
+    return callAPI('exportMonthToExcel', { token: session.token, yearMonth: month })
+      .then(function (res) { downloadFile(res.base64, res.filename); })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Export failed: ' + err.message); });
+  });
 }
 
 // ---------- ADMIN ----------
-function submitNewUser() {
+function submitNewUser(btn) {
   var fullName = document.getElementById('newUserFullName').value.trim();
   var username = document.getElementById('newUserUsername').value.trim();
   var password = document.getElementById('newUserPassword').value;
   var role = document.getElementById('newUserRole').value;
   if (!fullName || !username || !password) { showToast('Fill all fields.'); return; }
-  callAPI('addUser', { token: session.token, username: username, password: password, role: role, fullName: fullName })
-    .then(function (res) {
-      if (res.success) {
-        showToast('User added.');
-        document.getElementById('newUserFullName').value = '';
-        document.getElementById('newUserUsername').value = '';
-        document.getElementById('newUserPassword').value = '';
-        loadUsers();
-      } else showToast(res.message);
-    })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  withLoading(btn, 'Adding...', function () {
+    return callAPI('addUser', { token: session.token, username: username, password: password, role: role, fullName: fullName })
+      .then(function (res) {
+        if (res.success) {
+          showToast('User added.');
+          document.getElementById('newUserFullName').value = '';
+          document.getElementById('newUserUsername').value = '';
+          document.getElementById('newUserPassword').value = '';
+          loadUsers();
+        } else showToast(res.message);
+      })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  });
 }
 
 function loadUsers() {
@@ -1227,34 +1584,69 @@ function loadUsers() {
       var el = document.getElementById('usersList');
       el.innerHTML = list.map(function (u) {
         return '<div class="stat-row"><span>' + u.fullName + ' (' + u.username + ') — ' + u.role + '</span>' +
-          '<button class="btn small ' + (u.active ? 'danger' : '') + '" onclick="toggleUserActive(\'' + u.username + '\',' + (!u.active) + ')">' + (u.active ? 'Deactivate' : 'Activate') + '</button></div>';
+          '<button class="btn small ' + (u.active ? 'danger' : '') + '" onclick="toggleUserActive(this, \'' + u.username + '\',' + (!u.active) + ')">' + (u.active ? 'Deactivate' : 'Activate') + '</button></div>';
       }).join('');
     })
     .catch(function () {});
 }
 
-function toggleUserActive(username, active) {
-  callAPI('setUserActive', { token: session.token, username: username, active: active })
-    .then(function () { loadUsers(); })
-    .catch(function () {});
+function toggleUserActive(btn, username, active) {
+  withLoading(btn, '...', function () {
+    return callAPI('setUserActive', { token: session.token, username: username, active: active })
+      .then(function () { loadUsers(); })
+      .catch(function () {});
+  });
 }
 
-function submitNewQuickItem() {
+// Add Quick Item form doubles as the Edit form — qiOriginalName (hidden)
+// tells submitQuickItemForm whether this is a create or an update.
+function submitQuickItemForm(btn) {
+  var originalName = document.getElementById('qiOriginalName').value;
   var name = document.getElementById('qiName').value.trim();
   var price = document.getElementById('qiPrice').value;
   var unit = document.getElementById('qiUnit').value;
   var category = document.getElementById('qiCategory').value.trim();
   if (!name || !price) { showToast('Enter item name and price.'); return; }
-  callAPI('addQuickItem', { token: session.token, name: name, price: price, unit: unit, category: category })
-    .then(function () {
-      showToast('Quick item added.');
-      document.getElementById('qiName').value = '';
-      document.getElementById('qiPrice').value = '';
-      document.getElementById('qiCategory').value = '';
-      loadQuickItemsAdmin();
-      loadQuickItems();
-    })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+
+  var isEdit = !!originalName;
+  var action = isEdit ? 'updateQuickItem' : 'addQuickItem';
+  var params = isEdit
+    ? { token: session.token, originalName: originalName, name: name, price: price, unit: unit, category: category }
+    : { token: session.token, name: name, price: price, unit: unit, category: category };
+
+  withLoading(btn, isEdit ? 'Saving...' : 'Adding...', function () {
+    return callAPI(action, params)
+      .then(function (res) {
+        if (res && res.success === false) { showToast(res.message || 'Something went wrong.'); return; }
+        showToast(isEdit ? 'Quick item updated.' : 'Quick item added.');
+        cancelQuickItemEdit();
+        loadQuickItemsAdmin();
+        loadQuickItems();
+      })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+  });
+}
+
+function startEditQuickItem(name, price, unit, category) {
+  document.getElementById('qiOriginalName').value = name;
+  document.getElementById('qiName').value = name;
+  document.getElementById('qiPrice').value = price;
+  document.getElementById('qiUnit').value = unit;
+  document.getElementById('qiCategory').value = category || '';
+  document.getElementById('quickItemFormTitle').innerText = 'Edit Quick Item';
+  document.getElementById('qiSubmitBtn').innerText = 'Save Changes';
+  document.getElementById('qiCancelBtn').classList.remove('hidden');
+  document.getElementById('addQuickItemCard').scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
+function cancelQuickItemEdit() {
+  document.getElementById('qiOriginalName').value = '';
+  document.getElementById('qiName').value = '';
+  document.getElementById('qiPrice').value = '';
+  document.getElementById('qiCategory').value = '';
+  document.getElementById('quickItemFormTitle').innerText = 'Add Quick Item';
+  document.getElementById('qiSubmitBtn').innerText = '+ Add Quick Item';
+  document.getElementById('qiCancelBtn').classList.add('hidden');
 }
 
 function loadQuickItemsAdmin() {
@@ -1262,20 +1654,27 @@ function loadQuickItemsAdmin() {
     .then(function (list) {
       var el = document.getElementById('quickItemsAdminList');
       el.innerHTML = list.map(function (it) {
+        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "'";
         return '<div class="stat-row"><span>' + it.ItemName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + '</span>' +
-          '<span>' +
-          '<button class="btn small danger" onclick="deleteQI(\'' + it.ItemName + '\')">Delete</button>' +
+          '<span style="display:flex;gap:6px">' +
+          '<button class="btn small secondary" onclick="startEditQuickItem(' + argStr + ')">Edit</button>' +
+          '<button class="btn small danger" onclick="deleteQI(this, \'' + String(it.ItemName).replace(/'/g, "\\'") + '\')">Delete</button>' +
           '</span></div>';
       }).join('');
     })
     .catch(function () {});
 }
 
-function deleteQI(name) {
+function deleteQI(btn, name) {
   if (!confirm('Delete quick item "' + name + '"?')) return;
-  callAPI('deleteQuickItem', { token: session.token, name: name })
-    .then(function () { loadQuickItemsAdmin(); loadQuickItems(); })
-    .catch(function () {});
+  withLoading(btn, 'Deleting...', function () {
+    return callAPI('deleteQuickItem', { token: session.token, name: name })
+      .then(function () {
+        if (document.getElementById('qiOriginalName').value === name) cancelQuickItemEdit();
+        loadQuickItemsAdmin(); loadQuickItems();
+      })
+      .catch(function () {});
+  });
 }
 
 // ======================================================
@@ -1284,10 +1683,13 @@ function deleteQI(name) {
 // section at a time, and shows a speech-bubble explanation.
 // ======================================================
 var tutorialBaseSteps = [
-  { tab: 'billing', target: '#quickItemsCard', title: 'Quick Add', text: 'Tap any item card here to instantly add it to the bill — great for your most-sold items.' },
-  { tab: 'billing', target: '#manualAddCard', title: 'Add Items Manually', text: "Don't have a quick item set up? Add anything by name, choose pieces or weight, and set the price." },
-  { tab: 'billing', target: '#currentBillCard', title: 'Current Bill', text: 'Everything you add shows up here. Tap ✕ next to any item to remove it.' },
-  { tab: 'billing', target: '#billDetailsCard', title: 'Bill Details & Total', text: "Add the customer's name & phone (needed for credit sales), pick a payment mode, apply a discount, then hit Complete Bill." },
+  { tab: 'billing', billingStep: 'items', target: '#quickItemsCard', title: 'Quick Add', text: 'Tap any item card here to instantly add it to the bill — great for your most-sold items.' },
+  { tab: 'billing', billingStep: 'items', target: '#manualAddCard', title: 'Add Items Manually', text: "Don't have a quick item set up? Add anything by name, choose pieces or weight, and set the price." },
+  { tab: 'billing', billingStep: 'items', target: '#currentBillCard', title: 'Items Added So Far', text: 'Everything you add shows up here as you go. When you\'re done adding items, tap "Review & Pay" below.' },
+  { tab: 'billing', billingStep: 'items', target: '#itemsContinueBar', title: 'Review & Pay', text: 'This bar keeps a running total. Tap it once all the items are in to move to customer details and payment.' },
+  { tab: 'billing', billingStep: 'checkout', target: '#currentBillReviewCard', title: 'Current Bill', text: 'A final look at everything in the bill. Tap ✕ next to any item to remove it before completing.' },
+  { tab: 'billing', billingStep: 'checkout', target: '#billDetailsCard', title: 'Customer & Payment', text: "Add the customer's name & phone (needed for credit sales), pick a payment mode, and apply a discount if needed." },
+  { tab: 'billing', billingStep: 'checkout', target: '#billTotalsCard', title: 'Total & Complete', text: 'Check the total, then hit Complete Bill to save it.' },
   { tab: 'billing', target: '#bottomNav', title: 'Switch Between Sections', text: 'Use these bubbles to jump straight to Billing, Day and Udhaar — your most-used sections.' },
   { tab: 'billing', target: '#hamburgerBtn', title: 'More Options', text: 'Reports (and Admin, if you\'re a Manager) live in here to keep the main bar uncluttered.' },
   { tab: 'day', target: '#dayStatusCard', title: 'Open & Close Your Day', text: 'Start your day by entering opening cash. At the end, close the day and count your cash — QuickBill tells you if it matches.' },
@@ -1379,6 +1781,7 @@ function showTutorialStep(i) {
   tutorialStep = i;
   document.querySelectorAll('.tutorial-target-highlight').forEach(function (el) { el.classList.remove('tutorial-target-highlight'); });
   if (step.tab) switchTab(step.tab);
+  if (step.tab === 'billing' && step.billingStep) switchBillingStep(step.billingStep);
   // small delay so the tab content is rendered/visible before we measure positions
   setTimeout(positionTutorialStep, 60);
 }
