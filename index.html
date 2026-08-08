@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Anchal Grocery Billing</title>
+  <meta name="theme-color" content="#16A34A">
+  <meta name="description" content="Billing app for Anchal Grocery">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Grocery Billing">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+  <!-- ===================== LOGIN SCREEN ===================== -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="shop-icon">🛒</div>
+      <h1>Anchal Grocery Billing</h1>
+      <p class="sub">Sign in to start billing</p>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="loginUsername" autocomplete="username" placeholder="e.g. admin">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
+      <div class="error-msg" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- ===================== MAIN APP ===================== -->
+  <div id="appScreen">
+    <div class="topbar">
+      <div>
+        <div class="title">Anchal Grocery</div>
+        <div class="sub" id="staffNameLabel">—</div>
+      </div>
+      <div class="right">
+        <span class="day-badge closed" id="dayBadge">Day Closed</span>
+        <button class="logout-btn" onclick="doLogout()" title="Logout">⏻</button>
+      </div>
+    </div>
+
+    <!-- TAB: BILLING -->
+    <div class="tab-content" id="tab-billing">
+      <div class="section-title">New Bill</div>
+
+      <div class="card" id="quickItemsCard">
+        <h3>Quick Add</h3>
+        <div class="quick-grid" id="quickItemsGrid"></div>
+      </div>
+
+      <div class="card">
+        <h3>Add Item Manually</h3>
+        <div class="form-row">
+          <div class="field-inline" style="flex:2">
+            <label>Item Name</label>
+            <input type="text" id="manualName" placeholder="e.g. Onion">
+          </div>
+        </div>
+        <div class="tag-row">
+          <div class="tag-btn selected" id="modePiece" onclick="setEntryMode('piece')">Qty (pieces)</div>
+          <div class="tag-btn" id="modeWeight" onclick="setEntryMode('weight')">Weight (kg/g)</div>
+        </div>
+        <div class="form-row" id="pieceRow">
+          <div class="field-inline"><label>Quantity</label><input type="number" id="manualQty" min="1" value="1"></div>
+          <div class="field-inline"><label>Price per piece (₹)</label><input type="number" id="manualPricePiece" min="0" step="0.01"></div>
+        </div>
+        <div class="form-row hidden" id="weightRow">
+          <div class="field-inline"><label>Weight</label><input type="number" id="manualWeight" min="0" step="0.01" placeholder="e.g. 0.5"></div>
+          <div class="field-inline">
+            <label>Unit</label>
+            <select id="manualUnit"><option value="kg">kg</option><option value="g">g</option></select>
+          </div>
+          <div class="field-inline"><label>Price per kg (₹)</label><input type="number" id="manualPriceWeight" min="0" step="0.01"></div>
+        </div>
+        <button class="btn secondary" onclick="addManualItem()">+ Add to Bill</button>
+      </div>
+
+      <div class="card">
+        <h3>Current Bill</h3>
+        <div id="billItemsList"><div class="empty-state">No items added yet</div></div>
+      </div>
+
+      <div class="card">
+        <h3>Bill Details</h3>
+        <div class="field">
+          <label>Customer Name (optional)</label>
+          <input type="text" id="custName" placeholder="Walk-in customer">
+        </div>
+        <div class="field">
+          <label>Phone (optional, for credit)</label>
+          <input type="text" id="custPhone" placeholder="10-digit number">
+        </div>
+        <div class="form-row">
+          <div class="field-inline">
+            <label>Payment Mode</label>
+            <select id="paymentMode">
+              <option value="Cash">Cash</option>
+              <option value="UPI">UPI</option>
+              <option value="Credit">Credit (Udhaar)</option>
+            </select>
+          </div>
+          <div class="field-inline">
+            <label>Discount (₹)</label>
+            <input type="number" id="discount" min="0" step="0.01" value="0">
+          </div>
+        </div>
+        <div class="stat-row"><span>Subtotal</span><span class="val" id="subtotalDisplay">₹0.00</span></div>
+        <div class="stat-row"><span>Discount</span><span class="val" id="discountDisplay">₹0.00</span></div>
+        <div class="big-total">
+          <div class="label">Total Payable</div>
+          <div class="amount" id="totalDisplay">₹0.00</div>
+        </div>
+        <button class="btn" id="completeBillBtn" onclick="completeBill()">Complete Bill</button>
+      </div>
+    </div>
+
+    <!-- TAB: DAY -->
+    <div class="tab-content hidden" id="tab-day">
+      <div class="section-title">Day Management</div>
+      <div class="card" id="dayStatusCard"></div>
+      <div class="card" id="expenseCard">
+        <h3>Log an Expense</h3>
+        <div class="field"><label>Description</label><input type="text" id="expDesc" placeholder="e.g. Auto fare, packing bags"></div>
+        <div class="field"><label>Amount (₹)</label><input type="number" id="expAmount" min="0" step="0.01"></div>
+        <button class="btn secondary" onclick="submitExpense()">+ Add Expense</button>
+      </div>
+      <div class="card">
+        <h3>Today's Expenses</h3>
+        <div id="expenseList"><div class="empty-state">No expenses logged today</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: CREDITS -->
+    <div class="tab-content hidden" id="tab-credits">
+      <div class="section-title">Udhaar / Credit Ledger</div>
+      <div class="card">
+        <h3>Add Entry</h3>
+        <div class="field"><label>Customer Name</label><input type="text" id="crName" placeholder="Customer name"></div>
+        <div class="field"><label>Phone (optional)</label><input type="text" id="crPhone" placeholder="10-digit number"></div>
+        <div class="tag-row">
+          <div class="tag-btn selected" id="crTypeCredit" onclick="setCreditType('Credit')">They owe more</div>
+          <div class="tag-btn" id="crTypePayment" onclick="setCreditType('Payment')">They paid back</div>
+        </div>
+        <div class="field"><label>Amount (₹)</label><input type="number" id="crAmount" min="0" step="0.01"></div>
+        <div class="field"><label>Notes (optional)</label><input type="text" id="crNotes" placeholder="e.g. groceries for the week"></div>
+        <button class="btn secondary" onclick="submitCredit()">+ Save Entry</button>
+      </div>
+      <div class="card">
+        <h3>Outstanding Balances</h3>
+        <div id="creditLedgerList"><div class="empty-state">No outstanding balances</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: REPORTS -->
+    <div class="tab-content hidden" id="tab-reports">
+      <div class="section-title">Reports</div>
+      <div class="card">
+        <h3>Daily Report</h3>
+        <div class="field"><label>Select Date</label><input type="date" id="reportDate"></div>
+        <button class="btn secondary" onclick="loadDailyReport()">View Report</button>
+        <div id="dailyReportResult"></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Report</h3>
+        <div class="field"><label>Select Month</label><input type="month" id="reportMonth"></div>
+        <button class="btn secondary" onclick="loadMonthlyReport()">View Report</button>
+        <div id="monthlyReportResult"></div>
+      </div>
+    </div>
+
+    <!-- TAB: ADMIN -->
+    <div class="tab-content hidden" id="tab-admin">
+      <div class="section-title">Admin Panel</div>
+      <div class="card">
+        <h3>Add Staff Login</h3>
+        <div class="field"><label>Full Name</label><input type="text" id="newUserFullName"></div>
+        <div class="field"><label>Username</label><input type="text" id="newUserUsername"></div>
+        <div class="field"><label>Password</label><input type="text" id="newUserPassword"></div>
+        <div class="field">
+          <label>Role</label>
+          <select id="newUserRole"><option value="Staff">Staff</option><option value="Manager">Manager</option></select>
+        </div>
+        <button class="btn secondary" onclick="submitNewUser()">+ Add User</button>
+      </div>
+      <div class="card">
+        <h3>Existing Staff</h3>
+        <div id="usersList"></div>
+      </div>
+      <div class="card">
+        <h3>Add Quick Item</h3>
+        <div class="form-row">
+          <div class="field-inline"><label>Item Name</label><input type="text" id="qiName"></div>
+          <div class="field-inline"><label>Price (₹)</label><input type="number" id="qiPrice" step="0.01"></div>
+        </div>
+        <div class="form-row">
+          <div class="field-inline">
+            <label>Unit</label>
+            <select id="qiUnit"><option value="kg">kg</option><option value="piece">piece</option></select>
+          </div>
+          <div class="field-inline"><label>Category (optional)</label><input type="text" id="qiCategory"></div>
+        </div>
+        <button class="btn secondary" onclick="submitNewQuickItem()">+ Add Quick Item</button>
+      </div>
+      <div class="card">
+        <h3>Existing Quick Items</h3>
+        <div id="quickItemsAdminList"></div>
+      </div>
+    </div>
+
+    <div class="bottom-nav" id="bottomNav">
+      <button class="nav-btn active" data-tab="billing" onclick="switchTab('billing')"><span class="icon">🧾</span>Bill</button>
+      <button class="nav-btn" data-tab="day" onclick="switchTab('day')"><span class="icon">🔑</span>Day</button>
+      <button class="nav-btn" data-tab="credits" onclick="switchTab('credits')"><span class="icon">📒</span>Udhaar</button>
+      <button class="nav-btn" data-tab="reports" onclick="switchTab('reports')"><span class="icon">📊</span>Reports</button>
+      <button class="nav-btn hidden" id="adminNavBtn" data-tab="admin" onclick="switchTab('admin')"><span class="icon">⚙️</span>Admin</button>
+    </div>
+  </div>
+
+
+<script src="app.js"></script>
+</body>
+</html>
