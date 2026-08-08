@@ -5,7 +5,7 @@
 
 // >>> IMPORTANT: paste your Apps Script Web App URL here after deploying it <<<
 // It looks like: https://script.google.com/macros/s/AKfycb.../exec
-const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4KDUXcyXie9qiXFPyyZ90Kk0C5elfoDWU-6CpIAzbAU-y4upv7gNH4go2mVINSp1k/exec';
 
 // ---------- API HELPER ----------
 function callAPI(action, params) {
