@@ -1,5 +1,4 @@
-
-    :root {
+:root {
       --green: #16A34A;
       --green-dark: #15803D;
       --green-light: #DCFCE7;
@@ -52,18 +51,32 @@
     .success-msg { color: var(--green-dark); font-size: 13px; margin-top: 10px; }
 
     /* ---------- APP SHELL ---------- */
-    #appScreen { display: none; min-height: 100vh; padding-bottom: 72px; }
+    #appScreen { display: none; min-height: 100vh; padding-bottom: 104px; }
     .topbar {
       background: var(--green); color: #fff; padding: 14px 16px; display: flex; justify-content: space-between;
-      align-items: center; position: sticky; top: 0; z-index: 10;
+      align-items: center; position: sticky; top: 0; z-index: 10; gap: 10px;
     }
     .topbar .title { font-weight: 700; font-size: 16px; }
     .topbar .sub { font-size: 12px; opacity: 0.85; }
-    .topbar .right { display: flex; align-items: center; gap: 10px; }
-    .day-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700; }
+    .topbar .right { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+    .day-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
     .day-badge.open { background: #fff; color: var(--green-dark); }
     .day-badge.closed { background: rgba(255,255,255,0.25); color: #fff; }
     .logout-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
+
+    /* ---------- TUTORIAL TOGGLE ---------- */
+    .tutorial-toggle {
+      display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.45); color: #fff; padding: 6px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
+    }
+    .tutorial-toggle .tt-icon { font-size: 14px; }
+    .tutorial-toggle:active { transform: scale(0.96); }
+    .tutorial-toggle.active { background: #fff; color: var(--green-dark); border-color: #fff; }
+    @media (max-width: 380px) {
+      .tutorial-toggle .tt-label { display: none; }
+      .tutorial-toggle { padding: 6px 9px; }
+    }
 
     .tab-content { padding: 16px; max-width: 640px; margin: 0 auto; }
     .card {
@@ -78,17 +91,28 @@
     .big-total .amount { font-size: 34px; font-weight: 800; color: var(--green-dark); }
     .big-total .label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
 
-    /* Bottom nav */
+    /* ---------- Bottom nav: floating bubble bar ---------- */
     .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border);
-      display: flex; z-index: 20; box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+      position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 20;
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.6); border-radius: 28px; padding: 6px;
+      display: flex; gap: 2px; box-shadow: 0 12px 30px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
+      max-width: 640px; margin: 0 auto;
     }
     .nav-btn {
-      flex: 1; text-align: center; padding: 8px 2px 10px; background: none; border: none; cursor: pointer;
-      color: var(--muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      padding: 8px 2px; background: none; border: none; cursor: pointer; color: var(--muted);
+      font-size: 11px; font-weight: 700; border-radius: 20px; transition: color 0.2s ease;
     }
-    .nav-btn .icon { font-size: 20px; }
-    .nav-btn.active { color: var(--green-dark); font-weight: 700; }
+    .nav-btn .icon-wrap {
+      width: 42px; height: 32px; display: flex; align-items: center; justify-content: center;
+      border-radius: 16px; transition: background 0.25s ease, transform 0.2s ease;
+    }
+    .nav-btn .icon { font-size: 20px; line-height: 1; }
+    .nav-btn .label { transition: color 0.2s ease; }
+    .nav-btn:active .icon-wrap { transform: scale(0.88); }
+    .nav-btn.active { color: var(--green-dark); }
+    .nav-btn.active .icon-wrap { background: var(--green-light); transform: scale(1.04); }
 
     /* Quick items grid */
     .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
@@ -129,7 +153,7 @@
     .pill.credit { background: #FEF3C7; color: var(--amber); }
 
     .toast {
-      position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%); background: #1F2937; color: #fff;
+      position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); background: #1F2937; color: #fff;
       padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       max-width: 90%; text-align: center;
     }
@@ -146,4 +170,34 @@
     .tag-row { display: flex; gap: 8px; margin-bottom: 12px; }
     .tag-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; text-align: center; cursor: pointer; font-weight: 600; font-size: 14px; }
     .tag-btn.selected { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
-  
+
+    /* ---------- TUTORIAL WALKTHROUGH ---------- */
+    .tutorial-overlay { position: fixed; inset: 0; z-index: 300; }
+    .tutorial-overlay.hidden { display: none; }
+    .tutorial-mask { position: fixed; background: rgba(15, 23, 42, 0.62); transition: all 0.28s ease; }
+    .tutorial-target-highlight {
+      position: relative !important; z-index: 301 !important;
+      outline: 3px solid #fff; outline-offset: 3px; border-radius: 16px;
+      box-shadow: 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px rgba(22,163,74,0.5);
+      animation: tutorial-pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes tutorial-pulse {
+      0%, 100% { box-shadow: 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px rgba(22,163,74,0.5); }
+      50% { box-shadow: 0 0 0 10px rgba(22,163,74,0.28), 0 0 32px rgba(22,163,74,0.35); }
+    }
+    .tutorial-bubble {
+      position: fixed; z-index: 302; background: #fff; border-radius: 16px; padding: 16px 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3); max-width: 320px; transition: top 0.25s ease, left 0.25s ease;
+    }
+    .tutorial-bubble-arrow { position: absolute; width: 16px; height: 16px; background: #fff; transform: rotate(45deg); }
+    .tutorial-bubble-arrow.arrow-up { top: -8px; }
+    .tutorial-bubble-arrow.arrow-down { bottom: -8px; }
+    .tutorial-step-count { font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .tutorial-bubble h4 { margin: 0 0 6px; font-size: 16px; }
+    .tutorial-bubble p { margin: 0 0 14px; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+    .tutorial-controls { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .tutorial-skip { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; text-decoration: underline; padding: 4px; white-space: nowrap; }
+    .tutorial-nav-btns { display: flex; gap: 8px; }
+    .tutorial-btn-secondary, .tutorial-btn-primary { border: none; border-radius: 10px; padding: 9px 16px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+    .tutorial-btn-secondary { background: var(--bg); color: var(--text); }
+    .tutorial-btn-primary { background: var(--green); color: #fff; }
