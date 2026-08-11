@@ -523,35 +523,13 @@
           <div class="empty-state hidden" id="quickSearchNoResults"><span data-i18n="noItemsMatchPrefix">No items match "</span><span id="quickSearchNoResultsTerm"></span><span data-i18n="quote">"</span></div>
         </div>
 
-        <div class="card manual-add-sheet" id="manualAddCard">
-          <div class="manual-add-sheet-handle" onclick="closeManualAddCard()"></div>
-          <div class="manual-add-sheet-header">
-            <h3 data-i18n="addItemManually">Add Item Manually</h3>
-            <button type="button" class="cart-sheet-close" onclick="closeManualAddCard()">✕</button>
-          </div>
-          <div class="form-row">
-            <div class="field-inline" style="flex:2">
-              <label data-i18n="itemName">Item Name</label>
-              <input type="text" id="manualName" placeholder="e.g. Onion" data-i18n-ph="egOnion">
-            </div>
-          </div>
-          <div class="tag-row">
-            <div class="tag-btn selected" id="modePiece" onclick="setEntryMode('piece')" data-i18n="qtyPieces">Qty (pieces)</div>
-            <div class="tag-btn" id="modeWeight" onclick="setEntryMode('weight')" data-i18n="weightKgG">Weight (kg/g)</div>
-          </div>
-          <div class="form-row" id="pieceRow">
-            <div class="field-inline"><label data-i18n="quantity">Quantity</label><input type="number" id="manualQty" min="1" value="1"></div>
-            <div class="field-inline"><label data-i18n="pricePerPiece">Price per piece (₹)</label><input type="number" id="manualPricePiece" min="0" step="0.01"></div>
-          </div>
-          <div class="form-row hidden" id="weightRow">
-            <div class="field-inline"><label data-i18n="weight">Weight</label><input type="number" id="manualWeight" min="0" step="0.01" placeholder="e.g. 0.5" data-i18n-ph="egZeroFive"></div>
-            <div class="field-inline">
-              <label data-i18n="unit">Unit</label>
-              <select id="manualUnit"><option value="kg" data-i18n="unitKg">kg</option><option value="g" data-i18n="unitG">g</option></select>
-            </div>
-            <div class="field-inline"><label data-i18n="pricePerKg">Price per kg (₹)</label><input type="number" id="manualPriceWeight" min="0" step="0.01"></div>
-          </div>
-          <button class="btn secondary" onclick="addManualItem()" data-i18n="addToBillBtn">+ Add to Bill</button>
+        <!-- Persistent inline list of what's in the bill so far — replaces the
+             old auto-popping "Recently Added" sheet. Same rendering as the
+             Current Bill card on the Review & Pay step, just a second target
+             element so both stay in sync (see renderBillItems()). -->
+        <div class="card" id="itemsAddedSoFarCard">
+          <h3 data-i18n="itemsAddedSoFar">Items Added So Far</h3>
+          <div id="billItemsListItemsStep"><div class="empty-state" data-i18n="noItemsAddedYet">No items added yet</div></div>
         </div>
 
         <div class="sticky-continue-bar hidden" id="itemsContinueBar">
@@ -561,25 +539,6 @@
           </div>
           <button class="btn" id="goToCheckoutBtn" onclick="switchBillingStep('checkout')" data-i18n="reviewPayArrow">Review &amp; Pay →</button>
         </div>
-
-        <!-- Recently-added sliding sheet: pops up on every add, or opens on demand via the + -->
-        <div class="cart-sheet-backdrop" id="cartSheetBackdrop" onclick="closeCartSheet()"></div>
-        <div class="cart-sheet" id="cartSheet">
-          <div class="cart-sheet-handle" onclick="closeCartSheet()"></div>
-          <div class="cart-sheet-header">
-            <div class="cart-sheet-title" data-i18n="recentlyAdded">Recently Added</div>
-            <button type="button" class="cart-sheet-close" onclick="closeCartSheet()">✕</button>
-          </div>
-          <div class="cart-sheet-list" id="cartSheetList"></div>
-          <div class="cart-sheet-footer">
-            <div class="cart-sheet-total">
-              <span class="cs-count" id="cartSheetCount">0 items</span>
-              <span class="cs-amount" id="cartSheetTotal">₹0.00</span>
-            </div>
-            <button class="btn small" onclick="switchBillingStep('checkout')" data-i18n="reviewPayArrow">Review &amp; Pay →</button>
-          </div>
-        </div>
-        <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openManualAddCard()" aria-label="Add item manually">+</button>
       </div>
 
       <!-- STEP 2: REVIEW & PAY -->
@@ -744,6 +703,46 @@
       </div>
     </div>
 
+    <!-- These two are position:fixed overlays for Billing → Add Items.
+         Deliberately kept as siblings of the .tab-content divs (not nested
+         inside one) — any ancestor with a CSS transform becomes the
+         containing block for a position:fixed descendant, and .tab-content
+         gets a transform during the tab-switch animation. Nesting these
+         inside it caused them to jump/flash into the ancestor's box for a
+         frame on every tab switch. Visibility is handled purely in JS via
+         updateFabVisibility() in switchTab()/switchBillingStep(). -->
+    <div class="card manual-add-sheet" id="manualAddCard">
+      <div class="manual-add-sheet-handle" onclick="closeManualAddCard()"></div>
+      <div class="manual-add-sheet-header">
+        <h3 data-i18n="addItemManually">Add Item Manually</h3>
+        <button type="button" class="cart-sheet-close" onclick="closeManualAddCard()">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="field-inline" style="flex:2">
+          <label data-i18n="itemName">Item Name</label>
+          <input type="text" id="manualName" placeholder="e.g. Onion" data-i18n-ph="egOnion">
+        </div>
+      </div>
+      <div class="tag-row">
+        <div class="tag-btn selected" id="modePiece" onclick="setEntryMode('piece')" data-i18n="qtyPieces">Qty (pieces)</div>
+        <div class="tag-btn" id="modeWeight" onclick="setEntryMode('weight')" data-i18n="weightKgG">Weight (kg/g)</div>
+      </div>
+      <div class="form-row" id="pieceRow">
+        <div class="field-inline"><label data-i18n="quantity">Quantity</label><input type="number" id="manualQty" min="1" value="1"></div>
+        <div class="field-inline"><label data-i18n="pricePerPiece">Price per piece (₹)</label><input type="number" id="manualPricePiece" min="0" step="0.01"></div>
+      </div>
+      <div class="form-row hidden" id="weightRow">
+        <div class="field-inline"><label data-i18n="weight">Weight</label><input type="number" id="manualWeight" min="0" step="0.01" placeholder="e.g. 0.5" data-i18n-ph="egZeroFive"></div>
+        <div class="field-inline">
+          <label data-i18n="unit">Unit</label>
+          <select id="manualUnit"><option value="kg" data-i18n="unitKg">kg</option><option value="g" data-i18n="unitG">g</option></select>
+        </div>
+        <div class="field-inline"><label data-i18n="pricePerKg">Price per kg (₹)</label><input type="number" id="manualPriceWeight" min="0" step="0.01"></div>
+      </div>
+      <button class="btn secondary" onclick="addManualItem()" data-i18n="addToBillBtn">+ Add to Bill</button>
+    </div>
+    <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openManualAddCard()" aria-label="Add item manually">+</button>
+
     <div class="bottom-nav" id="bottomNav">
       <button class="nav-btn active" data-tab="billing" onclick="switchTab('billing')">
         <span class="icon-wrap"><span class="icon">🧾</span></span>
@@ -784,7 +783,7 @@ var I18N = {
     qtyPieces: 'Qty (pieces)', weightKgG: 'Weight (kg/g)', quantity: 'Quantity',
     pricePerPiece: 'Price per piece (₹)', egZeroFive: 'e.g. 0.5', weight: 'Weight', unit: 'Unit',
     unitKg: 'kg', unitG: 'g', unitPiece: 'piece', pricePerKg: 'Price per kg (₹)', addToBillBtn: '+ Add to Bill',
-    reviewPayArrow: 'Review & Pay →', recentlyAdded: 'Recently Added', backToAddItems: '← Back to Add Items',
+    reviewPayArrow: 'Review & Pay →', recentlyAdded: 'Recently Added', itemsAddedSoFar: 'Items Added So Far', backToAddItems: '← Back to Add Items',
     currentBill: 'Current Bill', noItemsAddedYet: 'No items added yet', customerPayment: 'Customer & Payment',
     customerNameOptional: 'Customer Name (optional)', walkInCustomer: 'Walk-in customer',
     phoneOptionalCredit: 'Phone (optional, for credit)', tenDigitNumber: '10-digit number',
@@ -859,7 +858,7 @@ var I18N = {
     tutorialStepCount: 'Step {n} of {total}',
     tut1t: 'Quick Add', tut1x: 'Tap any item card here to instantly add it to the bill — great for your most-sold items.',
     tut2t: 'Add Items Manually', tut2x: "Don't have a quick item set up? Add anything by name, choose pieces or weight, and set the price.",
-    tut3t: 'Items Added So Far', tut3x: 'Every item you add pops open a card from the bottom showing what\'s in the bill. Tap this + anytime to check it yourself.',
+    tut3t: 'Items Added So Far', tut3x: 'Every item you add shows up here right away, so you can check what\'s in the bill at a glance.',
     tut4t: 'Review & Pay', tut4x: 'This bar keeps a running total. Tap it once all the items are in to move to customer details and payment.',
     tut5t: 'Current Bill', tut5x: 'A final look at everything in the bill. Tap ✕ next to any item to remove it before completing.',
     tut6t: 'Customer & Payment', tut6x: "Add the customer's name & phone (needed for credit sales), pick a payment mode, and apply a discount if needed.",
@@ -904,7 +903,7 @@ var I18N = {
     qtyPieces: 'എണ്ണം (പീസ്)', weightKgG: 'തൂക്കം (കി.ഗ്രാം/ഗ്രാം)', quantity: 'എണ്ണം',
     pricePerPiece: 'ഒരു പീസിന്റെ വില (₹)', egZeroFive: 'ഉദാ: 0.5', weight: 'തൂക്കം', unit: 'യൂണിറ്റ്',
     unitKg: 'കി.ഗ്രാം', unitG: 'ഗ്രാം', unitPiece: 'പീസ്', pricePerKg: 'ഒരു കി.ഗ്രാമിന്റെ വില (₹)', addToBillBtn: '+ ബില്ലിലേക്ക് ചേർക്കുക',
-    reviewPayArrow: 'പരിശോധിച്ച് പണം നൽകുക →', recentlyAdded: 'അടുത്തിടെ ചേർത്തവ', backToAddItems: '← ഇനങ്ങൾ ചേർക്കുന്നതിലേക്ക് മടങ്ങുക',
+    reviewPayArrow: 'പരിശോധിച്ച് പണം നൽകുക →', recentlyAdded: 'അടുത്തിടെ ചേർത്തവ', itemsAddedSoFar: 'ഇതുവരെ ചേർത്ത ഇനങ്ങൾ', backToAddItems: '← ഇനങ്ങൾ ചേർക്കുന്നതിലേക്ക് മടങ്ങുക',
     currentBill: 'നിലവിലെ ബിൽ', noItemsAddedYet: 'ഇതുവരെ ഇനങ്ങളൊന്നും ചേർത്തിട്ടില്ല', customerPayment: 'കസ്റ്റമറും പേയ്‌മെന്റും',
     customerNameOptional: 'കസ്റ്റമറുടെ പേര് (ഓപ്ഷണൽ)', walkInCustomer: 'വാക്ക്-ഇൻ കസ്റ്റമർ',
     phoneOptionalCredit: 'ഫോൺ (ഓപ്ഷണൽ, ഉധാരത്തിന്)', tenDigitNumber: '10 അക്ക നമ്പർ',
@@ -970,7 +969,7 @@ var I18N = {
     tutorialStepCount: 'ഘട്ടം {n} / {total}',
     tut1t: 'ക്വിക്ക് ആഡ്', tut1x: 'ബില്ലിലേക്ക് ഉടനടി ചേർക്കാൻ ഏതെങ്കിലും ഇനത്തിന്റെ കാർഡിൽ ടാപ്പ് ചെയ്യുക — നിങ്ങളുടെ ഏറ്റവും കൂടുതൽ വിൽക്കുന്ന ഇനങ്ങൾക്ക് മികച്ചത്.',
     tut2t: 'ഇനങ്ങൾ സ്വയം ചേർക്കുക', tut2x: 'ക്വിക്ക് ഇനം സജ്ജീകരിച്ചിട്ടില്ലേ? പേര് നൽകി എന്തും ചേർക്കുക, പീസോ തൂക്കമോ തിരഞ്ഞെടുത്ത് വില സെറ്റ് ചെയ്യുക.',
-    tut3t: 'ഇതുവരെ ചേർത്ത ഇനങ്ങൾ', tut3x: 'നിങ്ങൾ ചേർക്കുന്ന ഓരോ ഇനവും ബില്ലിൽ എന്തൊക്കെയുണ്ടെന്ന് കാണിക്കുന്ന ഒരു കാർഡ് താഴെ നിന്ന് തുറക്കും. ഇത് സ്വയം പരിശോധിക്കാൻ എപ്പോൾ വേണമെങ്കിലും ഈ + ടാപ്പ് ചെയ്യുക.',
+    tut3t: 'ഇതുവരെ ചേർത്ത ഇനങ്ങൾ', tut3x: 'നിങ്ങൾ ചേർക്കുന്ന ഓരോ ഇനവും ഉടനടി ഇവിടെ കാണിക്കും, അതിനാൽ ബില്ലിൽ എന്തൊക്കെയുണ്ടെന്ന് ഒറ്റനോട്ടത്തിൽ പരിശോധിക്കാം.',
     tut4t: 'പരിശോധിച്ച് പണം നൽകുക', tut4x: 'ഈ ബാർ തുടർച്ചയായ ആകെത്തുക കാണിക്കുന്നു. എല്ലാ ഇനങ്ങളും ചേർത്ത ശേഷം കസ്റ്റമർ വിവരങ്ങളിലേക്കും പേയ്‌മെന്റിലേക്കും പോകാൻ ഇത് ടാപ്പ് ചെയ്യുക.',
     tut5t: 'നിലവിലെ ബിൽ', tut5x: 'ബില്ലിലെ എല്ലാം ഒരു അവസാന നോട്ടം. പൂർത്തിയാക്കുന്നതിന് മുമ്പ് ഏതെങ്കിലും ഇനം നീക്കം ചെയ്യാൻ അതിനടുത്തുള്ള ✕ ടാപ്പ് ചെയ്യുക.',
     tut6t: 'കസ്റ്റമറും പേയ്‌മെന്റും', tut6x: 'കസ്റ്റമറുടെ പേരും ഫോണും ചേർക്കുക (ക്രെഡിറ്റ് വിൽപ്പനയ്ക്ക് ആവശ്യമാണ്), ഒരു പേയ്‌മെന്റ് രീതി തിരഞ്ഞെടുക്കുക, ആവശ്യമെങ്കിൽ കിഴിവ് നൽകുക.',
@@ -1148,6 +1147,7 @@ function callAPI(action, params) {
 
 // ---------- STATE ----------
 var session = { token: null, role: null, fullName: null };
+var currentTab = 'billing'; // tracks which main tab is active (matches the tab visible by default)
 var currentBillItems = [];
 var entryMode = 'piece';
 var creditType = 'Credit';
@@ -1320,6 +1320,10 @@ function switchTab(tab) {
   var current = document.querySelector('.tab-content:not(.hidden)');
   var next = document.getElementById('tab-' + tab);
   closeHamburgerMenu();
+
+  currentTab = tab;
+  if (tab !== 'billing') closeManualAddCard();
+  updateFabVisibility();
 
   document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
   var navBtn = document.querySelector('.nav-btn[data-tab="' + tab + '"]');
@@ -1560,44 +1564,6 @@ function quickAdd(idx) {
     currentBillItems.push({ name: it.ItemName, qty: qty, weight: '', unit: 'piece', price: it.DefaultPrice, lineTotal: lineTotal2 });
   }
   renderBillItems();
-  openCartSheet();
-}
-
-// ---------- RECENTLY-ADDED SLIDING SHEET ----------
-// Pops up automatically from quickAdd() above; the floating + (fabAddBtn)
-// opens it on demand too (e.g. to check/edit the cart before any quick-add).
-function renderCartSheet() {
-  var el = document.getElementById('cartSheetList');
-  if (!el) return;
-  if (currentBillItems.length === 0) {
-    el.innerHTML = '<div class="empty-state">' + tr('noItemsAddedYet') + '</div>';
-  } else {
-    // Most-recently-added item on top; each row still keeps its real index
-    // into currentBillItems so the ✕ button removes the right one.
-    el.innerHTML = currentBillItems.map(function (it, idx) { return { it: it, idx: idx }; })
-      .reverse()
-      .map(function (entry) {
-        var it = entry.it, idx = entry.idx;
-        var meta = it.qty ? (it.qty + ' × ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
-        return '<div class="bill-item-row"><div class="info"><div class="name">' + it.name + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + it.lineTotal.toFixed(2) + '</div><button class="del-btn" onclick="removeBillItem(' + idx + ')">✕</button></div>';
-      }).join('');
-  }
-  var count = currentBillItems.length;
-  var total = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
-  document.getElementById('cartSheetCount').innerText = trCount(count);
-  document.getElementById('cartSheetTotal').innerText = '₹' + total.toFixed(2);
-}
-
-function openCartSheet() {
-  if (currentBillItems.length === 0) return; // only appears once at least 1 item is in the bill
-  renderCartSheet();
-  document.getElementById('cartSheet').classList.add('open');
-  document.getElementById('cartSheetBackdrop').classList.add('open');
-}
-
-function closeCartSheet() {
-  document.getElementById('cartSheet').classList.remove('open');
-  document.getElementById('cartSheetBackdrop').classList.remove('open');
 }
 
 // ---------- ADD ITEM MANUALLY SHEET ----------
@@ -1694,7 +1660,6 @@ function addManualItem() {
   }
   currentBillItems.push(item);
   renderBillItems();
-  openCartSheet();
   document.getElementById('manualName').value = '';
   document.getElementById('manualQty').value = 1;
   document.getElementById('manualPricePiece').value = '';
@@ -1714,10 +1679,11 @@ function renderBillItems() {
     return '<div class="bill-item-row"><div class="info"><div class="name">' + it.name + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + it.lineTotal.toFixed(2) + '</div><button class="del-btn" onclick="removeBillItem(' + idx + ')">✕</button></div>';
   }).join('');
 
-  // Full editable list, shown on the Review & Pay step
-  document.getElementById('billItemsList').innerHTML = currentBillItems.length === 0 ? emptyHtml : rowsHtml;
-  // Keep the sliding sheet in sync too, in case it's already open
-  renderCartSheet();
+  var html = currentBillItems.length === 0 ? emptyHtml : rowsHtml;
+  // Same list rendered in two places: the persistent "Items Added So Far"
+  // card on the Add Items step, and the "Current Bill" card on Review & Pay.
+  document.getElementById('billItemsListItemsStep').innerHTML = html;
+  document.getElementById('billItemsList').innerHTML = html;
 
   updateTotals();
 }
@@ -1732,6 +1698,18 @@ function switchBillingStep(step) {
     b.classList.toggle('active', b.dataset.step === step);
   });
   document.getElementById('tab-billing').scrollIntoView({ block: 'start' });
+  if (step !== 'items') closeManualAddCard();
+  updateFabVisibility();
+}
+
+// The "Add Item Manually" sheet and its floating + trigger live outside the
+// .tab-content elements (see the HTML comment above #manualAddCard) so tab
+// transitions don't jerk them around. Since they're no longer inside
+// #billingStepItems, showing/hiding them for the right tab+step has to be
+// done here in JS instead of relying on an ancestor's hidden class.
+function updateFabVisibility() {
+  var show = currentTab === 'billing' && billingStep === 'items';
+  document.getElementById('fabAddBtn').classList.toggle('hidden', !show);
 }
 
 function setDiscountType(type) {
@@ -2224,7 +2202,7 @@ function deleteQI(btn, name) {
 var tutorialBaseSteps = [
   { tab: 'billing', billingStep: 'items', target: '#quickItemsCard', titleKey: 'tut1t', textKey: 'tut1x' },
   { tab: 'billing', billingStep: 'items', target: '#manualAddCard', titleKey: 'tut2t', textKey: 'tut2x' },
-  { tab: 'billing', billingStep: 'items', target: '#fabAddBtn', titleKey: 'tut3t', textKey: 'tut3x' },
+  { tab: 'billing', billingStep: 'items', target: '#itemsAddedSoFarCard', titleKey: 'tut3t', textKey: 'tut3x' },
   { tab: 'billing', billingStep: 'items', target: '#itemsContinueBar', titleKey: 'tut4t', textKey: 'tut4x' },
   { tab: 'billing', billingStep: 'checkout', target: '#currentBillReviewCard', titleKey: 'tut5t', textKey: 'tut5x' },
   { tab: 'billing', billingStep: 'checkout', target: '#billDetailsCard', titleKey: 'tut6t', textKey: 'tut6x' },
