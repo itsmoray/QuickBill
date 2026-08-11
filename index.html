@@ -276,6 +276,18 @@
     }
     .cart-sheet-backdrop.open { opacity: 1; pointer-events: auto; }
 
+    /* ---------- ADD ITEM MANUALLY SHEET (opens via the + button, no dimming backdrop) ---------- */
+    .manual-add-sheet {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 42; max-width: 640px; margin: 0 auto;
+      border-radius: 20px 20px 0 0; max-height: 85vh; overflow-y: auto;
+      transform: translateY(105%); transition: transform 0.28s cubic-bezier(.32,.72,0,1);
+      pointer-events: none;
+    }
+    .manual-add-sheet.open { transform: translateY(0); pointer-events: auto; }
+    .manual-add-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 3px; margin: 0 auto 10px; cursor: pointer; }
+    .manual-add-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .manual-add-sheet-header h3 { margin: 0; }
+
     .cart-sheet {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--card);
       border-radius: 20px 20px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,0.2);
@@ -508,8 +520,12 @@
           <div class="empty-state hidden" id="quickSearchNoResults">No items match "<span id="quickSearchNoResultsTerm"></span>"</div>
         </div>
 
-        <div class="card" id="manualAddCard">
-          <h3>Add Item Manually</h3>
+        <div class="card manual-add-sheet" id="manualAddCard">
+          <div class="manual-add-sheet-handle" onclick="closeManualAddCard()"></div>
+          <div class="manual-add-sheet-header">
+            <h3>Add Item Manually</h3>
+            <button type="button" class="cart-sheet-close" onclick="closeManualAddCard()">✕</button>
+          </div>
           <div class="form-row">
             <div class="field-inline" style="flex:2">
               <label>Item Name</label>
@@ -560,7 +576,7 @@
             <button class="btn small" onclick="switchBillingStep('checkout')">Review &amp; Pay →</button>
           </div>
         </div>
-        <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openCartSheet()" aria-label="Show recently added items">+</button>
+        <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openManualAddCard()" aria-label="Add item manually">+</button>
       </div>
 
       <!-- STEP 2: REVIEW & PAY -->
@@ -1235,6 +1251,7 @@ function renderCartSheet() {
 }
 
 function openCartSheet() {
+  if (currentBillItems.length === 0) return; // only appears once at least 1 item is in the bill
   renderCartSheet();
   document.getElementById('cartSheet').classList.add('open');
   document.getElementById('cartSheetBackdrop').classList.add('open');
@@ -1243,6 +1260,17 @@ function openCartSheet() {
 function closeCartSheet() {
   document.getElementById('cartSheet').classList.remove('open');
   document.getElementById('cartSheetBackdrop').classList.remove('open');
+}
+
+// ---------- ADD ITEM MANUALLY SHEET ----------
+// Opens from the floating + button. No backdrop, so it doesn't dim/blur the
+// screen behind it — it just slides up over the current view.
+function openManualAddCard() {
+  document.getElementById('manualAddCard').classList.add('open');
+}
+
+function closeManualAddCard() {
+  document.getElementById('manualAddCard').classList.remove('open');
 }
 
 // ---------- CUSTOMER LOOKUP / AUTOCOMPLETE ----------
