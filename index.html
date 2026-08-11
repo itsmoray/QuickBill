@@ -449,16 +449,16 @@
     <div class="login-card">
       <div class="shop-icon"><img src="icon-192.png" alt="QuickBill"></div>
       <h1>QuickBill</h1>
-      <p class="sub">Sign in to start billing</p>
+      <p class="sub" data-i18n="signInSub">Sign in to start billing</p>
       <div class="field">
-        <label>Username</label>
-        <input type="text" id="loginUsername" autocomplete="username" placeholder="e.g. admin">
+        <label data-i18n="username">Username</label>
+        <input type="text" id="loginUsername" autocomplete="username" placeholder="e.g. admin" data-i18n-ph="egAdmin">
       </div>
       <div class="field">
-        <label>Password</label>
+        <label data-i18n="password">Password</label>
         <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••">
       </div>
-      <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
+      <button class="btn" id="loginBtn" onclick="doLogin()" data-i18n="login">Login</button>
       <div class="error-msg" id="loginError"></div>
     </div>
   </div>
@@ -472,9 +472,9 @@
       </div>
       <div class="right">
         <button class="tutorial-toggle" id="tutorialToggleBtn" onclick="toggleTutorial()" title="Show app tutorial">
-          <span class="tt-icon">🎓</span><span class="tt-label">Tutorial</span>
+          <span class="tt-icon">🎓</span><span class="tt-label" data-i18n="tutorial">Tutorial</span>
         </button>
-        <span class="day-badge closed" id="dayBadge">Day Closed</span>
+        <span class="day-badge closed" id="dayBadge" data-i18n="dayClosed">Day Closed</span>
         <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleHamburgerMenu()" title="More">☰</button>
         <button class="logout-btn" onclick="doLogout()" title="Logout">⏻</button>
       </div>
@@ -483,26 +483,29 @@
     <!-- Hamburger drawer: less-used sections live here -->
     <div class="hamburger-backdrop hidden" id="hamburgerBackdrop" onclick="closeHamburgerMenu()"></div>
     <div class="hamburger-menu" id="hamburgerMenu">
-      <h4>More</h4>
+      <h4 data-i18n="more">More</h4>
       <button class="menu-item" data-tab="reports" onclick="switchTab('reports')">
-        <span class="icon">📊</span><span>Reports</span>
+        <span class="icon">📊</span><span data-i18n="reports">Reports</span>
       </button>
       <button class="menu-item hidden" id="adminMenuItem" data-tab="admin" onclick="switchTab('admin')">
-        <span class="icon">⚙️</span><span>Admin</span>
+        <span class="icon">⚙️</span><span data-i18n="admin">Admin</span>
+      </button>
+      <button class="menu-item" id="langToggleMenuItem" onclick="toggleLanguage()">
+        <span class="icon">🌐</span><span id="langToggleLabel">മലയാളം</span>
       </button>
     </div>
 
     <!-- TAB: BILLING -->
     <div class="tab-content" id="tab-billing">
-      <div class="section-title">New Bill</div>
+      <div class="section-title" data-i18n="newBill">New Bill</div>
 
       <!-- Two clear steps: pick items first, then review & take payment -->
       <div class="billing-subnav" id="billingSubnav">
         <button class="billing-subnav-btn active" data-step="items" onclick="switchBillingStep('items')">
-          <span class="icon">🛒</span> Add Items
+          <span class="icon">🛒</span> <span data-i18n="addItems">Add Items</span>
         </button>
         <button class="billing-subnav-btn" data-step="checkout" onclick="switchBillingStep('checkout')">
-          <span class="icon">🧾</span> Review &amp; Pay
+          <span class="icon">🧾</span> <span data-i18n="reviewPay">Review &amp; Pay</span>
           <span class="subnav-badge hidden" id="billingItemCountBadge">0</span>
         </button>
       </div>
@@ -510,45 +513,45 @@
       <!-- STEP 1: ADD ITEMS -->
       <div class="billing-step" id="billingStepItems">
         <div class="card" id="quickItemsCard">
-          <h3>Quick Add</h3>
+          <h3 data-i18n="quickAdd">Quick Add</h3>
           <div class="quick-search-wrap">
             <span class="quick-search-icon">🔍</span>
-            <input type="text" id="quickItemSearch" class="quick-search-input" placeholder="Search items…" oninput="filterQuickItems(this.value)">
+            <input type="text" id="quickItemSearch" class="quick-search-input" placeholder="Search items…" oninput="filterQuickItems(this.value)" data-i18n-ph="searchItems">
             <button type="button" class="quick-search-clear hidden" id="quickSearchClear" onclick="clearQuickItemSearch()">✕</button>
           </div>
           <div class="quick-grid" id="quickItemsGrid"></div>
-          <div class="empty-state hidden" id="quickSearchNoResults">No items match "<span id="quickSearchNoResultsTerm"></span>"</div>
+          <div class="empty-state hidden" id="quickSearchNoResults"><span data-i18n="noItemsMatchPrefix">No items match "</span><span id="quickSearchNoResultsTerm"></span><span data-i18n="quote">"</span></div>
         </div>
 
         <div class="card manual-add-sheet" id="manualAddCard">
           <div class="manual-add-sheet-handle" onclick="closeManualAddCard()"></div>
           <div class="manual-add-sheet-header">
-            <h3>Add Item Manually</h3>
+            <h3 data-i18n="addItemManually">Add Item Manually</h3>
             <button type="button" class="cart-sheet-close" onclick="closeManualAddCard()">✕</button>
           </div>
           <div class="form-row">
             <div class="field-inline" style="flex:2">
-              <label>Item Name</label>
-              <input type="text" id="manualName" placeholder="e.g. Onion">
+              <label data-i18n="itemName">Item Name</label>
+              <input type="text" id="manualName" placeholder="e.g. Onion" data-i18n-ph="egOnion">
             </div>
           </div>
           <div class="tag-row">
-            <div class="tag-btn selected" id="modePiece" onclick="setEntryMode('piece')">Qty (pieces)</div>
-            <div class="tag-btn" id="modeWeight" onclick="setEntryMode('weight')">Weight (kg/g)</div>
+            <div class="tag-btn selected" id="modePiece" onclick="setEntryMode('piece')" data-i18n="qtyPieces">Qty (pieces)</div>
+            <div class="tag-btn" id="modeWeight" onclick="setEntryMode('weight')" data-i18n="weightKgG">Weight (kg/g)</div>
           </div>
           <div class="form-row" id="pieceRow">
-            <div class="field-inline"><label>Quantity</label><input type="number" id="manualQty" min="1" value="1"></div>
-            <div class="field-inline"><label>Price per piece (₹)</label><input type="number" id="manualPricePiece" min="0" step="0.01"></div>
+            <div class="field-inline"><label data-i18n="quantity">Quantity</label><input type="number" id="manualQty" min="1" value="1"></div>
+            <div class="field-inline"><label data-i18n="pricePerPiece">Price per piece (₹)</label><input type="number" id="manualPricePiece" min="0" step="0.01"></div>
           </div>
           <div class="form-row hidden" id="weightRow">
-            <div class="field-inline"><label>Weight</label><input type="number" id="manualWeight" min="0" step="0.01" placeholder="e.g. 0.5"></div>
+            <div class="field-inline"><label data-i18n="weight">Weight</label><input type="number" id="manualWeight" min="0" step="0.01" placeholder="e.g. 0.5" data-i18n-ph="egZeroFive"></div>
             <div class="field-inline">
-              <label>Unit</label>
-              <select id="manualUnit"><option value="kg">kg</option><option value="g">g</option></select>
+              <label data-i18n="unit">Unit</label>
+              <select id="manualUnit"><option value="kg" data-i18n="unitKg">kg</option><option value="g" data-i18n="unitG">g</option></select>
             </div>
-            <div class="field-inline"><label>Price per kg (₹)</label><input type="number" id="manualPriceWeight" min="0" step="0.01"></div>
+            <div class="field-inline"><label data-i18n="pricePerKg">Price per kg (₹)</label><input type="number" id="manualPriceWeight" min="0" step="0.01"></div>
           </div>
-          <button class="btn secondary" onclick="addManualItem()">+ Add to Bill</button>
+          <button class="btn secondary" onclick="addManualItem()" data-i18n="addToBillBtn">+ Add to Bill</button>
         </div>
 
         <div class="sticky-continue-bar hidden" id="itemsContinueBar">
@@ -556,7 +559,7 @@
             <div class="cb-count" id="itemsContinueCount">0 items</div>
             <div class="cb-amount" id="itemsContinueTotal">₹0.00</div>
           </div>
-          <button class="btn" id="goToCheckoutBtn" onclick="switchBillingStep('checkout')">Review &amp; Pay →</button>
+          <button class="btn" id="goToCheckoutBtn" onclick="switchBillingStep('checkout')" data-i18n="reviewPayArrow">Review &amp; Pay →</button>
         </div>
 
         <!-- Recently-added sliding sheet: pops up on every add, or opens on demand via the + -->
@@ -564,7 +567,7 @@
         <div class="cart-sheet" id="cartSheet">
           <div class="cart-sheet-handle" onclick="closeCartSheet()"></div>
           <div class="cart-sheet-header">
-            <div class="cart-sheet-title">Recently Added</div>
+            <div class="cart-sheet-title" data-i18n="recentlyAdded">Recently Added</div>
             <button type="button" class="cart-sheet-close" onclick="closeCartSheet()">✕</button>
           </div>
           <div class="cart-sheet-list" id="cartSheetList"></div>
@@ -573,7 +576,7 @@
               <span class="cs-count" id="cartSheetCount">0 items</span>
               <span class="cs-amount" id="cartSheetTotal">₹0.00</span>
             </div>
-            <button class="btn small" onclick="switchBillingStep('checkout')">Review &amp; Pay →</button>
+            <button class="btn small" onclick="switchBillingStep('checkout')" data-i18n="reviewPayArrow">Review &amp; Pay →</button>
           </div>
         </div>
         <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openManualAddCard()" aria-label="Add item manually">+</button>
@@ -581,162 +584,162 @@
 
       <!-- STEP 2: REVIEW & PAY -->
       <div class="billing-step hidden" id="billingStepCheckout">
-        <button class="back-to-items-link" onclick="switchBillingStep('items')">← Back to Add Items</button>
+        <button class="back-to-items-link" onclick="switchBillingStep('items')" data-i18n="backToAddItems">← Back to Add Items</button>
 
         <div class="card" id="currentBillReviewCard">
-          <h3>Current Bill</h3>
-          <div id="billItemsList"><div class="empty-state">No items added yet</div></div>
+          <h3 data-i18n="currentBill">Current Bill</h3>
+          <div id="billItemsList"><div class="empty-state" data-i18n="noItemsAddedYet">No items added yet</div></div>
         </div>
 
         <div class="card" id="billDetailsCard">
-          <h3>Customer &amp; Payment</h3>
+          <h3 data-i18n="customerPayment">Customer &amp; Payment</h3>
           <div class="field autocomplete-wrap">
-            <label>Customer Name (optional)</label>
-            <input type="text" id="custName" placeholder="Walk-in customer" autocomplete="off">
+            <label data-i18n="customerNameOptional">Customer Name (optional)</label>
+            <input type="text" id="custName" placeholder="Walk-in customer" autocomplete="off" data-i18n-ph="walkInCustomer">
             <input type="hidden" id="custId">
             <div class="autocomplete-dropdown hidden" id="custNameDropdown"></div>
           </div>
           <div class="field">
-            <label>Phone (optional, for credit)</label>
-            <input type="text" id="custPhone" placeholder="10-digit number">
+            <label data-i18n="phoneOptionalCredit">Phone (optional, for credit)</label>
+            <input type="text" id="custPhone" placeholder="10-digit number" data-i18n-ph="tenDigitNumber">
           </div>
           <div class="form-row">
             <div class="field-inline">
-              <label>Payment Mode</label>
+              <label data-i18n="paymentMode">Payment Mode</label>
               <select id="paymentMode">
-                <option value="Cash">Cash</option>
+                <option value="Cash" data-i18n="cash">Cash</option>
                 <option value="UPI">UPI</option>
-                <option value="Credit">Credit (Udhaar)</option>
+                <option value="Credit" data-i18n="creditUdhaar">Credit (Udhaar)</option>
               </select>
             </div>
             <div class="field-inline">
-              <label>Discount</label>
+              <label data-i18n="discount">Discount</label>
               <input type="number" id="discount" min="0" step="0.01" value="0">
             </div>
           </div>
           <div class="tag-row">
-            <div class="tag-btn selected" id="discTypeFlat" onclick="setDiscountType('flat')">₹ Flat</div>
-            <div class="tag-btn" id="discTypePercent" onclick="setDiscountType('percent')">% Percent</div>
+            <div class="tag-btn selected" id="discTypeFlat" onclick="setDiscountType('flat')" data-i18n="flatDiscount">₹ Flat</div>
+            <div class="tag-btn" id="discTypePercent" onclick="setDiscountType('percent')" data-i18n="percentDiscount">% Percent</div>
           </div>
         </div>
 
         <div class="card" id="billTotalsCard">
-          <h3>Total</h3>
-          <div class="stat-row"><span>Subtotal</span><span class="val" id="subtotalDisplay">₹0.00</span></div>
-          <div class="stat-row"><span>Discount</span><span class="val" id="discountDisplay">₹0.00</span></div>
+          <h3 data-i18n="total">Total</h3>
+          <div class="stat-row"><span data-i18n="subtotal">Subtotal</span><span class="val" id="subtotalDisplay">₹0.00</span></div>
+          <div class="stat-row"><span data-i18n="discount">Discount</span><span class="val" id="discountDisplay">₹0.00</span></div>
           <div class="big-total">
-            <div class="label">Total Payable</div>
+            <div class="label" data-i18n="totalPayable">Total Payable</div>
             <div class="amount" id="totalDisplay">₹0.00</div>
           </div>
-          <button class="btn" id="completeBillBtn" onclick="completeBill()">Complete Bill</button>
+          <button class="btn" id="completeBillBtn" onclick="completeBill()" data-i18n="completeBill">Complete Bill</button>
         </div>
       </div>
 
       <div class="card hidden" id="lastBillCard">
-        <h3>Last Bill</h3>
+        <h3 data-i18n="lastBill">Last Bill</h3>
         <div id="lastBillSummary"></div>
-        <button class="btn secondary" id="shareBillBtn" style="margin-top:10px" onclick="shareLastBillWhatsApp()">📤 Share Bill</button>
-        <button class="btn secondary" id="editLastBillBtn" style="margin-top:10px" onclick="editLastBill(this)">✏️ Edit This Bill</button>
-        <button class="btn danger" id="voidLastBillBtn" style="margin-top:10px" onclick="voidLastBill(this)">🗑 Void This Bill</button>
+        <button class="btn secondary" id="shareBillBtn" style="margin-top:10px" onclick="shareLastBillWhatsApp()" data-i18n="shareBill">📤 Share Bill</button>
+        <button class="btn secondary" id="editLastBillBtn" style="margin-top:10px" onclick="editLastBill(this)" data-i18n="editThisBill">✏️ Edit This Bill</button>
+        <button class="btn danger" id="voidLastBillBtn" style="margin-top:10px" onclick="voidLastBill(this)" data-i18n="voidThisBill">🗑 Void This Bill</button>
       </div>
     </div>
 
     <!-- TAB: DAY -->
     <div class="tab-content hidden" id="tab-day">
-      <div class="section-title">Day Management</div>
+      <div class="section-title" data-i18n="dayManagement">Day Management</div>
       <div class="card" id="dayStatusCard"></div>
       <div class="card" id="expenseCard">
-        <h3>Log an Expense</h3>
-        <div class="field"><label>Description</label><input type="text" id="expDesc" placeholder="e.g. Auto fare, packing bags"></div>
-        <div class="field"><label>Amount (₹)</label><input type="number" id="expAmount" min="0" step="0.01"></div>
-        <button class="btn secondary" onclick="submitExpense(this)">+ Add Expense</button>
+        <h3 data-i18n="logExpense">Log an Expense</h3>
+        <div class="field"><label data-i18n="description">Description</label><input type="text" id="expDesc" placeholder="e.g. Auto fare, packing bags" data-i18n-ph="egAutoFare"></div>
+        <div class="field"><label data-i18n="amountRupee">Amount (₹)</label><input type="number" id="expAmount" min="0" step="0.01"></div>
+        <button class="btn secondary" onclick="submitExpense(this)" data-i18n="addExpense">+ Add Expense</button>
       </div>
       <div class="card">
-        <h3>Today's Expenses</h3>
-        <div id="expenseList"><div class="empty-state">No expenses logged today</div></div>
+        <h3 data-i18n="todaysExpenses">Today's Expenses</h3>
+        <div id="expenseList"><div class="empty-state" data-i18n="noExpensesLoggedToday">No expenses logged today</div></div>
       </div>
     </div>
 
     <!-- TAB: CREDITS -->
     <div class="tab-content hidden" id="tab-credits">
-      <div class="section-title">Udhaar / Credit Ledger</div>
+      <div class="section-title" data-i18n="udhaarLedger">Udhaar / Credit Ledger</div>
       <div class="card" id="creditAddCard">
-        <h3>Add Entry</h3>
+        <h3 data-i18n="addEntry">Add Entry</h3>
         <div class="field autocomplete-wrap">
-          <label>Customer Name</label>
-          <input type="text" id="crName" placeholder="Customer name" autocomplete="off">
+          <label data-i18n="customerName">Customer Name</label>
+          <input type="text" id="crName" placeholder="Customer name" autocomplete="off" data-i18n-ph="customerNamePh">
           <input type="hidden" id="crCustId">
           <div class="autocomplete-dropdown hidden" id="crNameDropdown"></div>
         </div>
-        <div class="field"><label>Phone (optional)</label><input type="text" id="crPhone" placeholder="10-digit number"></div>
+        <div class="field"><label data-i18n="phoneOptional">Phone (optional)</label><input type="text" id="crPhone" placeholder="10-digit number" data-i18n-ph="tenDigitNumber"></div>
         <div class="tag-row">
-          <div class="tag-btn selected" id="crTypeCredit" onclick="setCreditType('Credit')">They owe more</div>
-          <div class="tag-btn" id="crTypePayment" onclick="setCreditType('Payment')">They paid back</div>
+          <div class="tag-btn selected" id="crTypeCredit" onclick="setCreditType('Credit')" data-i18n="theyOweMore">They owe more</div>
+          <div class="tag-btn" id="crTypePayment" onclick="setCreditType('Payment')" data-i18n="theyPaidBack">They paid back</div>
         </div>
-        <div class="field"><label>Amount (₹)</label><input type="number" id="crAmount" min="0" step="0.01"></div>
-        <div class="field"><label>Notes (optional)</label><input type="text" id="crNotes" placeholder="e.g. groceries for the week"></div>
-        <button class="btn secondary" onclick="submitCredit(this)">+ Save Entry</button>
+        <div class="field"><label data-i18n="amountRupee">Amount (₹)</label><input type="number" id="crAmount" min="0" step="0.01"></div>
+        <div class="field"><label data-i18n="notesOptional">Notes (optional)</label><input type="text" id="crNotes" placeholder="e.g. groceries for the week" data-i18n-ph="egGroceries"></div>
+        <button class="btn secondary" onclick="submitCredit(this)" data-i18n="saveEntry">+ Save Entry</button>
       </div>
       <div class="card" id="creditLedgerCard">
-        <h3>Outstanding Balances</h3>
-        <div id="creditLedgerList"><div class="empty-state">No outstanding balances</div></div>
+        <h3 data-i18n="outstandingBalances">Outstanding Balances</h3>
+        <div id="creditLedgerList"><div class="empty-state" data-i18n="noOutstandingBalances">No outstanding balances</div></div>
       </div>
     </div>
 
     <!-- TAB: REPORTS -->
     <div class="tab-content hidden" id="tab-reports">
-      <div class="section-title">Reports</div>
+      <div class="section-title" data-i18n="reports">Reports</div>
       <div class="card" id="dailyReportCard">
-        <h3>Daily Report</h3>
-        <div class="field"><label>Select Date</label><input type="date" id="reportDate"></div>
-        <button class="btn secondary" onclick="loadDailyReport(this)">View Report</button>
+        <h3 data-i18n="dailyReport">Daily Report</h3>
+        <div class="field"><label data-i18n="selectDate">Select Date</label><input type="date" id="reportDate"></div>
+        <button class="btn secondary" onclick="loadDailyReport(this)" data-i18n="viewReport">View Report</button>
         <div id="dailyReportResult"></div>
       </div>
       <div class="card" id="monthlyReportCard">
-        <h3>Monthly Report</h3>
-        <div class="field"><label>Select Month</label><input type="month" id="reportMonth"></div>
-        <button class="btn secondary" onclick="loadMonthlyReport(this)">View Report</button>
+        <h3 data-i18n="monthlyReport">Monthly Report</h3>
+        <div class="field"><label data-i18n="selectMonth">Select Month</label><input type="month" id="reportMonth"></div>
+        <button class="btn secondary" onclick="loadMonthlyReport(this)" data-i18n="viewReport">View Report</button>
         <div id="monthlyReportResult"></div>
       </div>
     </div>
 
     <!-- TAB: ADMIN -->
     <div class="tab-content hidden" id="tab-admin">
-      <div class="section-title">Admin Panel</div>
+      <div class="section-title" data-i18n="adminPanel">Admin Panel</div>
       <div class="card" id="addStaffCard">
-        <h3>Add Staff Login</h3>
-        <div class="field"><label>Full Name</label><input type="text" id="newUserFullName"></div>
-        <div class="field"><label>Username</label><input type="text" id="newUserUsername"></div>
-        <div class="field"><label>Password</label><input type="text" id="newUserPassword"></div>
+        <h3 data-i18n="addStaffLogin">Add Staff Login</h3>
+        <div class="field"><label data-i18n="fullName">Full Name</label><input type="text" id="newUserFullName"></div>
+        <div class="field"><label data-i18n="username">Username</label><input type="text" id="newUserUsername"></div>
+        <div class="field"><label data-i18n="password">Password</label><input type="text" id="newUserPassword"></div>
         <div class="field">
-          <label>Role</label>
-          <select id="newUserRole"><option value="Staff">Staff</option><option value="Manager">Manager</option></select>
+          <label data-i18n="role">Role</label>
+          <select id="newUserRole"><option value="Staff" data-i18n="staffRole">Staff</option><option value="Manager" data-i18n="managerRole">Manager</option></select>
         </div>
-        <button class="btn secondary" onclick="submitNewUser(this)">+ Add User</button>
+        <button class="btn secondary" onclick="submitNewUser(this)" data-i18n="addUser">+ Add User</button>
       </div>
       <div class="card">
-        <h3>Existing Staff</h3>
+        <h3 data-i18n="existingStaff">Existing Staff</h3>
         <div id="usersList"></div>
       </div>
       <div class="card" id="addQuickItemCard">
-        <h3 id="quickItemFormTitle">Add Quick Item</h3>
+        <h3 id="quickItemFormTitle" data-i18n="addQuickItem">Add Quick Item</h3>
         <input type="hidden" id="qiOriginalName" value="">
         <div class="form-row">
-          <div class="field-inline"><label>Item Name</label><input type="text" id="qiName"></div>
-          <div class="field-inline"><label>Price (₹)</label><input type="number" id="qiPrice" step="0.01"></div>
+          <div class="field-inline"><label data-i18n="itemName">Item Name</label><input type="text" id="qiName"></div>
+          <div class="field-inline"><label data-i18n="price">Price (₹)</label><input type="number" id="qiPrice" step="0.01"></div>
         </div>
         <div class="form-row">
           <div class="field-inline">
-            <label>Unit</label>
-            <select id="qiUnit"><option value="kg">kg</option><option value="piece">piece</option></select>
+            <label data-i18n="unit">Unit</label>
+            <select id="qiUnit"><option value="kg" data-i18n="unitKg">kg</option><option value="piece" data-i18n="unitPiece">piece</option></select>
           </div>
-          <div class="field-inline"><label>Category (optional)</label><input type="text" id="qiCategory"></div>
+          <div class="field-inline"><label data-i18n="categoryOptional">Category (optional)</label><input type="text" id="qiCategory"></div>
         </div>
-        <button class="btn secondary" id="qiSubmitBtn" onclick="submitQuickItemForm(this)">+ Add Quick Item</button>
-        <button class="btn secondary hidden" id="qiCancelBtn" style="margin-top:8px" onclick="cancelQuickItemEdit()">Cancel Edit</button>
+        <button class="btn secondary" id="qiSubmitBtn" onclick="submitQuickItemForm(this)" data-i18n="addQuickItemBtn">+ Add Quick Item</button>
+        <button class="btn secondary hidden" id="qiCancelBtn" style="margin-top:8px" onclick="cancelQuickItemEdit()" data-i18n="cancelEdit">Cancel Edit</button>
       </div>
       <div class="card">
-        <h3>Existing Quick Items</h3>
+        <h3 data-i18n="existingQuickItems">Existing Quick Items</h3>
         <div id="quickItemsAdminList"></div>
       </div>
     </div>
@@ -744,21 +747,356 @@
     <div class="bottom-nav" id="bottomNav">
       <button class="nav-btn active" data-tab="billing" onclick="switchTab('billing')">
         <span class="icon-wrap"><span class="icon">🧾</span></span>
-        <span class="label">Bill</span>
+        <span class="label" data-i18n="bill">Bill</span>
       </button>
       <button class="nav-btn" data-tab="day" onclick="switchTab('day')">
         <span class="icon-wrap"><span class="icon">🔑</span></span>
-        <span class="label">Day</span>
+        <span class="label" data-i18n="day">Day</span>
       </button>
       <button class="nav-btn" data-tab="credits" onclick="switchTab('credits')">
         <span class="icon-wrap"><span class="icon">📒</span></span>
-        <span class="label">Udhaar</span>
+        <span class="label" data-i18n="udhaar">Udhaar</span>
       </button>
     </div>
   </div>
 
 
 <script>
+// ======================================================
+// ---------- I18N (English / Malayalam) ----------
+// ======================================================
+var currentLang = localStorage.getItem('quickbill_lang') || 'en';
+
+var I18N = {
+  en: {
+    // Login
+    signInSub: 'Sign in to start billing', username: 'Username', password: 'Password', login: 'Login',
+    egAdmin: 'e.g. admin', signingIn: 'Signing in...', pleaseEnterUserPass: 'Please enter username and password.',
+    loginFailedDefault: 'Login failed.', connectionErrorPrefix: 'Connection error: ',
+    setupNeeded: 'Setup needed: open index.html and paste your Apps Script Web App URL into APPS_SCRIPT_URL.',
+    // Topbar / menu
+    tutorial: 'Tutorial', dayOpen: 'Day Open', dayClosed: 'Day Closed', more: 'More', reports: 'Reports', admin: 'Admin',
+    language: 'Language',
+    // Billing
+    newBill: 'New Bill', addItems: 'Add Items', reviewPay: 'Review & Pay', quickAdd: 'Quick Add',
+    searchItems: 'Search items…', noItemsMatchPrefix: 'No items match "', quote: '"',
+    addItemManually: 'Add Item Manually', itemName: 'Item Name', egOnion: 'e.g. Onion',
+    qtyPieces: 'Qty (pieces)', weightKgG: 'Weight (kg/g)', quantity: 'Quantity',
+    pricePerPiece: 'Price per piece (₹)', egZeroFive: 'e.g. 0.5', weight: 'Weight', unit: 'Unit',
+    unitKg: 'kg', unitG: 'g', unitPiece: 'piece', pricePerKg: 'Price per kg (₹)', addToBillBtn: '+ Add to Bill',
+    reviewPayArrow: 'Review & Pay →', recentlyAdded: 'Recently Added', backToAddItems: '← Back to Add Items',
+    currentBill: 'Current Bill', noItemsAddedYet: 'No items added yet', customerPayment: 'Customer & Payment',
+    customerNameOptional: 'Customer Name (optional)', walkInCustomer: 'Walk-in customer',
+    phoneOptionalCredit: 'Phone (optional, for credit)', tenDigitNumber: '10-digit number',
+    paymentMode: 'Payment Mode', cash: 'Cash', upi: 'UPI', creditUdhaar: 'Credit (Udhaar)', discount: 'Discount',
+    flatDiscount: '₹ Flat', percentDiscount: '% Percent', total: 'Total', subtotal: 'Subtotal',
+    totalPayable: 'Total Payable', completeBill: 'Complete Bill', lastBill: 'Last Bill', shareBill: '📤 Share Bill',
+    editThisBill: '✏️ Edit This Bill', voidThisBill: '🗑 Void This Bill', billId: 'Bill ID', customer: 'Customer',
+    items: 'Items', discountPercentPh: 'e.g. 10 for 10%',
+    // Day
+    dayManagement: 'Day Management', logExpense: 'Log an Expense', description: 'Description',
+    egAutoFare: 'e.g. Auto fare, packing bags', amountRupee: 'Amount (₹)', addExpense: '+ Add Expense',
+    todaysExpenses: "Today's Expenses", noExpensesLoggedToday: 'No expenses logged today',
+    dayIsOpen: 'Day is Open', openedByLabel: 'Opened by', openingTimeLabel: 'Opening Time',
+    openingCashLabel: 'Opening Cash', closingCashCountLabel: 'Closing Cash Count (₹)', closeDayBtn: 'Close Day',
+    dayClosedTitle: 'Day Closed', totalSales: 'Total Sales', totalExpenses: 'Total Expenses',
+    closedByLabel: 'Closed by', dayAlreadyClosedMsg: "Today's day has already been closed. Come back tomorrow to open a new day.",
+    dayNotOpenedYetTitle: 'Day Not Opened Yet', openDayBtn: 'Open Day',
+    // Credits
+    udhaarLedger: 'Udhaar / Credit Ledger', addEntry: 'Add Entry', customerName: 'Customer Name',
+    customerNamePh: 'Customer name', phoneOptional: 'Phone (optional)', theyOweMore: 'They owe more',
+    theyPaidBack: 'They paid back', notesOptional: 'Notes (optional)', egGroceries: 'e.g. groceries for the week',
+    saveEntry: '+ Save Entry', outstandingBalances: 'Outstanding Balances', noOutstandingBalances: 'No outstanding balances',
+    // Reports
+    dailyReport: 'Daily Report', selectDate: 'Select Date', viewReport: 'View Report', monthlyReport: 'Monthly Report',
+    selectMonth: 'Select Month', dayStatusLabel: 'Day Status', netLabel: 'Net', billsLabel: 'Bills',
+    downloadExcel: '⬇ Download Excel', timeLabel: 'Time', staffLabel: 'Staff', modeLabel: 'Mode',
+    totalLabel: 'Total', daysOperated: 'Days Operated', netProfit: 'Net Profit', dateLabel: 'Date',
+    statusLabel: 'Status', salesLabel: 'Sales', expensesLabel: 'Expenses', errorLoadingReport: 'Error loading report.',
+    // Admin
+    adminPanel: 'Admin Panel', addStaffLogin: 'Add Staff Login', fullName: 'Full Name', role: 'Role',
+    staffRole: 'Staff', managerRole: 'Manager', addUser: '+ Add User', existingStaff: 'Existing Staff',
+    addQuickItem: 'Add Quick Item', editQuickItemTitle: 'Edit Quick Item', price: 'Price (₹)',
+    categoryOptional: 'Category (optional)', addQuickItemBtn: '+ Add Quick Item', qiSubmitSave: 'Save Changes',
+    cancelEdit: 'Cancel Edit', existingQuickItems: 'Existing Quick Items', editLabel: 'Edit', deleteLabel: 'Delete',
+    activateLabel: 'Activate', deactivateLabel: 'Deactivate',
+    // Bottom nav
+    bill: 'Bill', day: 'Day', udhaar: 'Udhaar',
+    // Loading labels
+    openingLabel: 'Opening...', closingLabel: 'Closing...', addingLabel: 'Adding...', savingLabel: 'Saving...',
+    voidingLabel: 'Voiding...', preparingPDFLabel: 'Preparing PDF...', loadingLabel: 'Loading...',
+    preparingLabel: 'Preparing...', deletingLabel: 'Deleting...', pleaseWaitDefault: 'Please wait...', dotsLoading: '...',
+    // Toasts / messages
+    sessionExpired: 'Session expired. Please log in again.', dayOpened: 'Day opened.',
+    enterClosingCash: 'Please enter the counted closing cash.', confirmCloseDay: 'Close the day? This cannot be undone.',
+    cashMatchesExactly: 'Cash matches exactly!', moreThanExpected: '{amt} more than expected.', shortAmount: '{amt} short.',
+    dayClosedSalesMsg: 'Day closed. Sales: {amt}. {diff}', enterDescAmount: 'Enter description and amount.',
+    expenseAdded: 'Expense added.', noItemsSetup: 'No quick items set up yet',
+    weightPromptFor: 'Weight in kg for {name}:', qtyPromptFor: 'Quantity for {name}:',
+    enterItemName: 'Enter an item name.', enterQtyPrice: 'Enter quantity and price.',
+    enterWeightPrice: 'Enter weight and price per kg.', addAtLeastOneItem: 'Add at least one item.',
+    custNameRequiredCredit: 'Customer name is required for credit sales.', billSavedTotal: 'Bill saved! Total {amt}',
+    couldNotPreparePDF: 'Could not prepare the PDF. Sharing as text instead.',
+    couldNotOpenShareMenu: 'Could not open the share menu.',
+    pdfDownloadedAttach: 'PDF downloaded — attach it in WhatsApp from your Downloads.',
+    confirmEditLastBill: 'This will void the last bill and reload its items so you can fix them. Continue?',
+    lastBillVoidedEdit: 'Last bill voided — edit the items below and complete the bill again.',
+    confirmVoidBill: 'Void this bill? This cannot be undone.', billVoided: 'Bill voided.',
+    enterCustNameAmount: 'Enter customer name and amount.', savedNewBalance: 'Saved. New balance: {amt}',
+    exportFailed: 'Export failed: {err}', fillAllFields: 'Fill all fields.', userAddedMsg: 'User added.',
+    enterItemNamePrice: 'Enter item name and price.', somethingWentWrong: 'Something went wrong.',
+    quickItemUpdated: 'Quick item updated.', quickItemAdded: 'Quick item added.',
+    confirmDeleteQI: 'Delete quick item "{name}"?', errorPrefix: 'Error: ',
+    networkFailed: 'Network request failed. Check your internet connection.',
+    unexpectedResponse: 'Unexpected response from server.', serverStatusTemplate: 'Server returned status {status}',
+    noPhoneSaved: 'no phone saved',
+    // Status pills / values coming from backend
+    statusOpen: 'Open', statusClosedPill: 'Closed', statusCompleted: 'Completed', statusVoid: 'Void',
+    statusNotOpened: 'Not Opened', statusCreditPill: 'Credit',
+    itemSingular: 'item', itemPlural: 'items',
+    // Tutorial
+    tutorialSkip: 'Skip tour', tutorialBack: 'Back', tutorialNext: 'Next', tutorialFinish: 'Finish',
+    tutorialStepCount: 'Step {n} of {total}',
+    tut1t: 'Quick Add', tut1x: 'Tap any item card here to instantly add it to the bill — great for your most-sold items.',
+    tut2t: 'Add Items Manually', tut2x: "Don't have a quick item set up? Add anything by name, choose pieces or weight, and set the price.",
+    tut3t: 'Items Added So Far', tut3x: 'Every item you add pops open a card from the bottom showing what\'s in the bill. Tap this + anytime to check it yourself.',
+    tut4t: 'Review & Pay', tut4x: 'This bar keeps a running total. Tap it once all the items are in to move to customer details and payment.',
+    tut5t: 'Current Bill', tut5x: 'A final look at everything in the bill. Tap ✕ next to any item to remove it before completing.',
+    tut6t: 'Customer & Payment', tut6x: "Add the customer's name & phone (needed for credit sales), pick a payment mode, and apply a discount if needed.",
+    tut7t: 'Total & Complete', tut7x: 'Check the total, then hit Complete Bill to save it.',
+    tut8t: 'Switch Between Sections', tut8x: 'Use these bubbles to jump straight to Billing, Day and Udhaar — your most-used sections.',
+    tut9t: 'More Options', tut9x: 'Reports (and Admin, if you\'re a Manager) live in here to keep the main bar uncluttered.',
+    tut10t: 'Open & Close Your Day', tut10x: 'Start your day by entering opening cash. At the end, close the day and count your cash — QuickBill tells you if it matches.',
+    tut11t: 'Log Expenses', tut11x: 'Spent money during the day — auto fare, packing bags? Log it here so your reports stay accurate.',
+    tut12t: 'Udhaar / Credit Ledger', tut12x: 'Track money customers owe you. Add a "They owe more" entry when giving credit, or "They paid back" when they settle up.',
+    tut13t: 'Outstanding Balances', tut13x: "See every customer's current balance at a glance.",
+    tut14t: 'Daily Report', tut14x: 'Pick any date to see total sales, expenses and every bill from that day — download it as Excel too.',
+    tut15t: 'Monthly Report', tut15x: "Get a full month's sales, expenses and net profit in one view.",
+
+    // Backend (Apps Script) error messages — matched verbatim against res.message
+    // by trBackend() below and swapped for the localized text at display time.
+    beInvalidLogin: 'Invalid username or password.',
+    beItemNameRequired: 'Item name is required.',
+    beDuplicateQuickItem: 'Another quick item already has that name.',
+    beQuickItemNotFound: 'Quick item not found.',
+    beDayAlreadyOpen: 'Day is already open.',
+    beDayAlreadyClosed: 'Day already closed for today.',
+    beDayNotOpen: 'Day is not currently open.',
+    beOpenDayBeforeBilling: 'Please open the day before billing.',
+    beBillNoItems: 'Bill has no items.',
+    beVoidNotAllowed: 'Only the billing staff or a Manager can void this bill.',
+    beBillNotFound: 'Bill not found.',
+    beCustomerNameRequired: 'Customer name is required.',
+    beUsernameExists: 'Username already exists.',
+    beUserNotFound: 'User not found.',
+    beServerError: 'Server error'
+  },
+  ml: {
+    signInSub: 'ബില്ലിംഗ് തുടങ്ങാൻ സൈൻ ഇൻ ചെയ്യുക', username: 'യൂസർനെയിം', password: 'പാസ്‌വേഡ്', login: 'ലോഗിൻ',
+    egAdmin: 'ഉദാ: admin', signingIn: 'സൈൻ ഇൻ ചെയ്യുന്നു...', pleaseEnterUserPass: 'യൂസർനെയിമും പാസ്‌വേഡും നൽകുക.',
+    loginFailedDefault: 'ലോഗിൻ പരാജയപ്പെട്ടു.', connectionErrorPrefix: 'കണക്ഷൻ പിശക്: ',
+    setupNeeded: 'സജ്ജീകരണം ആവശ്യമാണ്: index.html തുറന്ന് APPS_SCRIPT_URL-ൽ നിങ്ങളുടെ Apps Script Web App URL പേസ്റ്റ് ചെയ്യുക.',
+    tutorial: 'ട്യൂട്ടോറിയൽ', dayOpen: 'ദിവസം തുറന്നു', dayClosed: 'ദിവസം അടച്ചു', more: 'കൂടുതൽ', reports: 'റിപ്പോർട്ടുകൾ', admin: 'അഡ്മിൻ',
+    language: 'ഭാഷ',
+    newBill: 'പുതിയ ബിൽ', addItems: 'ഇനങ്ങൾ ചേർക്കുക', reviewPay: 'പരിശോധിച്ച് പണം നൽകുക', quickAdd: 'ക്വിക്ക് ആഡ്',
+    searchItems: 'ഇനങ്ങൾ തിരയുക…', noItemsMatchPrefix: '"', quote: '" എന്നതുമായി പൊരുത്തപ്പെടുന്ന ഇനങ്ങളില്ല',
+    addItemManually: 'ഇനം സ്വയം ചേർക്കുക', itemName: 'ഇനത്തിന്റെ പേര്', egOnion: 'ഉദാ: ഉള്ളി',
+    qtyPieces: 'എണ്ണം (പീസ്)', weightKgG: 'തൂക്കം (കി.ഗ്രാം/ഗ്രാം)', quantity: 'എണ്ണം',
+    pricePerPiece: 'ഒരു പീസിന്റെ വില (₹)', egZeroFive: 'ഉദാ: 0.5', weight: 'തൂക്കം', unit: 'യൂണിറ്റ്',
+    unitKg: 'കി.ഗ്രാം', unitG: 'ഗ്രാം', unitPiece: 'പീസ്', pricePerKg: 'ഒരു കി.ഗ്രാമിന്റെ വില (₹)', addToBillBtn: '+ ബില്ലിലേക്ക് ചേർക്കുക',
+    reviewPayArrow: 'പരിശോധിച്ച് പണം നൽകുക →', recentlyAdded: 'അടുത്തിടെ ചേർത്തവ', backToAddItems: '← ഇനങ്ങൾ ചേർക്കുന്നതിലേക്ക് മടങ്ങുക',
+    currentBill: 'നിലവിലെ ബിൽ', noItemsAddedYet: 'ഇതുവരെ ഇനങ്ങളൊന്നും ചേർത്തിട്ടില്ല', customerPayment: 'കസ്റ്റമറും പേയ്‌മെന്റും',
+    customerNameOptional: 'കസ്റ്റമറുടെ പേര് (ഓപ്ഷണൽ)', walkInCustomer: 'വാക്ക്-ഇൻ കസ്റ്റമർ',
+    phoneOptionalCredit: 'ഫോൺ (ഓപ്ഷണൽ, ഉധാരത്തിന്)', tenDigitNumber: '10 അക്ക നമ്പർ',
+    paymentMode: 'പേയ്‌മെന്റ് രീതി', cash: 'ക്യാഷ്', upi: 'UPI', creditUdhaar: 'ക്രെഡിറ്റ് (ഉധാരം)', discount: 'കിഴിവ്',
+    flatDiscount: '₹ ഫ്ലാറ്റ്', percentDiscount: '% ശതമാനം', total: 'ആകെ', subtotal: 'സബ്ടോട്ടൽ',
+    totalPayable: 'അടയ്‌ക്കേണ്ട ആകെ തുക', completeBill: 'ബിൽ പൂർത്തിയാക്കുക', lastBill: 'അവസാന ബിൽ', shareBill: '📤 ബിൽ ഷെയർ ചെയ്യുക',
+    editThisBill: '✏️ ഈ ബിൽ എഡിറ്റ് ചെയ്യുക', voidThisBill: '🗑 ഈ ബിൽ റദ്ദാക്കുക', billId: 'ബിൽ ഐഡി', customer: 'കസ്റ്റമർ',
+    items: 'ഇനങ്ങൾ', discountPercentPh: 'ഉദാ: 10% ആണെങ്കിൽ 10',
+    dayManagement: 'ദിവസ മാനേജ്‌മെന്റ്', logExpense: 'ചെലവ് രേഖപ്പെടുത്തുക', description: 'വിവരണം',
+    egAutoFare: 'ഉദാ: ഓട്ടോ ചാർജ്, പാക്കിംഗ് ബാഗ്', amountRupee: 'തുക (₹)', addExpense: '+ ചെലവ് ചേർക്കുക',
+    todaysExpenses: 'ഇന്നത്തെ ചെലവുകൾ', noExpensesLoggedToday: 'ഇന്ന് ചെലവുകളൊന്നും രേഖപ്പെടുത്തിയിട്ടില്ല',
+    dayIsOpen: 'ദിവസം തുറന്നിരിക്കുന്നു', openedByLabel: 'തുറന്നത്', openingTimeLabel: 'തുറന്ന സമയം',
+    openingCashLabel: 'തുടക്ക ക്യാഷ്', closingCashCountLabel: 'അവസാന ക്യാഷ് എണ്ണം (₹)', closeDayBtn: 'ദിവസം അടയ്ക്കുക',
+    dayClosedTitle: 'ദിവസം അടച്ചു', totalSales: 'ആകെ വിൽപ്പന', totalExpenses: 'ആകെ ചെലവ്',
+    closedByLabel: 'അടച്ചത്', dayAlreadyClosedMsg: 'ഇന്നത്തെ ദിവസം ഇതിനകം അടച്ചു കഴിഞ്ഞു. പുതിയ ദിവസം തുറക്കാൻ നാളെ വരൂ.',
+    dayNotOpenedYetTitle: 'ദിവസം ഇതുവരെ തുറന്നിട്ടില്ല', openDayBtn: 'ദിവസം തുറക്കുക',
+    udhaarLedger: 'ഉധാരം / ക്രെഡിറ്റ് കണക്ക്', addEntry: 'എൻട്രി ചേർക്കുക', customerName: 'കസ്റ്റമറുടെ പേര്',
+    customerNamePh: 'കസ്റ്റമറുടെ പേര്', phoneOptional: 'ഫോൺ (ഓപ്ഷണൽ)', theyOweMore: 'കൂടുതൽ കടം',
+    theyPaidBack: 'തിരികെ അടച്ചു', notesOptional: 'കുറിപ്പുകൾ (ഓപ്ഷണൽ)', egGroceries: 'ഉദാ: ഈ ആഴ്ചത്തെ സാധനങ്ങൾ',
+    saveEntry: '+ എൻട്രി സേവ് ചെയ്യുക', outstandingBalances: 'ബാക്കിയുള്ള ബാലൻസുകൾ', noOutstandingBalances: 'ബാക്കി ബാലൻസുകളൊന്നുമില്ല',
+    dailyReport: 'ദിവസ റിപ്പോർട്ട്', selectDate: 'തീയതി തിരഞ്ഞെടുക്കുക', viewReport: 'റിപ്പോർട്ട് കാണുക', monthlyReport: 'മാസ റിപ്പോർട്ട്',
+    selectMonth: 'മാസം തിരഞ്ഞെടുക്കുക', dayStatusLabel: 'ദിവസ നില', netLabel: 'നെറ്റ്', billsLabel: 'ബില്ലുകൾ',
+    downloadExcel: '⬇ എക്സൽ ഡൗൺലോഡ് ചെയ്യുക', timeLabel: 'സമയം', staffLabel: 'സ്റ്റാഫ്', modeLabel: 'രീതി',
+    totalLabel: 'ആകെ', daysOperated: 'പ്രവർത്തിച്ച ദിവസങ്ങൾ', netProfit: 'അറ്റാദായം', dateLabel: 'തീയതി',
+    statusLabel: 'നില', salesLabel: 'വിൽപ്പന', expensesLabel: 'ചെലവ്', errorLoadingReport: 'റിപ്പോർട്ട് ലോഡ് ചെയ്യുന്നതിൽ പിശക്.',
+    adminPanel: 'അഡ്മിൻ പാനൽ', addStaffLogin: 'സ്റ്റാഫ് ലോഗിൻ ചേർക്കുക', fullName: 'മുഴുവൻ പേര്', role: 'റോൾ',
+    staffRole: 'സ്റ്റാഫ്', managerRole: 'മാനേജർ', addUser: '+ യൂസറെ ചേർക്കുക', existingStaff: 'നിലവിലുള്ള സ്റ്റാഫ്',
+    addQuickItem: 'ക്വിക്ക് ഇനം ചേർക്കുക', editQuickItemTitle: 'ക്വിക്ക് ഇനം എഡിറ്റ് ചെയ്യുക', price: 'വില (₹)',
+    categoryOptional: 'വിഭാഗം (ഓപ്ഷണൽ)', addQuickItemBtn: '+ ക്വിക്ക് ഇനം ചേർക്കുക', qiSubmitSave: 'മാറ്റങ്ങൾ സേവ് ചെയ്യുക',
+    cancelEdit: 'എഡിറ്റ് റദ്ദാക്കുക', existingQuickItems: 'നിലവിലുള്ള ക്വിക്ക് ഇനങ്ങൾ', editLabel: 'എഡിറ്റ്', deleteLabel: 'ഡിലീറ്റ്',
+    activateLabel: 'ആക്ടിവേറ്റ് ചെയ്യുക', deactivateLabel: 'ഡീആക്ടിവേറ്റ് ചെയ്യുക',
+    bill: 'ബിൽ', day: 'ദിവസം', udhaar: 'ഉധാരം',
+    openingLabel: 'തുറക്കുന്നു...', closingLabel: 'അടയ്ക്കുന്നു...', addingLabel: 'ചേർക്കുന്നു...', savingLabel: 'സേവ് ചെയ്യുന്നു...',
+    voidingLabel: 'റദ്ദാക്കുന്നു...', preparingPDFLabel: 'PDF തയ്യാറാക്കുന്നു...', loadingLabel: 'ലോഡ് ചെയ്യുന്നു...',
+    preparingLabel: 'തയ്യാറാക്കുന്നു...', deletingLabel: 'ഡിലീറ്റ് ചെയ്യുന്നു...', pleaseWaitDefault: 'കാത്തിരിക്കുക...', dotsLoading: '...',
+    sessionExpired: 'സെഷൻ കാലഹരണപ്പെട്ടു. വീണ്ടും ലോഗിൻ ചെയ്യുക.', dayOpened: 'ദിവസം തുറന്നു.',
+    enterClosingCash: 'എണ്ണിയ അവസാന ക്യാഷ് തുക നൽകുക.', confirmCloseDay: 'ദിവസം അടയ്ക്കണോ? ഇത് തിരികെ ചെയ്യാൻ കഴിയില്ല.',
+    cashMatchesExactly: 'ക്യാഷ് കൃത്യമായി പൊരുത്തപ്പെടുന്നു!', moreThanExpected: 'പ്രതീക്ഷിച്ചതിലും {amt} കൂടുതൽ.', shortAmount: '{amt} കുറവ്.',
+    dayClosedSalesMsg: 'ദിവസം അടച്ചു. വിൽപ്പന: {amt}. {diff}', enterDescAmount: 'വിവരണവും തുകയും നൽകുക.',
+    expenseAdded: 'ചെലവ് ചേർത്തു.', noItemsSetup: 'ഇതുവരെ ക്വിക്ക് ഇനങ്ങളൊന്നും സജ്ജീകരിച്ചിട്ടില്ല',
+    weightPromptFor: '{name}-ന്റെ തൂക്കം (കി.ഗ്രാം):', qtyPromptFor: '{name}-ന്റെ എണ്ണം:',
+    enterItemName: 'ഒരു ഇനത്തിന്റെ പേര് നൽകുക.', enterQtyPrice: 'എണ്ണവും വിലയും നൽകുക.',
+    enterWeightPrice: 'തൂക്കവും കി.ഗ്രാം വിലയും നൽകുക.', addAtLeastOneItem: 'ചുരുങ്ങിയത് ഒരു ഇനമെങ്കിലും ചേർക്കുക.',
+    custNameRequiredCredit: 'ക്രെഡിറ്റ് വിൽപ്പനയ്ക്ക് കസ്റ്റമറുടെ പേര് ആവശ്യമാണ്.', billSavedTotal: 'ബിൽ സേവ് ചെയ്തു! ആകെ {amt}',
+    couldNotPreparePDF: 'PDF തയ്യാറാക്കാൻ കഴിഞ്ഞില്ല. പകരം ടെക്സ്റ്റായി ഷെയർ ചെയ്യുന്നു.',
+    couldNotOpenShareMenu: 'ഷെയർ മെനു തുറക്കാൻ കഴിഞ്ഞില്ല.',
+    pdfDownloadedAttach: 'PDF ഡൗൺലോഡ് ചെയ്തു — നിങ്ങളുടെ ഡൗൺലോഡ്സിൽ നിന്ന് WhatsApp-ൽ അറ്റാച്ച് ചെയ്യുക.',
+    confirmEditLastBill: 'ഇത് അവസാന ബിൽ റദ്ദാക്കി അതിലെ ഇനങ്ങൾ വീണ്ടും ലോഡ് ചെയ്യും, അങ്ങനെ നിങ്ങൾക്ക് അവ ശരിയാക്കാം. തുടരണോ?',
+    lastBillVoidedEdit: 'അവസാന ബിൽ റദ്ദാക്കി — താഴെയുള്ള ഇനങ്ങൾ എഡിറ്റ് ചെയ്ത് ബിൽ വീണ്ടും പൂർത്തിയാക്കുക.',
+    confirmVoidBill: 'ഈ ബിൽ റദ്ദാക്കണോ? ഇത് തിരികെ ചെയ്യാൻ കഴിയില്ല.', billVoided: 'ബിൽ റദ്ദാക്കി.',
+    enterCustNameAmount: 'കസ്റ്റമറുടെ പേരും തുകയും നൽകുക.', savedNewBalance: 'സേവ് ചെയ്തു. പുതിയ ബാലൻസ്: {amt}',
+    exportFailed: 'എക്സ്പോർട്ട് പരാജയപ്പെട്ടു: {err}', fillAllFields: 'എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കുക.', userAddedMsg: 'യൂസറെ ചേർത്തു.',
+    enterItemNamePrice: 'ഇനത്തിന്റെ പേരും വിലയും നൽകുക.', somethingWentWrong: 'എന്തോ പിശക് സംഭവിച്ചു.',
+    quickItemUpdated: 'ക്വിക്ക് ഇനം അപ്ഡേറ്റ് ചെയ്തു.', quickItemAdded: 'ക്വിക്ക് ഇനം ചേർത്തു.',
+    confirmDeleteQI: '"{name}" എന്ന ക്വിക്ക് ഇനം ഡിലീറ്റ് ചെയ്യണോ?', errorPrefix: 'പിശക്: ',
+    networkFailed: 'നെറ്റ്‌വർക്ക് റിക്വസ്റ്റ് പരാജയപ്പെട്ടു. നിങ്ങളുടെ ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക.',
+    unexpectedResponse: 'സെർവറിൽ നിന്ന് അപ്രതീക്ഷിത പ്രതികരണം.', serverStatusTemplate: 'സെർവർ സ്റ്റാറ്റസ് {status} തിരികെ നൽകി',
+    noPhoneSaved: 'ഫോൺ നമ്പർ സേവ് ചെയ്തിട്ടില്ല',
+    statusOpen: 'തുറന്നത്', statusClosedPill: 'അടച്ചത്', statusCompleted: 'പൂർത്തിയായി', statusVoid: 'റദ്ദാക്കി',
+    statusNotOpened: 'തുറന്നിട്ടില്ല', statusCreditPill: 'ക്രെഡിറ്റ്',
+    itemSingular: 'ഇനം', itemPlural: 'ഇനങ്ങൾ',
+    tutorialSkip: 'ടൂർ ഒഴിവാക്കുക', tutorialBack: 'തിരികെ', tutorialNext: 'അടുത്തത്', tutorialFinish: 'പൂർത്തിയായി',
+    tutorialStepCount: 'ഘട്ടം {n} / {total}',
+    tut1t: 'ക്വിക്ക് ആഡ്', tut1x: 'ബില്ലിലേക്ക് ഉടനടി ചേർക്കാൻ ഏതെങ്കിലും ഇനത്തിന്റെ കാർഡിൽ ടാപ്പ് ചെയ്യുക — നിങ്ങളുടെ ഏറ്റവും കൂടുതൽ വിൽക്കുന്ന ഇനങ്ങൾക്ക് മികച്ചത്.',
+    tut2t: 'ഇനങ്ങൾ സ്വയം ചേർക്കുക', tut2x: 'ക്വിക്ക് ഇനം സജ്ജീകരിച്ചിട്ടില്ലേ? പേര് നൽകി എന്തും ചേർക്കുക, പീസോ തൂക്കമോ തിരഞ്ഞെടുത്ത് വില സെറ്റ് ചെയ്യുക.',
+    tut3t: 'ഇതുവരെ ചേർത്ത ഇനങ്ങൾ', tut3x: 'നിങ്ങൾ ചേർക്കുന്ന ഓരോ ഇനവും ബില്ലിൽ എന്തൊക്കെയുണ്ടെന്ന് കാണിക്കുന്ന ഒരു കാർഡ് താഴെ നിന്ന് തുറക്കും. ഇത് സ്വയം പരിശോധിക്കാൻ എപ്പോൾ വേണമെങ്കിലും ഈ + ടാപ്പ് ചെയ്യുക.',
+    tut4t: 'പരിശോധിച്ച് പണം നൽകുക', tut4x: 'ഈ ബാർ തുടർച്ചയായ ആകെത്തുക കാണിക്കുന്നു. എല്ലാ ഇനങ്ങളും ചേർത്ത ശേഷം കസ്റ്റമർ വിവരങ്ങളിലേക്കും പേയ്‌മെന്റിലേക്കും പോകാൻ ഇത് ടാപ്പ് ചെയ്യുക.',
+    tut5t: 'നിലവിലെ ബിൽ', tut5x: 'ബില്ലിലെ എല്ലാം ഒരു അവസാന നോട്ടം. പൂർത്തിയാക്കുന്നതിന് മുമ്പ് ഏതെങ്കിലും ഇനം നീക്കം ചെയ്യാൻ അതിനടുത്തുള്ള ✕ ടാപ്പ് ചെയ്യുക.',
+    tut6t: 'കസ്റ്റമറും പേയ്‌മെന്റും', tut6x: 'കസ്റ്റമറുടെ പേരും ഫോണും ചേർക്കുക (ക്രെഡിറ്റ് വിൽപ്പനയ്ക്ക് ആവശ്യമാണ്), ഒരു പേയ്‌മെന്റ് രീതി തിരഞ്ഞെടുക്കുക, ആവശ്യമെങ്കിൽ കിഴിവ് നൽകുക.',
+    tut7t: 'ആകെയും പൂർത്തിയാക്കലും', tut7x: 'ആകെ തുക പരിശോധിച്ച ശേഷം, സേവ് ചെയ്യാൻ \'ബിൽ പൂർത്തിയാക്കുക\' അമർത്തുക.',
+    tut8t: 'വിഭാഗങ്ങൾക്കിടയിൽ മാറുക', tut8x: 'ബില്ലിംഗ്, ദിവസം, ഉധാരം എന്നീ ഏറ്റവും കൂടുതൽ ഉപയോഗിക്കുന്ന വിഭാഗങ്ങളിലേക്ക് നേരിട്ട് പോകാൻ ഈ ബബിളുകൾ ഉപയോഗിക്കുക.',
+    tut9t: 'കൂടുതൽ ഓപ്ഷനുകൾ', tut9x: 'പ്രധാന ബാർ ലളിതമായി നിലനിർത്താൻ റിപ്പോർട്ടുകളും (നിങ്ങൾ മാനേജർ ആണെങ്കിൽ അഡ്മിനും) ഇവിടെയാണ്.',
+    tut10t: 'ദിവസം തുറക്കുകയും അടയ്ക്കുകയും ചെയ്യുക', tut10x: 'തുടക്ക ക്യാഷ് നൽകി ദിവസം ആരംഭിക്കുക. അവസാനം, ദിവസം അടച്ച് ക്യാഷ് എണ്ണുക — അത് ശരിയാണോ എന്ന് QuickBill പറയും.',
+    tut11t: 'ചെലവുകൾ രേഖപ്പെടുത്തുക', tut11x: 'ദിവസത്തിനിടയിൽ പണം ചെലവഴിച്ചോ — ഓട്ടോ ചാർജ്, പാക്കിംഗ് ബാഗ്? റിപ്പോർട്ടുകൾ കൃത്യമായി നിലനിർത്താൻ ഇവിടെ രേഖപ്പെടുത്തുക.',
+    tut12t: 'ഉധാരം / ക്രെഡിറ്റ് കണക്ക്', tut12x: 'കസ്റ്റമർമാർ നിങ്ങൾക്ക് നൽകാനുള്ള പണം ട്രാക്ക് ചെയ്യുക. ക്രെഡിറ്റ് നൽകുമ്പോൾ "കൂടുതൽ കടം" എൻട്രിയും, അവർ തീർപ്പാക്കുമ്പോൾ "തിരികെ അടച്ചു" എൻട്രിയും ചേർക്കുക.',
+    tut13t: 'ബാക്കിയുള്ള ബാലൻസുകൾ', tut13x: 'ഓരോ കസ്റ്റമറുടെയും നിലവിലെ ബാലൻസ് ഒറ്റനോട്ടത്തിൽ കാണുക.',
+    tut14t: 'ദിവസ റിപ്പോർട്ട്', tut14x: 'ഏതെങ്കിലും തീയതി തിരഞ്ഞെടുത്ത് ആ ദിവസത്തെ ആകെ വിൽപ്പന, ചെലവ്, എല്ലാ ബില്ലുകളും കാണുക — എക്സൽ ആയി ഡൗൺലോഡ് ചെയ്യാനും കഴിയും.',
+    tut15t: 'മാസ റിപ്പോർട്ട്', tut15x: 'ഒരു മുഴുവൻ മാസത്തെ വിൽപ്പന, ചെലവ്, അറ്റാദായം ഒറ്റ കാഴ്ചയിൽ കാണുക.',
+
+    beInvalidLogin: 'ഉപയോക്തൃനാമമോ പാസ്‌വേഡോ തെറ്റാണ്.',
+    beItemNameRequired: 'ഇനത്തിന്റെ പേര് ആവശ്യമാണ്.',
+    beDuplicateQuickItem: 'ഈ പേരിൽ മറ്റൊരു ക്വിക്ക് ഇനം ഇതിനകം ഉണ്ട്.',
+    beQuickItemNotFound: 'ക്വിക്ക് ഇനം കണ്ടെത്തിയില്ല.',
+    beDayAlreadyOpen: 'ദിവസം ഇതിനകം തുറന്നിരിക്കുന്നു.',
+    beDayAlreadyClosed: 'ഇന്നത്തെ ദിവസം ഇതിനകം അടച്ചു.',
+    beDayNotOpen: 'ദിവസം നിലവിൽ തുറന്നിട്ടില്ല.',
+    beOpenDayBeforeBilling: 'ബില്ലിംഗിന് മുമ്പ് ദിവസം തുറക്കുക.',
+    beBillNoItems: 'ബില്ലിൽ ഇനങ്ങളൊന്നുമില്ല.',
+    beVoidNotAllowed: 'ബില്ലിംഗ് സ്റ്റാഫിനോ മാനേജർക്കോ മാത്രമേ ഈ ബിൽ റദ്ദാക്കാൻ കഴിയൂ.',
+    beBillNotFound: 'ബിൽ കണ്ടെത്തിയില്ല.',
+    beCustomerNameRequired: 'കസ്റ്റമറുടെ പേര് ആവശ്യമാണ്.',
+    beUsernameExists: 'ഈ ഉപയോക്തൃനാമം ഇതിനകം നിലവിലുണ്ട്.',
+    beUserNotFound: 'ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല.',
+    beServerError: 'സെർവർ പിശക്'
+  }
+};
+
+function tr(key, vars) {
+  var dict = I18N[currentLang] || I18N.en;
+  var str = dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
+  if (vars) {
+    Object.keys(vars).forEach(function (k) {
+      str = str.replace('{' + k + '}', vars[k]);
+    });
+  }
+  return str;
+}
+
+function trCount(n) {
+  return n + ' ' + (n === 1 ? tr('itemSingular') : tr('itemPlural'));
+}
+
+// Backend sends day-status / bill-status words in fixed English strings —
+// map them to the current language for display without changing app logic.
+var STATUS_KEY_MAP = {
+  'Open': 'statusOpen', 'Closed': 'statusClosedPill', 'Completed': 'statusCompleted',
+  'Void': 'statusVoid', 'Not Opened': 'statusNotOpened', 'Credit': 'statusCreditPill'
+};
+function trStatus(s) {
+  var key = STATUS_KEY_MAP[s];
+  return key ? tr(key) : s;
+}
+
+// Apps Script (Code.js) returns plain English error text in res.message.
+// Map the known, static ones to i18n keys so they show in the current
+// language too. Anything not in this map (rare/dynamic messages like
+// "Unknown action: X" or a raw exception message) is shown as-is —
+// safer than guessing at a translation for text we don't recognize.
+var BACKEND_MSG_MAP = {
+  'Invalid username or password.': 'beInvalidLogin',
+  'Item name is required.': 'beItemNameRequired',
+  'Another quick item already has that name.': 'beDuplicateQuickItem',
+  'Quick item not found.': 'beQuickItemNotFound',
+  'Day is already open.': 'beDayAlreadyOpen',
+  'Day already closed for today.': 'beDayAlreadyClosed',
+  'Day is not currently open.': 'beDayNotOpen',
+  'Please open the day before billing.': 'beOpenDayBeforeBilling',
+  'Bill has no items.': 'beBillNoItems',
+  'Only the billing staff or a Manager can void this bill.': 'beVoidNotAllowed',
+  'Bill not found.': 'beBillNotFound',
+  'Customer name is required.': 'beCustomerNameRequired',
+  'Username already exists.': 'beUsernameExists',
+  'User not found.': 'beUserNotFound',
+  'Server error': 'beServerError'
+};
+function trBackend(msg) {
+  if (!msg) return msg;
+  var key = BACKEND_MSG_MAP[msg];
+  return key ? tr(key) : msg;
+}
+
+function applyStaticTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    el.textContent = tr(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+    el.placeholder = tr(el.getAttribute('data-i18n-ph'));
+  });
+  document.documentElement.lang = currentLang === 'ml' ? 'ml' : 'en';
+  var langLabel = document.getElementById('langToggleLabel');
+  if (langLabel) langLabel.textContent = currentLang === 'ml' ? 'English' : 'മലയാളം';
+}
+
+// Re-renders whatever dynamic content is currently on screen so a language
+// switch takes effect immediately, not just on next reload/navigation.
+function refreshDynamicContentForLanguage() {
+  if (!session.token) return;
+  refreshDayStatus();
+  renderQuickItemsGrid(document.getElementById('quickItemSearch') ? document.getElementById('quickItemSearch').value : '');
+  renderBillItems();
+  renderLastBillCard();
+  var creditsVisible = document.getElementById('tab-credits') && !document.getElementById('tab-credits').classList.contains('hidden');
+  if (creditsVisible) loadCreditLedger();
+  var adminVisible = document.getElementById('tab-admin') && !document.getElementById('tab-admin').classList.contains('hidden');
+  if (adminVisible) { loadUsers(); loadQuickItemsAdmin(); }
+  // Reports already shown on screen use whatever language they were fetched
+  // in — re-run the currently visible one(s) so they flip too.
+  var dailyResult = document.getElementById('dailyReportResult');
+  if (dailyResult && dailyResult.innerHTML.trim() && document.getElementById('reportDate').value) loadDailyReport();
+  var monthlyResult = document.getElementById('monthlyReportResult');
+  if (monthlyResult && monthlyResult.innerHTML.trim() && document.getElementById('reportMonth').value) loadMonthlyReport();
+  if (tutorialActive) positionTutorialStep();
+}
+
+function toggleLanguage() {
+  currentLang = currentLang === 'ml' ? 'en' : 'ml';
+  localStorage.setItem('quickbill_lang', currentLang);
+  applyStaticTranslations();
+  refreshDynamicContentForLanguage();
+  closeHamburgerMenu();
+}
+
 // ======================================================
 // ANCHAL GROCERY BILLING — Frontend (PWA, hosted on GitHub Pages)
 // Talks to the Google Apps Script backend as a JSON API.
@@ -783,18 +1121,18 @@ function callAPI(action, params) {
     xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
     xhr.onload = function () {
       if (xhr.status < 200 || xhr.status >= 300) {
-        reject(new Error('Server returned status ' + xhr.status));
+        reject(new Error(tr('serverStatusTemplate', { status: xhr.status })));
         return;
       }
       var res;
       try {
         res = JSON.parse(xhr.responseText);
       } catch (e) {
-        reject(new Error('Unexpected response from server.'));
+        reject(new Error(tr('unexpectedResponse')));
         return;
       }
       if (res && res.message === 'SESSION_EXPIRED') {
-        showToast('Session expired. Please log in again.');
+        showToast(tr('sessionExpired'));
         doLogout();
         reject(new Error('SESSION_EXPIRED'));
         return;
@@ -802,7 +1140,7 @@ function callAPI(action, params) {
       resolve(res);
     };
     xhr.onerror = function () {
-      reject(new Error('Network request failed. Check your internet connection.'));
+      reject(new Error(tr('networkFailed')));
     };
     xhr.send(JSON.stringify(payload));
   }).finally(function () { bumpTopProgress(-1); });
@@ -835,9 +1173,9 @@ function hideSplash() {
 }
 
 window.onload = function () {
+  applyStaticTranslations();
   if (APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
-    document.getElementById('loginError').innerText =
-      'Setup needed: open index.html and paste your Apps Script Web App URL into APPS_SCRIPT_URL.';
+    document.getElementById('loginError').innerText = tr('setupNeeded');
   }
   var saved = localStorage.getItem('grocerySession');
   if (saved) {
@@ -876,7 +1214,7 @@ function withLoading(btn, label, fn) {
   if (!btn) { return fn(); }
   var original = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '<span class="btn-spinner"></span>' + (label || 'Please wait...');
+  btn.innerHTML = '<span class="btn-spinner"></span>' + (label || tr('pleaseWaitDefault'));
   function restore() { btn.disabled = false; btn.innerHTML = original; }
   var result;
   try {
@@ -899,7 +1237,7 @@ var actionOverlayDepth = 0;
 function showActionOverlay(text) {
   actionOverlayDepth++;
   var el = document.getElementById('actionOverlay');
-  document.getElementById('actionOverlayText').innerText = text || 'Please wait...';
+  document.getElementById('actionOverlayText').innerText = text || tr('pleaseWaitDefault');
   el.classList.remove('hidden');
 }
 function hideActionOverlay() {
@@ -923,11 +1261,11 @@ function doLogin() {
   var p = document.getElementById('loginPassword').value;
   var errEl = document.getElementById('loginError');
   errEl.innerText = '';
-  if (!u || !p) { errEl.innerText = 'Please enter username and password.'; return; }
+  if (!u || !p) { errEl.innerText = tr('pleaseEnterUserPass'); return; }
   var btn = document.getElementById('loginBtn');
   var original = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '<span class="btn-spinner"></span>Signing in...';
+  btn.innerHTML = '<span class="btn-spinner"></span>' + tr('signingIn');
   document.getElementById('topProgressBar').classList.add('active');
   callAPI('login', { username: u, password: p })
     .then(function (res) {
@@ -944,13 +1282,13 @@ function doLogin() {
       } else {
         btn.disabled = false; btn.innerHTML = original;
         document.getElementById('topProgressBar').classList.remove('active');
-        errEl.innerText = res.message || 'Login failed.';
+        errEl.innerText = trBackend(res.message) || tr('loginFailedDefault');
       }
     })
     .catch(function (err) {
       btn.disabled = false; btn.innerHTML = original;
       document.getElementById('topProgressBar').classList.remove('active');
-      if (err.message !== 'SESSION_EXPIRED') errEl.innerText = 'Connection error: ' + err.message;
+      if (err.message !== 'SESSION_EXPIRED') errEl.innerText = tr('connectionErrorPrefix') + err.message;
     });
 }
 
@@ -970,7 +1308,7 @@ function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'block';
   document.getElementById('topProgressBar').classList.remove('on-dark');
-  document.getElementById('staffNameLabel').innerText = session.fullName + ' • ' + session.role;
+  document.getElementById('staffNameLabel').innerText = session.fullName + ' • ' + (session.role === 'Manager' ? tr('managerRole') : tr('staffRole'));
   if (session.role === 'Manager') document.getElementById('adminMenuItem').classList.remove('hidden');
   refreshDayStatus();
   loadQuickItems();
@@ -1041,7 +1379,7 @@ function refreshDayStatus() {
     .then(function (status) {
       var badge = document.getElementById('dayBadge');
       var isOpen = status.status === 'Open';
-      badge.innerText = isOpen ? 'Day Open' : 'Day Closed';
+      badge.innerText = isOpen ? tr('dayOpen') : tr('dayClosed');
       badge.className = 'day-badge ' + (isOpen ? 'open' : 'closed');
       renderDayCard(status);
       if (status.status === 'Open') loadTodayExpenses();
@@ -1053,54 +1391,54 @@ function renderDayCard(status) {
   var el = document.getElementById('dayStatusCard');
   if (status.status === 'Open') {
     el.innerHTML =
-      '<h3>Day is Open</h3>' +
-      '<div class="stat-row"><span>Opened by</span><span class="val">' + status.openedBy + '</span></div>' +
-      '<div class="stat-row"><span>Opening Time</span><span class="val">' + status.openTime + '</span></div>' +
-      '<div class="stat-row"><span>Opening Cash</span><span class="val">₹' + Number(status.openingCash).toFixed(2) + '</span></div>' +
-      '<div class="field" style="margin-top:14px"><label>Closing Cash Count (₹)</label><input type="number" id="closingCashInput" min="0" step="0.01"></div>' +
-      '<button class="btn danger" onclick="submitCloseDay(this)">Close Day</button>';
+      '<h3>' + tr('dayIsOpen') + '</h3>' +
+      '<div class="stat-row"><span>' + tr('openedByLabel') + '</span><span class="val">' + status.openedBy + '</span></div>' +
+      '<div class="stat-row"><span>' + tr('openingTimeLabel') + '</span><span class="val">' + status.openTime + '</span></div>' +
+      '<div class="stat-row"><span>' + tr('openingCashLabel') + '</span><span class="val">₹' + Number(status.openingCash).toFixed(2) + '</span></div>' +
+      '<div class="field" style="margin-top:14px"><label>' + tr('closingCashCountLabel') + '</label><input type="number" id="closingCashInput" min="0" step="0.01"></div>' +
+      '<button class="btn danger" onclick="submitCloseDay(this)">' + tr('closeDayBtn') + '</button>';
   } else if (status.status === 'Closed') {
     el.innerHTML =
-      '<h3>Day Closed</h3>' +
-      '<div class="stat-row"><span>Total Sales</span><span class="val">₹' + Number(status.totalSales).toFixed(2) + '</span></div>' +
-      '<div class="stat-row"><span>Total Expenses</span><span class="val">₹' + Number(status.totalExpenses).toFixed(2) + '</span></div>' +
-      '<div class="stat-row"><span>Closed by</span><span class="val">' + status.closedBy + ' at ' + status.closeTime + '</span></div>' +
-      '<p style="color:var(--muted);font-size:13px;margin-top:10px">Today\'s day has already been closed. Come back tomorrow to open a new day.</p>';
+      '<h3>' + tr('dayClosedTitle') + '</h3>' +
+      '<div class="stat-row"><span>' + tr('totalSales') + '</span><span class="val">₹' + Number(status.totalSales).toFixed(2) + '</span></div>' +
+      '<div class="stat-row"><span>' + tr('totalExpenses') + '</span><span class="val">₹' + Number(status.totalExpenses).toFixed(2) + '</span></div>' +
+      '<div class="stat-row"><span>' + tr('closedByLabel') + '</span><span class="val">' + status.closedBy + ' ' + status.closeTime + '</span></div>' +
+      '<p style="color:var(--muted);font-size:13px;margin-top:10px">' + tr('dayAlreadyClosedMsg') + '</p>';
   } else {
     el.innerHTML =
-      '<h3>Day Not Opened Yet</h3>' +
-      '<div class="field"><label>Opening Cash (₹)</label><input type="number" id="openingCashInput" min="0" step="0.01" value="0"></div>' +
-      '<button class="btn" onclick="submitOpenDay(this)">Open Day</button>';
+      '<h3>' + tr('dayNotOpenedYetTitle') + '</h3>' +
+      '<div class="field"><label>' + tr('openingCashLabel') + ' (₹)</label><input type="number" id="openingCashInput" min="0" step="0.01" value="0"></div>' +
+      '<button class="btn" onclick="submitOpenDay(this)">' + tr('openDayBtn') + '</button>';
   }
 }
 
 function submitOpenDay(btn) {
   var cash = document.getElementById('openingCashInput').value || 0;
-  withLoading(btn, 'Opening...', function () {
+  withLoading(btn, tr('openingLabel'), function () {
     return callAPI('openDay', { token: session.token, openingCash: cash })
       .then(function (res) {
-        if (res.success) { showToast('Day opened.'); refreshDayStatus(); }
-        else showToast(res.message);
+        if (res.success) { showToast(tr('dayOpened')); refreshDayStatus(); }
+        else showToast(trBackend(res.message));
       })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
 }
 
 function submitCloseDay(btn) {
   var cash = document.getElementById('closingCashInput').value;
-  if (cash === '' || cash === null) { showToast('Please enter the counted closing cash.'); return; }
-  if (!confirm('Close the day? This cannot be undone.')) return;
-  withLoading(btn, 'Closing...', function () {
+  if (cash === '' || cash === null) { showToast(tr('enterClosingCash')); return; }
+  if (!confirm(tr('confirmCloseDay'))) return;
+  withLoading(btn, tr('closingLabel'), function () {
     return callAPI('closeDay', { token: session.token, closingCash: cash })
       .then(function (res) {
         if (res.success) {
-          var diffMsg = res.difference === 0 ? 'Cash matches exactly!' :
-            (res.difference > 0 ? '₹' + res.difference.toFixed(2) + ' more than expected.' : '₹' + Math.abs(res.difference).toFixed(2) + ' short.');
-          showToast('Day closed. Sales: ₹' + res.totalSales.toFixed(2) + '. ' + diffMsg);
+          var diffMsg = res.difference === 0 ? tr('cashMatchesExactly') :
+            (res.difference > 0 ? tr('moreThanExpected', { amt: '₹' + res.difference.toFixed(2) }) : tr('shortAmount', { amt: '₹' + Math.abs(res.difference).toFixed(2) }));
+          showToast(tr('dayClosedSalesMsg', { amt: '₹' + res.totalSales.toFixed(2), diff: diffMsg }));
           refreshDayStatus();
-        } else showToast(res.message);
+        } else showToast(trBackend(res.message));
       })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
 }
 
@@ -1108,16 +1446,16 @@ function submitCloseDay(btn) {
 function submitExpense(btn) {
   var desc = document.getElementById('expDesc').value.trim();
   var amt = document.getElementById('expAmount').value;
-  if (!desc || !amt) { showToast('Enter description and amount.'); return; }
-  withLoading(btn, 'Adding...', function () {
+  if (!desc || !amt) { showToast(tr('enterDescAmount')); return; }
+  withLoading(btn, tr('addingLabel'), function () {
     return callAPI('addExpense', { token: session.token, description: desc, amount: amt })
       .then(function () {
-        showToast('Expense added.');
+        showToast(tr('expenseAdded'));
         document.getElementById('expDesc').value = '';
         document.getElementById('expAmount').value = '';
         loadTodayExpenses();
       })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
 }
 
@@ -1125,7 +1463,7 @@ function loadTodayExpenses() {
   callAPI('getTodayExpenses', { token: session.token })
     .then(function (list) {
       var el = document.getElementById('expenseList');
-      if (list.length === 0) { el.innerHTML = '<div class="empty-state">No expenses logged today</div>'; return; }
+      if (list.length === 0) { el.innerHTML = '<div class="empty-state">' + tr('noExpensesLoggedToday') + '</div>'; return; }
       el.innerHTML = list.map(function (e) {
         return '<div class="bill-item-row"><div class="info"><div class="name">' + e.description + '</div><div class="meta">' + e.time + ' • ' + e.enteredBy + '</div></div><div class="amt">₹' + Number(e.amount).toFixed(2) + '</div></div>';
       }).join('');
@@ -1172,7 +1510,7 @@ function renderQuickItemsGrid(query) {
   var noResultsEl = document.getElementById('quickSearchNoResults');
   var items = window._quickItemsCache || [];
   if (items.length === 0) {
-    grid.innerHTML = '<div class="empty-state">No quick items set up yet</div>';
+    grid.innerHTML = '<div class="empty-state">' + tr('noItemsSetup') + '</div>';
     if (noResultsEl) noResultsEl.classList.add('hidden');
     return;
   }
@@ -1211,12 +1549,12 @@ function clearQuickItemSearch() {
 function quickAdd(idx) {
   var it = window._quickItemsCache[idx];
   if (it.Unit === 'kg') {
-    var wt = prompt('Weight in kg for ' + it.ItemName + ':', '1');
+    var wt = prompt(tr('weightPromptFor', { name: it.ItemName }), '1');
     if (wt === null || isNaN(wt) || Number(wt) <= 0) return;
     var lineTotal = Number(wt) * Number(it.DefaultPrice);
     currentBillItems.push({ name: it.ItemName, qty: '', weight: wt, unit: 'kg', price: it.DefaultPrice, lineTotal: lineTotal });
   } else {
-    var qty = prompt('Quantity for ' + it.ItemName + ':', '1');
+    var qty = prompt(tr('qtyPromptFor', { name: it.ItemName }), '1');
     if (qty === null || isNaN(qty) || Number(qty) <= 0) return;
     var lineTotal2 = Number(qty) * Number(it.DefaultPrice);
     currentBillItems.push({ name: it.ItemName, qty: qty, weight: '', unit: 'piece', price: it.DefaultPrice, lineTotal: lineTotal2 });
@@ -1232,7 +1570,7 @@ function renderCartSheet() {
   var el = document.getElementById('cartSheetList');
   if (!el) return;
   if (currentBillItems.length === 0) {
-    el.innerHTML = '<div class="empty-state">No items added yet</div>';
+    el.innerHTML = '<div class="empty-state">' + tr('noItemsAddedYet') + '</div>';
   } else {
     // Most-recently-added item on top; each row still keeps its real index
     // into currentBillItems so the ✕ button removes the right one.
@@ -1246,7 +1584,7 @@ function renderCartSheet() {
   }
   var count = currentBillItems.length;
   var total = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
-  document.getElementById('cartSheetCount').innerText = count + (count === 1 ? ' item' : ' items');
+  document.getElementById('cartSheetCount').innerText = trCount(count);
   document.getElementById('cartSheetTotal').innerText = '₹' + total.toFixed(2);
 }
 
@@ -1307,7 +1645,7 @@ function attachCustomerAutocomplete(nameInputId, phoneInputId, idInputId, dropdo
     if (matches.length === 0) { dropdown.classList.add('hidden'); dropdown.innerHTML = ''; return; }
     dropdown.innerHTML = matches.map(function (c, i) {
       return '<div class="autocomplete-row" data-idx="' + i + '"><span class="ac-name">' + c.name + '</span>' +
-        (c.phone ? '<span class="ac-phone">' + c.phone + '</span>' : '<span class="ac-phone ac-phone-missing">no phone saved</span>') + '</div>';
+        (c.phone ? '<span class="ac-phone">' + c.phone + '</span>' : '<span class="ac-phone ac-phone-missing">' + tr('noPhoneSaved') + '</span>') + '</div>';
     }).join('');
     dropdown._matches = matches;
     dropdown.classList.remove('hidden');
@@ -1339,18 +1677,18 @@ function setEntryMode(mode) {
 
 function addManualItem() {
   var name = document.getElementById('manualName').value.trim();
-  if (!name) { showToast('Enter an item name.'); return; }
+  if (!name) { showToast(tr('enterItemName')); return; }
   var item;
   if (entryMode === 'piece') {
     var qty = Number(document.getElementById('manualQty').value);
     var price = Number(document.getElementById('manualPricePiece').value);
-    if (!qty || !price) { showToast('Enter quantity and price.'); return; }
+    if (!qty || !price) { showToast(tr('enterQtyPrice')); return; }
     item = { name: name, qty: qty, weight: '', unit: 'piece', price: price, lineTotal: qty * price };
   } else {
     var weight = Number(document.getElementById('manualWeight').value);
     var unit = document.getElementById('manualUnit').value;
     var priceKg = Number(document.getElementById('manualPriceWeight').value);
-    if (!weight || !priceKg) { showToast('Enter weight and price per kg.'); return; }
+    if (!weight || !priceKg) { showToast(tr('enterWeightPrice')); return; }
     var weightInKg = unit === 'g' ? weight / 1000 : weight;
     item = { name: name, qty: '', weight: weight + ' ' + unit, unit: unit, price: priceKg, lineTotal: weightInKg * priceKg };
   }
@@ -1370,7 +1708,7 @@ function removeBillItem(idx) {
 }
 
 function renderBillItems() {
-  var emptyHtml = '<div class="empty-state">No items added yet</div>';
+  var emptyHtml = '<div class="empty-state">' + tr('noItemsAddedYet') + '</div>';
   var rowsHtml = currentBillItems.length === 0 ? '' : currentBillItems.map(function (it, idx) {
     var meta = it.qty ? (it.qty + ' × ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
     return '<div class="bill-item-row"><div class="info"><div class="name">' + it.name + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + it.lineTotal.toFixed(2) + '</div><button class="del-btn" onclick="removeBillItem(' + idx + ')">✕</button></div>';
@@ -1400,7 +1738,7 @@ function setDiscountType(type) {
   discountType = type;
   document.getElementById('discTypeFlat').classList.toggle('selected', type === 'flat');
   document.getElementById('discTypePercent').classList.toggle('selected', type === 'percent');
-  document.getElementById('discount').placeholder = type === 'percent' ? 'e.g. 10 for 10%' : '';
+  document.getElementById('discount').placeholder = type === 'percent' ? tr('discountPercentPh') : '';
   updateTotals();
 }
 
@@ -1423,7 +1761,7 @@ function updateTotals() {
   // Keep the Add Items step's sticky bar and the Review & Pay badge in sync
   var count = currentBillItems.length;
   var rawSubtotal = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
-  document.getElementById('itemsContinueCount').innerText = count + (count === 1 ? ' item' : ' items');
+  document.getElementById('itemsContinueCount').innerText = trCount(count);
   document.getElementById('itemsContinueTotal').innerText = '₹' + rawSubtotal.toFixed(2);
   document.getElementById('itemsContinueBar').classList.toggle('hidden', count === 0);
   var badge = document.getElementById('billingItemCountBadge');
@@ -1433,11 +1771,11 @@ function updateTotals() {
 document.addEventListener('input', function (e) { if (e.target && e.target.id === 'discount') updateTotals(); });
 
 function completeBill() {
-  if (currentBillItems.length === 0) { showToast('Add at least one item.'); return; }
+  if (currentBillItems.length === 0) { showToast(tr('addAtLeastOneItem')); return; }
   var paymentMode = document.getElementById('paymentMode').value;
   var custName = document.getElementById('custName').value.trim();
   var custPhone = document.getElementById('custPhone').value.trim();
-  if (paymentMode === 'Credit' && !custName) { showToast('Customer name is required for credit sales.'); return; }
+  if (paymentMode === 'Credit' && !custName) { showToast(tr('custNameRequiredCredit')); return; }
   var subtotal = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
   var discountAmt = computeDiscountAmount(subtotal);
   var itemsSnapshot = currentBillItems.slice(); // keep a copy before we clear the cart
@@ -1450,12 +1788,12 @@ function completeBill() {
   };
   var btn = document.getElementById('completeBillBtn');
   var btnOriginal = btn.innerHTML;
-  btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Saving...';
+  btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>' + tr('savingLabel');
   callAPI('saveBill', { token: session.token, billData: billData })
     .then(function (res) {
       btn.disabled = false; btn.innerHTML = btnOriginal;
       if (res.success) {
-        showToast('Bill saved! Total ₹' + res.total.toFixed(2));
+        showToast(tr('billSavedTotal', { amt: '₹' + res.total.toFixed(2) }));
         lastBill = {
           billId: res.billId, items: itemsSnapshot, customerName: custName, customerPhone: custPhone,
           paymentMode: paymentMode, subtotal: res.subtotal, discount: res.discount, total: res.total
@@ -1472,12 +1810,12 @@ function completeBill() {
         switchBillingStep('items');
         if (custName) loadCustomers();
       } else {
-        showToast(res.message);
+        showToast(trBackend(res.message));
       }
     })
     .catch(function (err) {
       btn.disabled = false; btn.innerHTML = btnOriginal;
-      if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message);
+      if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message);
     });
 }
 
@@ -1487,10 +1825,10 @@ function renderLastBillCard() {
   if (!lastBill) { card.classList.add('hidden'); return; }
   card.classList.remove('hidden');
   document.getElementById('lastBillSummary').innerHTML =
-    '<div class="stat-row"><span>Bill ID</span><span class="val">' + lastBill.billId + '</span></div>' +
-    '<div class="stat-row"><span>Customer</span><span class="val">' + (lastBill.customerName || 'Walk-in') + '</span></div>' +
-    '<div class="stat-row"><span>Items</span><span class="val">' + lastBill.items.length + '</span></div>' +
-    '<div class="stat-row"><span>Total</span><span class="val">₹' + Number(lastBill.total).toFixed(2) + '</span></div>';
+    '<div class="stat-row"><span>' + tr('billId') + '</span><span class="val">' + lastBill.billId + '</span></div>' +
+    '<div class="stat-row"><span>' + tr('customer') + '</span><span class="val">' + (lastBill.customerName || tr('walkInCustomer')) + '</span></div>' +
+    '<div class="stat-row"><span>' + tr('items') + '</span><span class="val">' + lastBill.items.length + '</span></div>' +
+    '<div class="stat-row"><span>' + tr('total') + '</span><span class="val">₹' + Number(lastBill.total).toFixed(2) + '</span></div>';
 }
 
 function buildReceiptText() {
@@ -1498,7 +1836,7 @@ function buildReceiptText() {
   var lines = [];
   lines.push('🧾 QuickBill Receipt');
   lines.push('Bill: ' + lastBill.billId);
-  lines.push('Customer: ' + (lastBill.customerName || 'Walk-in'));
+  lines.push(tr('customer') + ': ' + (lastBill.customerName || tr('walkInCustomer')));
   lines.push('--------------------------');
   lastBill.items.forEach(function (it) {
     var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
@@ -1523,7 +1861,7 @@ function buildReceiptPDFBlob() {
   doc.text('QuickBill Receipt', x, y); y += 20;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
   doc.text('Bill: ' + lastBill.billId, x, y); y += 14;
-  doc.text('Customer: ' + (lastBill.customerName || 'Walk-in'), x, y); y += 10;
+  doc.text(tr('customer') + ': ' + (lastBill.customerName || tr('walkInCustomer')), x, y); y += 10;
   doc.setLineWidth(0.5); doc.line(x, y, 262, y); y += 16;
   lastBill.items.forEach(function (it) {
     var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
@@ -1551,14 +1889,14 @@ function buildReceiptPDFBlob() {
 function shareLastBillWhatsApp() {
   if (!lastBill) return;
   var btn = document.getElementById('shareBillBtn');
-  withLoading(btn, 'Preparing PDF...', function () {
+  withLoading(btn, tr('preparingPDFLabel'), function () {
     return new Promise(function (resolve) {
       // Slight delay so the spinner actually shows even on very fast devices —
       // PDF generation itself can otherwise finish in the same tick.
       setTimeout(function () {
         var blob = buildReceiptPDFBlob();
         if (!blob) {
-          showToast('Could not prepare the PDF. Sharing as text instead.');
+          showToast(tr('couldNotPreparePDF'));
           var text = encodeURIComponent(buildReceiptText());
           var phone = (lastBill.customerPhone || '').replace(/\D/g, '');
           window.open(phone ? ('https://wa.me/91' + phone + '?text=' + text) : ('https://wa.me/?text=' + text), '_blank');
@@ -1576,7 +1914,7 @@ function shareLastBillWhatsApp() {
             title: 'QuickBill Receipt',
             text: 'Receipt for Bill ' + lastBill.billId
           }).catch(function (err) {
-            if (err && err.name !== 'AbortError') showToast('Could not open the share menu.');
+            if (err && err.name !== 'AbortError') showToast(tr('couldNotOpenShareMenu'));
           }).finally(resolve);
         } else {
           // Fallback for browsers without file-sharing support: download the PDF
@@ -1586,7 +1924,7 @@ function shareLastBillWhatsApp() {
           link.href = url; link.download = filename;
           document.body.appendChild(link); link.click(); link.remove();
           setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-          showToast('PDF downloaded — attach it in WhatsApp from your Downloads.');
+          showToast(tr('pdfDownloadedAttach'));
           var phone2 = (lastBill.customerPhone || '').replace(/\D/g, '');
           window.open(phone2 ? ('https://wa.me/91' + phone2) : 'https://wa.me/', '_blank');
           resolve();
@@ -1598,11 +1936,11 @@ function shareLastBillWhatsApp() {
 
 function editLastBill(btn) {
   if (!lastBill) return;
-  if (!confirm('This will void the last bill and reload its items so you can fix them. Continue?')) return;
-  withLoading(btn, 'Voiding...', function () {
+  if (!confirm(tr('confirmEditLastBill'))) return;
+  withLoading(btn, tr('voidingLabel'), function () {
   return callAPI('voidBill', { token: session.token, billId: lastBill.billId })
     .then(function (res) {
-      if (!res.success) { showToast(res.message); return; }
+      if (!res.success) { showToast(trBackend(res.message)); return; }
       currentBillItems = lastBill.items.slice();
       document.getElementById('custName').value = lastBill.customerName || '';
       document.getElementById('custPhone').value = lastBill.customerPhone || '';
@@ -1611,26 +1949,26 @@ function editLastBill(btn) {
       switchBillingStep('items');
       lastBill = null;
       renderLastBillCard();
-      showToast('Last bill voided — edit the items below and complete the bill again.');
+      showToast(tr('lastBillVoidedEdit'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
 }
 
 function voidLastBill(btn) {
   if (!lastBill) return;
-  if (!confirm('Void this bill? This cannot be undone.')) return;
-  withLoading(btn, 'Voiding...', function () {
+  if (!confirm(tr('confirmVoidBill'))) return;
+  withLoading(btn, tr('voidingLabel'), function () {
   return callAPI('voidBill', { token: session.token, billId: lastBill.billId })
     .then(function (res) {
       if (res.success) {
-        showToast('Bill voided.');
+        showToast(tr('billVoided'));
         lastBill = null;
         renderLastBillCard();
-      } else showToast(res.message);
+      } else showToast(trBackend(res.message));
     })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
 }
 
@@ -1644,15 +1982,15 @@ function setCreditType(type) {
 function submitCredit(btn) {
   var name = document.getElementById('crName').value.trim();
   var amount = document.getElementById('crAmount').value;
-  if (!name || !amount) { showToast('Enter customer name and amount.'); return; }
-  withLoading(btn, 'Saving...', function () {
+  if (!name || !amount) { showToast(tr('enterCustNameAmount')); return; }
+  withLoading(btn, tr('savingLabel'), function () {
     return callAPI('addCreditEntry', {
       token: session.token, customerName: name, phone: document.getElementById('crPhone').value.trim(),
       type: creditType, amount: amount, notes: document.getElementById('crNotes').value.trim()
     })
       .then(function (res) {
         if (res.success) {
-          showToast('Saved. New balance: ₹' + res.newBalance.toFixed(2));
+          showToast(tr('savedNewBalance', { amt: '₹' + res.newBalance.toFixed(2) }));
           document.getElementById('crName').value = '';
           document.getElementById('crPhone').value = '';
           document.getElementById('crCustId').value = '';
@@ -1660,9 +1998,9 @@ function submitCredit(btn) {
           document.getElementById('crNotes').value = '';
           loadCreditLedger();
           loadCustomers();
-        } else showToast(res.message);
+        } else showToast(trBackend(res.message));
       })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
 }
 
@@ -1670,7 +2008,7 @@ function loadCreditLedger() {
   callAPI('getCreditLedger', { token: session.token })
     .then(function (list) {
       var el = document.getElementById('creditLedgerList');
-      if (list.length === 0) { el.innerHTML = '<div class="empty-state">No outstanding balances</div>'; return; }
+      if (list.length === 0) { el.innerHTML = '<div class="empty-state">' + tr('noOutstandingBalances') + '</div>'; return; }
       el.innerHTML = list.map(function (c) {
         return '<div class="customer-row"><div><div class="name">' + c.customerName + '</div><div class="phone">' + (c.phone || '') + '</div></div><div class="bal">₹' + c.balance.toFixed(2) + '</div></div>';
       }).join('');
@@ -1684,25 +2022,25 @@ function loadDailyReport(btn) {
   if (!date) return;
   var el = document.getElementById('dailyReportResult');
   el.innerHTML = '<div class="spinner"></div>';
-  withLoading(btn, 'Loading...', function () {
+  withLoading(btn, tr('loadingLabel'), function () {
   return callAPI('getDailyReport', { token: session.token, date: date })
     .then(function (r) {
       var statusClass = r.dayStatus.toLowerCase().replace(' ', '');
-      var html = '<div class="stat-row"><span>Day Status</span><span class="pill ' + statusClass + '">' + r.dayStatus + '</span></div>' +
-        '<div class="stat-row"><span>Total Sales</span><span class="val">₹' + r.totalSales.toFixed(2) + '</span></div>' +
-        '<div class="stat-row"><span>Total Expenses</span><span class="val">₹' + r.totalExpenses.toFixed(2) + '</span></div>' +
-        '<div class="stat-row"><span>Net</span><span class="val">₹' + (r.totalSales - r.totalExpenses).toFixed(2) + '</span></div>' +
-        '<div class="stat-row"><span>Bills</span><span class="val">' + r.billCount + '</span></div>' +
-        '<button class="btn secondary" style="margin-top:10px" onclick="downloadDayExcel(this, \'' + date + '\')">⬇ Download Excel</button>';
+      var html = '<div class="stat-row"><span>' + tr('dayStatusLabel') + '</span><span class="pill ' + statusClass + '">' + trStatus(r.dayStatus) + '</span></div>' +
+        '<div class="stat-row"><span>' + tr('totalSales') + '</span><span class="val">₹' + r.totalSales.toFixed(2) + '</span></div>' +
+        '<div class="stat-row"><span>' + tr('totalExpenses') + '</span><span class="val">₹' + r.totalExpenses.toFixed(2) + '</span></div>' +
+        '<div class="stat-row"><span>' + tr('netLabel') + '</span><span class="val">₹' + (r.totalSales - r.totalExpenses).toFixed(2) + '</span></div>' +
+        '<div class="stat-row"><span>' + tr('billsLabel') + '</span><span class="val">' + r.billCount + '</span></div>' +
+        '<button class="btn secondary" style="margin-top:10px" onclick="downloadDayExcel(this, \'' + date + '\')">' + tr('downloadExcel') + '</button>';
       if (r.bills.length > 0) {
-        html += '<div style="overflow-x:auto;margin-top:14px"><table class="report-table"><tr><th>Time</th><th>Staff</th><th>Customer</th><th>Mode</th><th>Total</th></tr>' +
+        html += '<div style="overflow-x:auto;margin-top:14px"><table class="report-table"><tr><th>' + tr('timeLabel') + '</th><th>' + tr('staffLabel') + '</th><th>' + tr('customer') + '</th><th>' + tr('modeLabel') + '</th><th>' + tr('totalLabel') + '</th></tr>' +
           r.bills.map(function (b) {
             return '<tr><td>' + b.time + '</td><td>' + b.staff + '</td><td>' + (b.customer || '-') + '</td><td>' + b.paymentMode + '</td><td>₹' + Number(b.total).toFixed(2) + '</td></tr>';
           }).join('') + '</table></div>';
       }
       el.innerHTML = html;
     })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') el.innerHTML = 'Error loading report.'; });
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') el.innerHTML = tr('errorLoadingReport'); });
   });
 }
 
@@ -1711,23 +2049,23 @@ function loadMonthlyReport(btn) {
   if (!month) return;
   var el = document.getElementById('monthlyReportResult');
   el.innerHTML = '<div class="spinner"></div>';
-  withLoading(btn, 'Loading...', function () {
+  withLoading(btn, tr('loadingLabel'), function () {
   return callAPI('getMonthlyReport', { token: session.token, yearMonth: month })
     .then(function (r) {
-      var html = '<div class="stat-row"><span>Days Operated</span><span class="val">' + r.daysOperated + '</span></div>' +
-        '<div class="stat-row"><span>Total Sales</span><span class="val">₹' + r.totalSales.toFixed(2) + '</span></div>' +
-        '<div class="stat-row"><span>Total Expenses</span><span class="val">₹' + r.totalExpenses.toFixed(2) + '</span></div>' +
-        '<div class="stat-row"><span>Net Profit</span><span class="val">₹' + r.netProfit.toFixed(2) + '</span></div>' +
-        '<button class="btn secondary" style="margin-top:10px" onclick="downloadMonthExcel(this, \'' + month + '\')">⬇ Download Excel</button>';
+      var html = '<div class="stat-row"><span>' + tr('daysOperated') + '</span><span class="val">' + r.daysOperated + '</span></div>' +
+        '<div class="stat-row"><span>' + tr('totalSales') + '</span><span class="val">₹' + r.totalSales.toFixed(2) + '</span></div>' +
+        '<div class="stat-row"><span>' + tr('totalExpenses') + '</span><span class="val">₹' + r.totalExpenses.toFixed(2) + '</span></div>' +
+        '<div class="stat-row"><span>' + tr('netProfit') + '</span><span class="val">₹' + r.netProfit.toFixed(2) + '</span></div>' +
+        '<button class="btn secondary" style="margin-top:10px" onclick="downloadMonthExcel(this, \'' + month + '\')">' + tr('downloadExcel') + '</button>';
       if (r.days.length > 0) {
-        html += '<div style="overflow-x:auto;margin-top:14px"><table class="report-table"><tr><th>Date</th><th>Status</th><th>Sales</th><th>Expenses</th><th>Net</th></tr>' +
+        html += '<div style="overflow-x:auto;margin-top:14px"><table class="report-table"><tr><th>' + tr('dateLabel') + '</th><th>' + tr('statusLabel') + '</th><th>' + tr('salesLabel') + '</th><th>' + tr('expensesLabel') + '</th><th>' + tr('netLabel') + '</th></tr>' +
           r.days.map(function (d) {
-            return '<tr><td>' + d.date + '</td><td>' + d.status + '</td><td>₹' + d.sales.toFixed(2) + '</td><td>₹' + d.expenses.toFixed(2) + '</td><td>₹' + d.net.toFixed(2) + '</td></tr>';
+            return '<tr><td>' + d.date + '</td><td>' + trStatus(d.status) + '</td><td>₹' + d.sales.toFixed(2) + '</td><td>₹' + d.expenses.toFixed(2) + '</td><td>₹' + d.net.toFixed(2) + '</td></tr>';
           }).join('') + '</table></div>';
       }
       el.innerHTML = html;
     })
-    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') el.innerHTML = 'Error loading report.'; });
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') el.innerHTML = tr('errorLoadingReport'); });
   });
 }
 
@@ -1741,18 +2079,18 @@ function downloadFile(base64, filename) {
 }
 
 function downloadDayExcel(btn, date) {
-  withLoading(btn, 'Preparing...', function () {
+  withLoading(btn, tr('preparingLabel'), function () {
     return callAPI('exportDayToExcel', { token: session.token, date: date })
       .then(function (res) { downloadFile(res.base64, res.filename); })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Export failed: ' + err.message); });
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('exportFailed', { err: err.message })); });
   });
 }
 
 function downloadMonthExcel(btn, month) {
-  withLoading(btn, 'Preparing...', function () {
+  withLoading(btn, tr('preparingLabel'), function () {
     return callAPI('exportMonthToExcel', { token: session.token, yearMonth: month })
       .then(function (res) { downloadFile(res.base64, res.filename); })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Export failed: ' + err.message); });
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('exportFailed', { err: err.message })); });
   });
 }
 
@@ -1762,19 +2100,19 @@ function submitNewUser(btn) {
   var username = document.getElementById('newUserUsername').value.trim();
   var password = document.getElementById('newUserPassword').value;
   var role = document.getElementById('newUserRole').value;
-  if (!fullName || !username || !password) { showToast('Fill all fields.'); return; }
-  withLoading(btn, 'Adding...', function () {
+  if (!fullName || !username || !password) { showToast(tr('fillAllFields')); return; }
+  withLoading(btn, tr('addingLabel'), function () {
     return callAPI('addUser', { token: session.token, username: username, password: password, role: role, fullName: fullName })
       .then(function (res) {
         if (res.success) {
-          showToast('User added.');
+          showToast(tr('userAddedMsg'));
           document.getElementById('newUserFullName').value = '';
           document.getElementById('newUserUsername').value = '';
           document.getElementById('newUserPassword').value = '';
           loadUsers();
-        } else showToast(res.message);
+        } else showToast(trBackend(res.message));
       })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
 }
 
@@ -1783,15 +2121,16 @@ function loadUsers() {
     .then(function (list) {
       var el = document.getElementById('usersList');
       el.innerHTML = list.map(function (u) {
-        return '<div class="stat-row"><span>' + u.fullName + ' (' + u.username + ') — ' + u.role + '</span>' +
-          '<button class="btn small ' + (u.active ? 'danger' : '') + '" onclick="toggleUserActive(this, \'' + u.username + '\',' + (!u.active) + ')">' + (u.active ? 'Deactivate' : 'Activate') + '</button></div>';
+        var roleLabel = u.role === 'Manager' ? tr('managerRole') : tr('staffRole');
+        return '<div class="stat-row"><span>' + u.fullName + ' (' + u.username + ') — ' + roleLabel + '</span>' +
+          '<button class="btn small ' + (u.active ? 'danger' : '') + '" onclick="toggleUserActive(this, \'' + u.username + '\',' + (!u.active) + ')">' + (u.active ? tr('deactivateLabel') : tr('activateLabel')) + '</button></div>';
       }).join('');
     })
     .catch(function () {});
 }
 
 function toggleUserActive(btn, username, active) {
-  withLoading(btn, '...', function () {
+  withLoading(btn, tr('dotsLoading'), function () {
     return callAPI('setUserActive', { token: session.token, username: username, active: active })
       .then(function () { loadUsers(); })
       .catch(function () {});
@@ -1806,7 +2145,7 @@ function submitQuickItemForm(btn) {
   var price = document.getElementById('qiPrice').value;
   var unit = document.getElementById('qiUnit').value;
   var category = document.getElementById('qiCategory').value.trim();
-  if (!name || !price) { showToast('Enter item name and price.'); return; }
+  if (!name || !price) { showToast(tr('enterItemNamePrice')); return; }
 
   var isEdit = !!originalName;
   var action = isEdit ? 'updateQuickItem' : 'addQuickItem';
@@ -1814,16 +2153,16 @@ function submitQuickItemForm(btn) {
     ? { token: session.token, originalName: originalName, name: name, price: price, unit: unit, category: category }
     : { token: session.token, name: name, price: price, unit: unit, category: category };
 
-  withLoading(btn, isEdit ? 'Saving...' : 'Adding...', function () {
+  withLoading(btn, isEdit ? tr('savingLabel') : tr('addingLabel'), function () {
     return callAPI(action, params)
       .then(function (res) {
-        if (res && res.success === false) { showToast(res.message || 'Something went wrong.'); return; }
-        showToast(isEdit ? 'Quick item updated.' : 'Quick item added.');
+        if (res && res.success === false) { showToast(trBackend(res.message) || tr('somethingWentWrong')); return; }
+        showToast(isEdit ? tr('quickItemUpdated') : tr('quickItemAdded'));
         cancelQuickItemEdit();
         loadQuickItemsAdmin();
         loadQuickItems();
       })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast('Error: ' + err.message); });
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
 }
 
@@ -1833,8 +2172,8 @@ function startEditQuickItem(name, price, unit, category) {
   document.getElementById('qiPrice').value = price;
   document.getElementById('qiUnit').value = unit;
   document.getElementById('qiCategory').value = category || '';
-  document.getElementById('quickItemFormTitle').innerText = 'Edit Quick Item';
-  document.getElementById('qiSubmitBtn').innerText = 'Save Changes';
+  document.getElementById('quickItemFormTitle').innerText = tr('editQuickItemTitle');
+  document.getElementById('qiSubmitBtn').innerText = tr('qiSubmitSave');
   document.getElementById('qiCancelBtn').classList.remove('hidden');
   document.getElementById('addQuickItemCard').scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
@@ -1844,8 +2183,8 @@ function cancelQuickItemEdit() {
   document.getElementById('qiName').value = '';
   document.getElementById('qiPrice').value = '';
   document.getElementById('qiCategory').value = '';
-  document.getElementById('quickItemFormTitle').innerText = 'Add Quick Item';
-  document.getElementById('qiSubmitBtn').innerText = '+ Add Quick Item';
+  document.getElementById('quickItemFormTitle').innerText = tr('addQuickItem');
+  document.getElementById('qiSubmitBtn').innerText = tr('addQuickItemBtn');
   document.getElementById('qiCancelBtn').classList.add('hidden');
 }
 
@@ -1857,8 +2196,8 @@ function loadQuickItemsAdmin() {
         var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "'";
         return '<div class="stat-row"><span>' + it.ItemName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + '</span>' +
           '<span style="display:flex;gap:6px">' +
-          '<button class="btn small secondary" onclick="startEditQuickItem(' + argStr + ')">Edit</button>' +
-          '<button class="btn small danger" onclick="deleteQI(this, \'' + String(it.ItemName).replace(/'/g, "\\'") + '\')">Delete</button>' +
+          '<button class="btn small secondary" onclick="startEditQuickItem(' + argStr + ')">' + tr('editLabel') + '</button>' +
+          '<button class="btn small danger" onclick="deleteQI(this, \'' + String(it.ItemName).replace(/'/g, "\\'") + '\')">' + tr('deleteLabel') + '</button>' +
           '</span></div>';
       }).join('');
     })
@@ -1866,8 +2205,8 @@ function loadQuickItemsAdmin() {
 }
 
 function deleteQI(btn, name) {
-  if (!confirm('Delete quick item "' + name + '"?')) return;
-  withLoading(btn, 'Deleting...', function () {
+  if (!confirm(tr('confirmDeleteQI', { name: name }))) return;
+  withLoading(btn, tr('deletingLabel'), function () {
     return callAPI('deleteQuickItem', { token: session.token, name: name })
       .then(function () {
         if (document.getElementById('qiOriginalName').value === name) cancelQuickItemEdit();
@@ -1883,21 +2222,21 @@ function deleteQI(btn, name) {
 // section at a time, and shows a speech-bubble explanation.
 // ======================================================
 var tutorialBaseSteps = [
-  { tab: 'billing', billingStep: 'items', target: '#quickItemsCard', title: 'Quick Add', text: 'Tap any item card here to instantly add it to the bill — great for your most-sold items.' },
-  { tab: 'billing', billingStep: 'items', target: '#manualAddCard', title: 'Add Items Manually', text: "Don't have a quick item set up? Add anything by name, choose pieces or weight, and set the price." },
-  { tab: 'billing', billingStep: 'items', target: '#fabAddBtn', title: 'Items Added So Far', text: 'Every item you add pops open a card from the bottom showing what\'s in the bill. Tap this + anytime to check it yourself.' },
-  { tab: 'billing', billingStep: 'items', target: '#itemsContinueBar', title: 'Review & Pay', text: 'This bar keeps a running total. Tap it once all the items are in to move to customer details and payment.' },
-  { tab: 'billing', billingStep: 'checkout', target: '#currentBillReviewCard', title: 'Current Bill', text: 'A final look at everything in the bill. Tap ✕ next to any item to remove it before completing.' },
-  { tab: 'billing', billingStep: 'checkout', target: '#billDetailsCard', title: 'Customer & Payment', text: "Add the customer's name & phone (needed for credit sales), pick a payment mode, and apply a discount if needed." },
-  { tab: 'billing', billingStep: 'checkout', target: '#billTotalsCard', title: 'Total & Complete', text: 'Check the total, then hit Complete Bill to save it.' },
-  { tab: 'billing', target: '#bottomNav', title: 'Switch Between Sections', text: 'Use these bubbles to jump straight to Billing, Day and Udhaar — your most-used sections.' },
-  { tab: 'billing', target: '#hamburgerBtn', title: 'More Options', text: 'Reports (and Admin, if you\'re a Manager) live in here to keep the main bar uncluttered.' },
-  { tab: 'day', target: '#dayStatusCard', title: 'Open & Close Your Day', text: 'Start your day by entering opening cash. At the end, close the day and count your cash — QuickBill tells you if it matches.' },
-  { tab: 'day', target: '#expenseCard', title: 'Log Expenses', text: 'Spent money during the day — auto fare, packing bags? Log it here so your reports stay accurate.' },
-  { tab: 'credits', target: '#creditAddCard', title: 'Udhaar / Credit Ledger', text: 'Track money customers owe you. Add a "They owe more" entry when giving credit, or "They paid back" when they settle up.' },
-  { tab: 'credits', target: '#creditLedgerCard', title: 'Outstanding Balances', text: "See every customer's current balance at a glance." },
-  { tab: 'reports', target: '#dailyReportCard', title: 'Daily Report', text: 'Pick any date to see total sales, expenses and every bill from that day — download it as Excel too.' },
-  { tab: 'reports', target: '#monthlyReportCard', title: 'Monthly Report', text: "Get a full month's sales, expenses and net profit in one view." }
+  { tab: 'billing', billingStep: 'items', target: '#quickItemsCard', titleKey: 'tut1t', textKey: 'tut1x' },
+  { tab: 'billing', billingStep: 'items', target: '#manualAddCard', titleKey: 'tut2t', textKey: 'tut2x' },
+  { tab: 'billing', billingStep: 'items', target: '#fabAddBtn', titleKey: 'tut3t', textKey: 'tut3x' },
+  { tab: 'billing', billingStep: 'items', target: '#itemsContinueBar', titleKey: 'tut4t', textKey: 'tut4x' },
+  { tab: 'billing', billingStep: 'checkout', target: '#currentBillReviewCard', titleKey: 'tut5t', textKey: 'tut5x' },
+  { tab: 'billing', billingStep: 'checkout', target: '#billDetailsCard', titleKey: 'tut6t', textKey: 'tut6x' },
+  { tab: 'billing', billingStep: 'checkout', target: '#billTotalsCard', titleKey: 'tut7t', textKey: 'tut7x' },
+  { tab: 'billing', target: '#bottomNav', titleKey: 'tut8t', textKey: 'tut8x' },
+  { tab: 'billing', target: '#hamburgerBtn', titleKey: 'tut9t', textKey: 'tut9x' },
+  { tab: 'day', target: '#dayStatusCard', titleKey: 'tut10t', textKey: 'tut10x' },
+  { tab: 'day', target: '#expenseCard', titleKey: 'tut11t', textKey: 'tut11x' },
+  { tab: 'credits', target: '#creditAddCard', titleKey: 'tut12t', textKey: 'tut12x' },
+  { tab: 'credits', target: '#creditLedgerCard', titleKey: 'tut13t', textKey: 'tut13x' },
+  { tab: 'reports', target: '#dailyReportCard', titleKey: 'tut14t', textKey: 'tut14x' },
+  { tab: 'reports', target: '#monthlyReportCard', titleKey: 'tut15t', textKey: 'tut15x' }
 ];
 
 var tutorialActive = false;
@@ -1928,10 +2267,10 @@ function ensureTutorialOverlay() {
       '<h4 id="tutorialTitle"></h4>' +
       '<p id="tutorialText"></p>' +
       '<div class="tutorial-controls">' +
-        '<button class="tutorial-skip" onclick="endTutorial()">Skip tour</button>' +
+        '<button class="tutorial-skip" onclick="endTutorial()" id="tutorialSkipBtn">' + tr('tutorialSkip') + '</button>' +
         '<div class="tutorial-nav-btns">' +
-          '<button class="tutorial-btn-secondary" id="tutorialBackBtn" onclick="prevTutorialStep()">Back</button>' +
-          '<button class="tutorial-btn-primary" id="tutorialNextBtn" onclick="nextTutorialStep()">Next</button>' +
+          '<button class="tutorial-btn-secondary" id="tutorialBackBtn" onclick="prevTutorialStep()">' + tr('tutorialBack') + '</button>' +
+          '<button class="tutorial-btn-primary" id="tutorialNextBtn" onclick="nextTutorialStep()">' + tr('tutorialNext') + '</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -2004,11 +2343,13 @@ function positionTutorialStep() {
   bubbleEl.style.opacity = '0';
   setTimeout(function () { bubbleEl.style.opacity = '1'; }, 60);
 
-  document.getElementById('tutorialStepCount').innerText = 'Step ' + (tutorialStep + 1) + ' of ' + steps.length;
-  document.getElementById('tutorialTitle').innerText = step.title;
-  document.getElementById('tutorialText').innerText = step.text;
+  document.getElementById('tutorialStepCount').innerText = tr('tutorialStepCount', { n: tutorialStep + 1, total: steps.length });
+  document.getElementById('tutorialTitle').innerText = tr(step.titleKey);
+  document.getElementById('tutorialText').innerText = tr(step.textKey);
+  document.getElementById('tutorialBackBtn').innerText = tr('tutorialBack');
+  document.getElementById('tutorialSkipBtn').innerText = tr('tutorialSkip');
   document.getElementById('tutorialBackBtn').style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
-  document.getElementById('tutorialNextBtn').innerText = tutorialStep === steps.length - 1 ? 'Finish' : 'Next';
+  document.getElementById('tutorialNextBtn').innerText = tutorialStep === steps.length - 1 ? tr('tutorialFinish') : tr('tutorialNext');
 
   var target = document.querySelector(step.target);
   var bubble = document.getElementById('tutorialBubble');
