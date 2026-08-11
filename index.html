@@ -245,6 +245,58 @@
     .quick-item-btn .price { font-size: 11px; color: var(--muted); font-weight: 400; display: block; margin-top: 2px; }
     .quick-item-btn { position: relative; }
 
+    /* Quick Add search (fuzzy-filters the grid above) */
+    .quick-search-wrap { position: relative; margin-bottom: 10px; }
+    .quick-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; opacity: 0.5; pointer-events: none; }
+    .quick-search-input {
+      width: 100%; padding: 10px 34px; border-radius: 10px; border: 1.5px solid var(--border);
+      font-size: 14px; outline: none; background: var(--bg);
+    }
+    .quick-search-input:focus { border-color: var(--green); background: #fff; }
+    .quick-search-clear {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none;
+      color: var(--muted); font-size: 13px; cursor: pointer; padding: 6px 8px;
+    }
+
+    /* ---------- FLOATING "+" BUTTON & RECENTLY-ADDED SLIDING SHEET ---------- */
+    /* Pops up right after an item is added so staff get quick confirmation
+       without leaving the item-picking grid; the + reopens it any time. */
+    .fab-cart-btn {
+      position: fixed; right: 18px; bottom: 100px; z-index: 22; width: 52px; height: 52px; border-radius: 50%;
+      background: var(--green); color: #fff; border: none; font-size: 26px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 8px 20px rgba(22,163,74,0.4); align-items: center; justify-content: center;
+      line-height: 1; display: flex; transition: transform 0.15s ease;
+    }
+    .fab-cart-btn.hidden { display: none !important; }
+    .fab-cart-btn:active { transform: scale(0.92); }
+
+    .cart-sheet-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 39;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .cart-sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .cart-sheet {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--card);
+      border-radius: 20px 20px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,0.2);
+      max-width: 640px; margin: 0 auto; max-height: 42vh; display: flex; flex-direction: column;
+      transform: translateY(105%); transition: transform 0.28s cubic-bezier(.32,.72,0,1);
+    }
+    .cart-sheet.open { transform: translateY(0); }
+    .cart-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 3px; margin: 10px auto 2px; cursor: pointer; }
+    .cart-sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 8px; }
+    .cart-sheet-title { font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .cart-sheet-close { background: none; border: none; font-size: 16px; color: var(--muted); cursor: pointer; padding: 4px; }
+    .cart-sheet-list { flex: 1; overflow-y: auto; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+    .cart-sheet-footer {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px 14px;
+      border-top: 1px solid var(--border); background: var(--card); border-radius: 0 0 0 0;
+    }
+    .cart-sheet-total { line-height: 1.3; }
+    .cart-sheet-total .cs-count { display: block; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+    .cart-sheet-total .cs-amount { display: block; font-size: 17px; font-weight: 800; color: var(--green-dark); }
+    .cart-sheet-footer .btn { width: auto; margin: 0; padding: 11px 18px; }
+
     /* ---------- CUSTOMER AUTOCOMPLETE ---------- */
     .autocomplete-wrap { position: relative; }
     .autocomplete-dropdown {
@@ -447,7 +499,13 @@
       <div class="billing-step" id="billingStepItems">
         <div class="card" id="quickItemsCard">
           <h3>Quick Add</h3>
+          <div class="quick-search-wrap">
+            <span class="quick-search-icon">🔍</span>
+            <input type="text" id="quickItemSearch" class="quick-search-input" placeholder="Search items…" oninput="filterQuickItems(this.value)">
+            <button type="button" class="quick-search-clear hidden" id="quickSearchClear" onclick="clearQuickItemSearch()">✕</button>
+          </div>
           <div class="quick-grid" id="quickItemsGrid"></div>
+          <div class="empty-state hidden" id="quickSearchNoResults">No items match "<span id="quickSearchNoResultsTerm"></span>"</div>
         </div>
 
         <div class="card" id="manualAddCard">
@@ -489,6 +547,25 @@
           </div>
           <button class="btn" id="goToCheckoutBtn" onclick="switchBillingStep('checkout')">Review &amp; Pay →</button>
         </div>
+
+        <!-- Recently-added sliding sheet: pops up on every add, or opens on demand via the + -->
+        <div class="cart-sheet-backdrop" id="cartSheetBackdrop" onclick="closeCartSheet()"></div>
+        <div class="cart-sheet" id="cartSheet">
+          <div class="cart-sheet-handle" onclick="closeCartSheet()"></div>
+          <div class="cart-sheet-header">
+            <div class="cart-sheet-title">Recently Added</div>
+            <button type="button" class="cart-sheet-close" onclick="closeCartSheet()">✕</button>
+          </div>
+          <div class="cart-sheet-list" id="cartSheetList"></div>
+          <div class="cart-sheet-footer">
+            <div class="cart-sheet-total">
+              <span class="cs-count" id="cartSheetCount">0 items</span>
+              <span class="cs-amount" id="cartSheetTotal">₹0.00</span>
+            </div>
+            <button class="btn small" onclick="switchBillingStep('checkout')">Review &amp; Pay →</button>
+          </div>
+        </div>
+        <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openCartSheet()" aria-label="Show recently added items">+</button>
       </div>
 
       <!-- STEP 2: REVIEW & PAY -->
@@ -1049,14 +1126,75 @@ function loadTodayExpenses() {
 function loadQuickItems() {
   callAPI('getQuickItems', { token: session.token })
     .then(function (items) {
-      var grid = document.getElementById('quickItemsGrid');
-      if (items.length === 0) { grid.innerHTML = '<div class="empty-state">No quick items set up yet</div>'; return; }
-      grid.innerHTML = items.map(function (it, idx) {
-        return '<div class="quick-item-btn" onclick="quickAdd(' + idx + ')">' + it.ItemName + '<span class="price">₹' + it.DefaultPrice + '/' + it.Unit + '</span></div>';
-      }).join('');
       window._quickItemsCache = items;
+      renderQuickItemsGrid('');
     })
     .catch(function () {});
+}
+
+// ---------- QUICK ADD SEARCH (fuzzy) ----------
+// Lets staff type a few letters — even out of order — instead of scrolling a
+// long Quick Add grid. Exact/prefix/substring matches rank above loose
+// subsequence matches; anything that doesn't contain the typed letters in
+// order is dropped.
+function fuzzyScore(query, text) {
+  query = query.toLowerCase().trim();
+  text = text.toLowerCase();
+  if (!query) return 0;
+  if (text === query) return 1000;
+  if (text.indexOf(query) === 0) return 500;
+  if (text.indexOf(query) !== -1) return 300;
+  var ti = 0, score = 0, streak = 0;
+  for (var qi = 0; qi < query.length; qi++) {
+    var ch = query[qi], found = false;
+    while (ti < text.length) {
+      if (text[ti] === ch) { score += 10 + streak; streak++; ti++; found = true; break; }
+      streak = 0; ti++;
+    }
+    if (!found) return -1;
+  }
+  return score;
+}
+
+function renderQuickItemsGrid(query) {
+  var grid = document.getElementById('quickItemsGrid');
+  var noResultsEl = document.getElementById('quickSearchNoResults');
+  var items = window._quickItemsCache || [];
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No quick items set up yet</div>';
+    if (noResultsEl) noResultsEl.classList.add('hidden');
+    return;
+  }
+  var q = (query || '').trim();
+  var ranked = items
+    .map(function (it, idx) { return { it: it, idx: idx, score: fuzzyScore(q, it.ItemName) }; })
+    .filter(function (r) { return r.score >= 0; });
+  if (q) ranked.sort(function (a, b) { return b.score - a.score; });
+
+  var noMatches = !!q && ranked.length === 0;
+  if (noResultsEl) {
+    noResultsEl.classList.toggle('hidden', !noMatches);
+    var termEl = document.getElementById('quickSearchNoResultsTerm');
+    if (termEl) termEl.textContent = q;
+  }
+  grid.classList.toggle('hidden', noMatches);
+  grid.innerHTML = ranked.map(function (r) {
+    var it = r.it;
+    return '<div class="quick-item-btn" onclick="quickAdd(' + r.idx + ')">' + it.ItemName + '<span class="price">₹' + it.DefaultPrice + '/' + it.Unit + '</span></div>';
+  }).join('');
+}
+
+function filterQuickItems(value) {
+  var clearBtn = document.getElementById('quickSearchClear');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !value);
+  renderQuickItemsGrid(value);
+}
+
+function clearQuickItemSearch() {
+  var input = document.getElementById('quickItemSearch');
+  input.value = '';
+  filterQuickItems('');
+  input.focus();
 }
 
 function quickAdd(idx) {
@@ -1073,6 +1211,43 @@ function quickAdd(idx) {
     currentBillItems.push({ name: it.ItemName, qty: qty, weight: '', unit: 'piece', price: it.DefaultPrice, lineTotal: lineTotal2 });
   }
   renderBillItems();
+  openCartSheet();
+}
+
+// ---------- RECENTLY-ADDED SLIDING SHEET ----------
+// Pops up automatically from quickAdd() above; the floating + (fabAddBtn)
+// opens it on demand too (e.g. to check/edit the cart before any quick-add).
+function renderCartSheet() {
+  var el = document.getElementById('cartSheetList');
+  if (!el) return;
+  if (currentBillItems.length === 0) {
+    el.innerHTML = '<div class="empty-state">No items added yet</div>';
+  } else {
+    // Most-recently-added item on top; each row still keeps its real index
+    // into currentBillItems so the ✕ button removes the right one.
+    el.innerHTML = currentBillItems.map(function (it, idx) { return { it: it, idx: idx }; })
+      .reverse()
+      .map(function (entry) {
+        var it = entry.it, idx = entry.idx;
+        var meta = it.qty ? (it.qty + ' × ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
+        return '<div class="bill-item-row"><div class="info"><div class="name">' + it.name + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + it.lineTotal.toFixed(2) + '</div><button class="del-btn" onclick="removeBillItem(' + idx + ')">✕</button></div>';
+      }).join('');
+  }
+  var count = currentBillItems.length;
+  var total = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
+  document.getElementById('cartSheetCount').innerText = count + (count === 1 ? ' item' : ' items');
+  document.getElementById('cartSheetTotal').innerText = '₹' + total.toFixed(2);
+}
+
+function openCartSheet() {
+  renderCartSheet();
+  document.getElementById('cartSheet').classList.add('open');
+  document.getElementById('cartSheetBackdrop').classList.add('open');
+}
+
+function closeCartSheet() {
+  document.getElementById('cartSheet').classList.remove('open');
+  document.getElementById('cartSheetBackdrop').classList.remove('open');
 }
 
 // ---------- CUSTOMER LOOKUP / AUTOCOMPLETE ----------
@@ -1182,6 +1357,8 @@ function renderBillItems() {
   // Read-only preview, shown on the Add Items step so staff can see what's
   // already in the cart without leaving the item-picking screen
   document.getElementById('billItemsListPreview').innerHTML = currentBillItems.length === 0 ? emptyHtml : rowsHtml;
+  // Keep the sliding sheet in sync too, in case it's already open
+  renderCartSheet();
 
   updateTotals();
 }
