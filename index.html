@@ -535,11 +535,6 @@
           <button class="btn secondary" onclick="addManualItem()">+ Add to Bill</button>
         </div>
 
-        <div class="card" id="currentBillCard">
-          <h3>Items Added So Far</h3>
-          <div id="billItemsListPreview"><div class="empty-state">No items added yet</div></div>
-        </div>
-
         <div class="sticky-continue-bar hidden" id="itemsContinueBar">
           <div class="cb-info">
             <div class="cb-count" id="itemsContinueCount">0 items</div>
@@ -1333,6 +1328,7 @@ function addManualItem() {
   }
   currentBillItems.push(item);
   renderBillItems();
+  openCartSheet();
   document.getElementById('manualName').value = '';
   document.getElementById('manualQty').value = 1;
   document.getElementById('manualPricePiece').value = '';
@@ -1354,9 +1350,6 @@ function renderBillItems() {
 
   // Full editable list, shown on the Review & Pay step
   document.getElementById('billItemsList').innerHTML = currentBillItems.length === 0 ? emptyHtml : rowsHtml;
-  // Read-only preview, shown on the Add Items step so staff can see what's
-  // already in the cart without leaving the item-picking screen
-  document.getElementById('billItemsListPreview').innerHTML = currentBillItems.length === 0 ? emptyHtml : rowsHtml;
   // Keep the sliding sheet in sync too, in case it's already open
   renderCartSheet();
 
@@ -1864,7 +1857,7 @@ function deleteQI(btn, name) {
 var tutorialBaseSteps = [
   { tab: 'billing', billingStep: 'items', target: '#quickItemsCard', title: 'Quick Add', text: 'Tap any item card here to instantly add it to the bill — great for your most-sold items.' },
   { tab: 'billing', billingStep: 'items', target: '#manualAddCard', title: 'Add Items Manually', text: "Don't have a quick item set up? Add anything by name, choose pieces or weight, and set the price." },
-  { tab: 'billing', billingStep: 'items', target: '#currentBillCard', title: 'Items Added So Far', text: 'Everything you add shows up here as you go. When you\'re done adding items, tap "Review & Pay" below.' },
+  { tab: 'billing', billingStep: 'items', target: '#fabAddBtn', title: 'Items Added So Far', text: 'Every item you add pops open a card from the bottom showing what\'s in the bill. Tap this + anytime to check it yourself.' },
   { tab: 'billing', billingStep: 'items', target: '#itemsContinueBar', title: 'Review & Pay', text: 'This bar keeps a running total. Tap it once all the items are in to move to customer details and payment.' },
   { tab: 'billing', billingStep: 'checkout', target: '#currentBillReviewCard', title: 'Current Bill', text: 'A final look at everything in the bill. Tap ✕ next to any item to remove it before completing.' },
   { tab: 'billing', billingStep: 'checkout', target: '#billDetailsCard', title: 'Customer & Payment', text: "Add the customer's name & phone (needed for credit sales), pick a payment mode, and apply a discount if needed." },
