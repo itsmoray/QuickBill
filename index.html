@@ -43,7 +43,7 @@
     }
     [data-theme="dark"] .pill.void, [data-theme="dark"] .pill.notopened { background: #3F1D1D; color: var(--red); }
     [data-theme="dark"] .pill.credit { background: #3F2E10; color: var(--amber); }
-    [data-theme="dark"] .autocomplete-dropdown, [data-theme="dark"] .hamburger-menu, [data-theme="dark"] .settings-modal { background: var(--card); }
+    [data-theme="dark"] .autocomplete-dropdown, [data-theme="dark"] .hamburger-menu, [data-theme="dark"] .settings-panel { background: var(--card); }
     [data-theme="dark"] .field input, [data-theme="dark"] .field select,
     [data-theme="dark"] .field-inline input, [data-theme="dark"] .field-inline select,
     [data-theme="dark"] .quick-search-input, [data-theme="dark"] .tag-btn, [data-theme="dark"] .autocomplete-row:hover {
@@ -397,27 +397,27 @@
     .toggle-switch input:checked + .toggle-slider { background: var(--green); }
     .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
 
-    /* ---------- SETTINGS MODAL ---------- */
+    /* ---------- SETTINGS PANEL (slides in from the side, same pattern as the hamburger menu) ---------- */
     .settings-backdrop {
       position: fixed; inset: 0; background: rgba(15,23,42,0); z-index: 94; transition: background 0.28s ease;
     }
     .settings-backdrop.hidden { display: none; }
     .settings-backdrop.open { background: rgba(15,23,42,0.45); }
-    .settings-modal {
-      position: fixed; left: 16px; right: 16px; top: 50%; max-width: 400px; margin: 0 auto; background: var(--card);
-      border-radius: 18px; z-index: 95; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-      transform: translateY(-50%) scale(0.92); opacity: 0; pointer-events: none;
-      transition: transform 0.22s cubic-bezier(.2,.8,.2,1), opacity 0.22s ease;
+    .settings-panel {
+      position: fixed; top: 0; right: 0; bottom: 0; width: min(78vw, 320px); background: var(--card); z-index: 95;
+      box-shadow: -8px 0 30px rgba(0,0,0,0.2); transform: translateX(100%); transition: transform 0.32s cubic-bezier(.2,.8,.2,1);
+      padding: 20px 16px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto;
     }
-    .settings-modal.open { transform: translateY(-50%) scale(1); opacity: 1; pointer-events: auto; }
-    .settings-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .settings-modal-header h3 { margin: 0; font-size: 17px; color: var(--text); }
-    .settings-close-btn { background: var(--bg); border: none; color: var(--muted); font-size: 16px; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
+    .settings-panel.open { transform: translateX(0); }
+    .settings-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .settings-panel-header h3 { margin: 0; font-size: 17px; color: var(--text); }
+    .settings-close-btn { background: var(--bg); border: none; color: var(--muted); font-size: 16px; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; flex-shrink: 0; }
     .settings-row {
       display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 4px;
       border-bottom: 1px solid var(--border);
     }
     .settings-row:last-child { border-bottom: none; }
+    .settings-row.disabled { opacity: 0.45; pointer-events: none; }
     .settings-row-info { display: flex; align-items: center; gap: 12px; }
     .settings-row-info .icon {
       font-size: 16px; width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center;
@@ -506,11 +506,14 @@
 
   </style>
   <script>
-    // Applied immediately (before paint) so dark-mode users never see a light flash.
+    // Applied immediately (before paint) so theme users never see a flash of the wrong mode.
+    // Mode 'auto' (default) follows the phone's system setting; 'manual' uses the saved override.
     (function () {
-      if (localStorage.getItem('quickbill_theme') === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
+      var mode = localStorage.getItem('quickbill_theme_mode') || 'auto';
+      var isDark = mode === 'manual'
+        ? localStorage.getItem('quickbill_theme') === 'dark'
+        : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
     })();
   </script>
 </head>
@@ -601,14 +604,27 @@
       </button>
     </div>
 
-    <!-- Settings modal -->
+    <!-- Settings panel: slides in from the side, same pattern as the hamburger menu -->
     <div class="settings-backdrop hidden" id="settingsBackdrop" onclick="closeSettingsModal()"></div>
-    <div class="settings-modal" id="settingsModal">
-      <div class="settings-modal-header">
+    <div class="settings-panel" id="settingsModal">
+      <div class="settings-panel-header">
         <h3 data-i18n="settings">Settings</h3>
         <button class="settings-close-btn" onclick="closeSettingsModal()">✕</button>
       </div>
       <div class="settings-row">
+        <div class="settings-row-info">
+          <span class="icon">📱</span>
+          <div>
+            <div class="settings-row-title" data-i18n="matchSystem">Match System</div>
+            <div class="settings-row-sub" data-i18n="matchSystemSub">Follow your phone's setting</div>
+          </div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="matchSystemSwitch" onchange="toggleMatchSystem()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-row" id="darkModeRow">
         <div class="settings-row-info">
           <span class="icon">🌓</span>
           <div>
@@ -907,6 +923,7 @@ var I18N = {
     tutorial: 'Tutorial', dayOpen: 'Day Open', dayClosed: 'Day Closed', more: 'More', reports: 'Reports', admin: 'Admin',
     language: 'Language', menuSectionApp: 'App', menuSectionPreferences: 'Preferences',
     settings: 'Settings', darkMode: 'Dark Mode', darkModeOn: 'Currently dark', lightModeOn: 'Currently light',
+    matchSystem: 'Match System', matchSystemSub: "Follow your phone's setting", followingSystem: "Following your phone's setting",
     // Billing
     newBill: 'New Bill', addItems: 'Add Items', reviewPay: 'Review & Pay', quickAdd: 'Quick Add',
     searchItems: 'Search items…', noItemsMatchPrefix: 'No items match "', quote: '"',
@@ -1029,6 +1046,7 @@ var I18N = {
     tutorial: 'ട്യൂട്ടോറിയൽ', dayOpen: 'ദിവസം തുറന്നു', dayClosed: 'ദിവസം അടച്ചു', more: 'കൂടുതൽ', reports: 'റിപ്പോർട്ടുകൾ', admin: 'അഡ്മിൻ',
     language: 'ഭാഷ', menuSectionApp: 'ആപ്പ്', menuSectionPreferences: 'ക്രമീകരണങ്ങൾ',
     settings: 'സെറ്റിംഗ്സ്', darkMode: 'ഡാർക്ക് മോഡ്', darkModeOn: 'ഇപ്പോൾ ഡാർക്ക് ആണ്', lightModeOn: 'ഇപ്പോൾ ലൈറ്റ് ആണ്',
+    matchSystem: 'സിസ്റ്റം സെറ്റിംഗ് പിന്തുടരുക', matchSystemSub: 'നിങ്ങളുടെ ഫോണിന്റെ സെറ്റിംഗ് അനുസരിക്കും', followingSystem: 'ഫോണിന്റെ സെറ്റിംഗ് അനുസരിക്കുന്നു',
     newBill: 'പുതിയ ബിൽ', addItems: 'ഇനങ്ങൾ ചേർക്കുക', reviewPay: 'പരിശോധിച്ച് പണം നൽകുക', quickAdd: 'ക്വിക്ക് ആഡ്',
     searchItems: 'ഇനങ്ങൾ തിരയുക…', noItemsMatchPrefix: '"', quote: '" എന്നതുമായി പൊരുത്തപ്പെടുന്ന ഇനങ്ങളില്ല',
     addItemManually: 'ഇനം സ്വയം ചേർക്കുക', itemName: 'ഇനത്തിന്റെ പേര്', egOnion: 'ഉദാ: ഉള്ളി',
@@ -1229,44 +1247,82 @@ function toggleLanguage() {
   refreshDynamicContentForLanguage();
 }
 
-// ---------- SETTINGS MODAL & DARK MODE ----------
+// ---------- SETTINGS PANEL & DARK MODE ----------
+// Theme mode is either 'auto' (follow the phone's system setting, default) or
+// 'manual' (user picked light/dark explicitly in Settings, overriding the system).
+function getThemeMode() {
+  return localStorage.getItem('quickbill_theme_mode') || 'auto';
+}
+function systemPrefersDark() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+function effectiveThemeIsDark() {
+  return getThemeMode() === 'manual' ? localStorage.getItem('quickbill_theme') === 'dark' : systemPrefersDark();
+}
+function applyTheme() {
+  if (effectiveThemeIsDark()) document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+}
+
 function openSettingsModal() {
   closeHamburgerMenu();
-  var modal = document.getElementById('settingsModal');
+  var panel = document.getElementById('settingsModal');
   var backdrop = document.getElementById('settingsBackdrop');
   backdrop.classList.remove('hidden');
   requestAnimationFrame(function () {
     backdrop.classList.add('open');
-    modal.classList.add('open');
+    panel.classList.add('open');
   });
 }
 
 function closeSettingsModal() {
-  var modal = document.getElementById('settingsModal');
+  var panel = document.getElementById('settingsModal');
   var backdrop = document.getElementById('settingsBackdrop');
-  modal.classList.remove('open');
+  panel.classList.remove('open');
   backdrop.classList.remove('open');
   setTimeout(function () { backdrop.classList.add('hidden'); }, 260);
 }
 
 function applyThemeUI() {
-  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  var sw = document.getElementById('darkModeSwitch');
+  var isAuto = getThemeMode() === 'auto';
+  var isDark = effectiveThemeIsDark();
+  var matchSw = document.getElementById('matchSystemSwitch');
+  var darkSw = document.getElementById('darkModeSwitch');
+  var darkRow = document.getElementById('darkModeRow');
   var sub = document.getElementById('darkModeSub');
-  if (sw) sw.checked = isDark;
-  if (sub) sub.textContent = isDark ? tr('darkModeOn') : tr('lightModeOn');
+  if (matchSw) matchSw.checked = isAuto;
+  if (darkSw) darkSw.checked = isDark;
+  if (darkRow) darkRow.classList.toggle('disabled', isAuto);
+  if (sub) sub.textContent = isAuto ? tr('followingSystem') : (isDark ? tr('darkModeOn') : tr('lightModeOn'));
+}
+
+function toggleMatchSystem() {
+  var isAuto = document.getElementById('matchSystemSwitch').checked;
+  if (isAuto) {
+    localStorage.setItem('quickbill_theme_mode', 'auto');
+  } else {
+    // Switching off "match system" — start the manual override from whatever
+    // theme is currently showing, so the screen doesn't jump unexpectedly.
+    localStorage.setItem('quickbill_theme', effectiveThemeIsDark() ? 'dark' : 'light');
+    localStorage.setItem('quickbill_theme_mode', 'manual');
+  }
+  applyTheme();
+  applyThemeUI();
 }
 
 function toggleDarkMode() {
   var isDark = document.getElementById('darkModeSwitch').checked;
-  if (isDark) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    localStorage.setItem('quickbill_theme', 'dark');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-    localStorage.setItem('quickbill_theme', 'light');
-  }
+  localStorage.setItem('quickbill_theme', isDark ? 'dark' : 'light');
+  localStorage.setItem('quickbill_theme_mode', 'manual');
+  applyTheme();
   applyThemeUI();
+}
+
+// Live system theme changes only take effect while mode is 'auto'.
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+    if (getThemeMode() === 'auto') { applyTheme(); applyThemeUI(); }
+  });
 }
 
 // Tutorial launched from the hamburger menu — close the drawer first so the
