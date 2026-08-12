@@ -29,6 +29,7 @@
       --radius: 14px;
       --nav-glass: rgba(255,255,255,0.92);
       --nav-glass-border: rgba(255,255,255,0.6);
+      --topbar-h: 62px;
     }
     /* ---------- DARK MODE ---------- */
     [data-theme="dark"] {
@@ -166,10 +167,13 @@
     .success-msg { color: var(--green-dark); font-size: 13px; margin-top: 10px; }
 
     /* ---------- APP SHELL ---------- */
-    #appScreen { display: none; min-height: 100vh; padding-bottom: 112px; }
+    /* padding-top reserves room for the topbar, which is position:fixed
+       (not sticky) so it can never be scrolled out of view. */
+    #appScreen { display: none; min-height: 100vh; padding-bottom: 112px; padding-top: var(--topbar-h); }
     .topbar {
       background: var(--green); color: #fff; padding: 14px 16px; display: flex; justify-content: space-between;
-      align-items: center; position: sticky; top: 0; z-index: 10; gap: 10px;
+      align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 30; gap: 10px;
+      min-height: var(--topbar-h); box-sizing: border-box;
     }
     .topbar .title { font-weight: 700; font-size: 16px; }
     .topbar .sub { font-size: 12px; opacity: 0.85; }
@@ -536,20 +540,36 @@
          page content room for it. No JS changes needed: it's the same
          #bottomNav element and the same switchTab() calls, just restyled. */
       #appScreen { padding-bottom: 0; }
-      #tabContentWrapper { padding-left: 84px; }
+      #tabContentWrapper { padding-left: 116px; }
+      /* Floating sidebar: the same glass bubble-bar look as the mobile
+         bottom nav, just rotated into a column and docked under the
+         topbar with room to breathe on every side instead of a flush
+         edge-to-edge panel. */
       .bottom-nav {
-        left: 0; right: auto; top: 62px; bottom: 0; margin: 0;
+        left: 16px; right: auto; top: calc(var(--topbar-h) + 16px); bottom: 16px; margin: 0;
         width: 84px; max-width: 84px; flex-direction: column; align-items: stretch;
-        justify-content: flex-start; gap: 6px; padding: 18px 8px;
-        border-radius: 0; border: none; border-right: 1px solid var(--border);
-        background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.04);
+        justify-content: flex-start; gap: 8px; padding: 14px 8px;
+        border-radius: 22px; border: 1px solid var(--nav-glass-border);
+        background: var(--nav-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.05);
       }
-      .nav-btn { width: 100%; }
+      /* Each button gets its own bounding box so the sidebar reads as a
+         set of distinct controls, not a stretch of empty column — and
+         flex is reset to auto so the three buttons sit close together
+         near the top instead of stretching to fill the sidebar's height
+         (that stretch was the mobile flex:1 rule leaking into the
+         column layout). */
+      .nav-btn {
+        width: 100%; flex: 0 0 auto; border: 1px solid transparent; border-radius: 14px;
+        padding: 10px 4px; transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      }
+      .nav-btn:hover { background: var(--bg); border-color: var(--border); }
+      .nav-btn.active { background: var(--green-light); border-color: var(--nav-glass-border); }
+      .nav-btn.active .icon-wrap { background: none; transform: none; }
 
       /* Keep the manual-add modal centered in the content area (to the
          right of the sidebar) rather than the full viewport */
-      .manual-add-sheet { left: calc(50% + 42px); }
+      .manual-add-sheet { left: calc(50% + 58px); }
 
       /* ---- Billing: split-screen dashboard ----
          #billingStepItems and #billingStepCheckout are normally toggled by
@@ -565,7 +585,8 @@
         display: block !important;
       }
       #billingStepCheckout {
-        position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; padding-right: 2px;
+        position: sticky; top: calc(var(--topbar-h) + 20px);
+        max-height: calc(100vh - var(--topbar-h) - 40px); overflow-y: auto; padding-right: 2px;
       }
       /* Mobile-only step-navigation chrome — not needed when both panes show at once */
       #billingSubnav, #itemsContinueBar, .back-to-items-link, #fabAddBtn { display: none !important; }
