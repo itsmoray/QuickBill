@@ -514,6 +514,96 @@
     .tutorial-btn-secondary { background: var(--bg); color: var(--text); }
     .tutorial-btn-primary { background: var(--green); color: #fff; }
 
+    /* ---------- DESKTOP / LAPTOP LAYOUT ----------
+       Everything above this point is untouched — phones and small screens
+       keep the exact single-column, step-by-step flow they already have.
+       From here down, wider screens get a proper two-pane billing dashboard:
+       items/search on the left, a running cart + checkout on the right. */
+
+    .desktop-manual-add-btn { display: none; } /* mobile uses the floating + button instead */
+
+    @media (min-width: 900px) {
+      /* Give every tab some breathing room instead of a phone-width column
+         floating in the middle of a wide screen. */
+      .tab-content { max-width: 900px; padding: 28px 32px 56px; }
+      #tab-billing.tab-content { max-width: 1200px; }
+
+      /* ---- Left sidebar nav ----
+         The floating bottom bubble bar is a phone pattern — on a laptop it
+         just sits on top of whatever's at the bottom of the right-hand
+         column (it was covering the Complete Bill button). Turn it into a
+         slim left sidebar instead, docked under the topbar, and give the
+         page content room for it. No JS changes needed: it's the same
+         #bottomNav element and the same switchTab() calls, just restyled. */
+      #appScreen { padding-bottom: 0; }
+      #tabContentWrapper { padding-left: 84px; }
+      .bottom-nav {
+        left: 0; right: auto; top: 62px; bottom: 0; margin: 0;
+        width: 84px; max-width: 84px; flex-direction: column; align-items: stretch;
+        justify-content: flex-start; gap: 6px; padding: 18px 8px;
+        border-radius: 0; border: none; border-right: 1px solid var(--border);
+        background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.04);
+      }
+      .nav-btn { width: 100%; }
+
+      /* Keep the manual-add modal centered in the content area (to the
+         right of the sidebar) rather than the full viewport */
+      .manual-add-sheet { left: calc(50% + 42px); }
+
+      /* ---- Billing: split-screen dashboard ----
+         #billingStepItems and #billingStepCheckout are normally toggled by
+         switchBillingStep() via the .hidden class for the mobile step flow.
+         On desktop we want both visible at once, side by side, so we force
+         them on here — no JS changes needed, the step-switching code simply
+         becomes a no-op for visibility (it still drives the mobile subnav
+         state harmlessly in the background). */
+      #billingGrid {
+        display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; align-items: start;
+      }
+      #billingStepItems, #billingStepCheckout.billing-step {
+        display: block !important;
+      }
+      #billingStepCheckout {
+        position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; padding-right: 2px;
+      }
+      /* Mobile-only step-navigation chrome — not needed when both panes show at once */
+      #billingSubnav, #itemsContinueBar, .back-to-items-link, #fabAddBtn { display: none !important; }
+      /* "Items Added So Far" on the left duplicates the "Current Bill" card
+         that's now always visible in the right-hand cart column */
+      #itemsAddedSoFarCard { display: none; }
+
+      /* Quick Add grid gets more breathing room in the wider left pane */
+      #tab-billing .quick-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+
+      /* Inline "+ Add Item Manually" button replaces the mobile floating + */
+      .desktop-manual-add-btn { display: block; margin-top: 12px; }
+
+      /* The manual-add sheet becomes a centered modal card instead of a
+         bottom sheet spanning the full width */
+      .manual-add-sheet {
+        left: 50%; right: auto; bottom: auto; top: 50%; width: 460px; max-width: 90vw;
+        max-height: 80vh; border-radius: 18px;
+        transform: translate(-50%, -46%) scale(0.97); opacity: 0;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+        transition: transform 0.22s cubic-bezier(.32,.72,0,1), opacity 0.18s ease;
+      }
+      .manual-add-sheet.open { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      .manual-add-sheet-handle { display: none; } /* drag handle only makes sense as a bottom sheet */
+
+      /* Soft dimmed backdrop behind the manual-add modal. Progressive
+         enhancement via :has() — on browsers without it, the modal simply
+         appears without a backdrop, same as before. */
+      body:has(#manualAddCard.open)::after {
+        content: ''; position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 41;
+      }
+    }
+
+    @media (min-width: 1180px) {
+      #tab-billing.tab-content { max-width: 1320px; }
+      #billingGrid { grid-template-columns: minmax(0, 1fr) 440px; }
+    }
+
   </style>
   <script>
     // Applied immediately (before paint) so theme users never see a flash of the wrong mode.
@@ -665,6 +755,12 @@
         </button>
       </div>
 
+      <!-- On phones, JS (switchBillingStep) toggles which one of these two
+           is visible. On wider screens (see the @media block below) both
+           become visible at once inside a two-column grid — the CSS just
+           overrides display:none on .hidden for these two directly, no JS
+           changes needed. -->
+      <div class="billing-grid" id="billingGrid">
       <!-- STEP 1: ADD ITEMS -->
       <div class="billing-step" id="billingStepItems">
         <div class="card" id="quickItemsCard">
@@ -676,6 +772,7 @@
           </div>
           <div class="quick-grid" id="quickItemsGrid"></div>
           <div class="empty-state hidden" id="quickSearchNoResults"><span data-i18n="noItemsMatchPrefix">No items match "</span><span id="quickSearchNoResultsTerm"></span><span data-i18n="quote">"</span></div>
+          <button type="button" class="btn secondary desktop-manual-add-btn" onclick="openManualAddCard()" data-i18n="addItemManually">+ Add Item Manually</button>
         </div>
 
         <!-- Persistent inline list of what's in the bill so far — replaces the
@@ -748,6 +845,7 @@
           <button class="btn" id="completeBillBtn" onclick="completeBill()" data-i18n="completeBill">Complete Bill</button>
         </div>
       </div>
+      </div><!-- /#billingGrid -->
 
       <div class="card hidden" id="lastBillCard">
         <h3 data-i18n="lastBill">Last Bill</h3>
