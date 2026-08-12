@@ -27,12 +27,14 @@
       --muted: #6B7280;
       --border: #E5E7EB;
       --radius: 14px;
+      --nav-glass: rgba(255,255,255,0.92);
+      --nav-glass-border: rgba(255,255,255,0.6);
     }
     /* ---------- DARK MODE ---------- */
     [data-theme="dark"] {
       --green: #22C55E;
       --green-dark: #4ADE80;
-      --green-light: #14532D;
+      --green-light: #163A25;
       --red: #F87171;
       --amber: #FBBF24;
       --bg: #111827;
@@ -40,16 +42,24 @@
       --text: #F3F4F6;
       --muted: #9CA3AF;
       --border: #374151;
+      --nav-glass: rgba(31,41,55,0.88);
+      --nav-glass-border: rgba(255,255,255,0.08);
     }
     [data-theme="dark"] .pill.void, [data-theme="dark"] .pill.notopened { background: #3F1D1D; color: var(--red); }
     [data-theme="dark"] .pill.credit { background: #3F2E10; color: var(--amber); }
-    [data-theme="dark"] .autocomplete-dropdown, [data-theme="dark"] .hamburger-menu, [data-theme="dark"] .settings-panel { background: var(--card); }
+    [data-theme="dark"] .autocomplete-dropdown, [data-theme="dark"] .hamburger-menu, [data-theme="dark"] .settings-panel {
+      background: var(--card);
+    }
     [data-theme="dark"] .field input, [data-theme="dark"] .field select,
     [data-theme="dark"] .field-inline input, [data-theme="dark"] .field-inline select,
-    [data-theme="dark"] .quick-search-input, [data-theme="dark"] .tag-btn, [data-theme="dark"] .autocomplete-row:hover {
+    [data-theme="dark"] .quick-search-input, [data-theme="dark"] .quick-search-input:focus,
+    [data-theme="dark"] .tag-btn, [data-theme="dark"] .autocomplete-row:hover {
       background: var(--bg); color: var(--text);
     }
     [data-theme="dark"] .login-card { background: var(--card); }
+    [data-theme="dark"] .day-badge.open { background: var(--card); }
+    [data-theme="dark"] .tutorial-target-highlight { outline-color: var(--card); }
+    [data-theme="dark"] .btn.secondary { background: var(--bg); color: var(--green-dark); border-color: var(--green-dark); }
     * { box-sizing: border-box; }
     body {
       margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -117,7 +127,7 @@
       display: flex; align-items: center; justify-content: center;
     }
     .action-overlay-card {
-      background: #fff; border-radius: 16px; padding: 22px 28px; display: flex; flex-direction: column;
+      background: var(--card); border-radius: 16px; padding: 22px 28px; display: flex; flex-direction: column;
       align-items: center; gap: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); min-width: 160px;
     }
     .action-overlay-card .spinner { margin: 0; }
@@ -195,8 +205,8 @@
     /* ---------- Bottom nav: floating bubble bar ---------- */
     .bottom-nav {
       position: fixed; left: 12px; right: 12px; bottom: 22px; z-index: 20;
-      background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.6); border-radius: 28px; padding: 6px;
+      background: var(--nav-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--nav-glass-border); border-radius: 28px; padding: 6px;
       display: flex; gap: 2px; box-shadow: 0 12px 30px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
       max-width: 640px; margin: 0 auto;
     }
@@ -217,7 +227,7 @@
 
     /* ---------- BILLING: split into two clear steps ---------- */
     .billing-subnav {
-      display: flex; gap: 8px; background: #fff; border: 1px solid var(--border); border-radius: 14px;
+      display: flex; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 14px;
       padding: 5px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .billing-subnav-btn {
@@ -487,11 +497,11 @@
       50% { box-shadow: 0 0 0 10px rgba(22,163,74,0.28), 0 0 32px rgba(22,163,74,0.35); }
     }
     .tutorial-bubble {
-      position: fixed; z-index: 302; background: #fff; border-radius: 16px; padding: 16px 18px;
+      position: fixed; z-index: 302; background: var(--card); border-radius: 16px; padding: 16px 18px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.3); max-width: 320px;
       transition: top 0.5s cubic-bezier(.2,.8,.2,1), left 0.5s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
     }
-    .tutorial-bubble-arrow { position: absolute; width: 16px; height: 16px; background: #fff; transform: rotate(45deg); }
+    .tutorial-bubble-arrow { position: absolute; width: 16px; height: 16px; background: var(--card); transform: rotate(45deg); }
     .tutorial-bubble-arrow.arrow-up { top: -8px; }
     .tutorial-bubble-arrow.arrow-down { bottom: -8px; }
     .tutorial-step-count { font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
