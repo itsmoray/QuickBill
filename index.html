@@ -1322,7 +1322,7 @@ function switchTab(tab) {
   closeHamburgerMenu();
 
   currentTab = tab;
-  if (tab !== 'billing') closeManualAddCard();
+  if (tab !== 'billing') closeManualAddCardInstant();
   updateFabVisibility();
 
   document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
@@ -1575,6 +1575,21 @@ function openManualAddCard() {
 
 function closeManualAddCard() {
   document.getElementById('manualAddCard').classList.remove('open');
+}
+
+// Same as closeManualAddCard(), but with no slide-down animation. Used when
+// switching tabs: the sheet sits at a high z-index so it stays above the
+// tab-content while it's mid-transition, and its own 0.28s close transition
+// was overlapping the tab's leave/enter transition — you'd see it hover and
+// slide over the incoming tab for a moment. Snapping it shut instantly avoids
+// that, since the whole screen is already changing anyway.
+function closeManualAddCardInstant() {
+  var el = document.getElementById('manualAddCard');
+  if (!el.classList.contains('open')) return;
+  el.style.transition = 'none';
+  el.classList.remove('open');
+  void el.offsetWidth; // force reflow so the transition stays off for this change
+  el.style.transition = '';
 }
 
 // ---------- CUSTOMER LOOKUP / AUTOCOMPLETE ----------
