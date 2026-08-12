@@ -28,10 +28,33 @@
       --border: #E5E7EB;
       --radius: 14px;
     }
+    /* ---------- DARK MODE ---------- */
+    [data-theme="dark"] {
+      --green: #22C55E;
+      --green-dark: #4ADE80;
+      --green-light: #14532D;
+      --red: #F87171;
+      --amber: #FBBF24;
+      --bg: #111827;
+      --card: #1F2937;
+      --text: #F3F4F6;
+      --muted: #9CA3AF;
+      --border: #374151;
+    }
+    [data-theme="dark"] .pill.void, [data-theme="dark"] .pill.notopened { background: #3F1D1D; color: var(--red); }
+    [data-theme="dark"] .pill.credit { background: #3F2E10; color: var(--amber); }
+    [data-theme="dark"] .autocomplete-dropdown, [data-theme="dark"] .hamburger-menu, [data-theme="dark"] .settings-modal { background: var(--card); }
+    [data-theme="dark"] .field input, [data-theme="dark"] .field select,
+    [data-theme="dark"] .field-inline input, [data-theme="dark"] .field-inline select,
+    [data-theme="dark"] .quick-search-input, [data-theme="dark"] .tag-btn, [data-theme="dark"] .autocomplete-row:hover {
+      background: var(--bg); color: var(--text);
+    }
+    [data-theme="dark"] .login-card { background: var(--card); }
     * { box-sizing: border-box; }
     body {
       margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent;
+      transition: background 0.25s ease, color 0.25s ease;
     }
     input, select, button { font-family: inherit; }
     .hidden { display: none !important; }
@@ -133,7 +156,7 @@
     .success-msg { color: var(--green-dark); font-size: 13px; margin-top: 10px; }
 
     /* ---------- APP SHELL ---------- */
-    #appScreen { display: none; min-height: 100vh; padding-bottom: 104px; }
+    #appScreen { display: none; min-height: 100vh; padding-bottom: 112px; }
     .topbar {
       background: var(--green); color: #fff; padding: 14px 16px; display: flex; justify-content: space-between;
       align-items: center; position: sticky; top: 0; z-index: 10; gap: 10px;
@@ -145,20 +168,6 @@
     .day-badge.open { background: #fff; color: var(--green-dark); }
     .day-badge.closed { background: rgba(255,255,255,0.25); color: #fff; }
     .logout-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
-
-    /* ---------- TUTORIAL TOGGLE ---------- */
-    .tutorial-toggle {
-      display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.18);
-      border: 1px solid rgba(255,255,255,0.45); color: #fff; padding: 6px 12px; border-radius: 20px;
-      font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
-    }
-    .tutorial-toggle .tt-icon { font-size: 14px; }
-    .tutorial-toggle:active { transform: scale(0.96); }
-    .tutorial-toggle.active { background: #fff; color: var(--green-dark); border-color: #fff; }
-    @media (max-width: 380px) {
-      .tutorial-toggle .tt-label { display: none; }
-      .tutorial-toggle { padding: 6px 9px; }
-    }
 
     .tab-content-wrapper { position: relative; }
     .tab-content { padding: 16px; max-width: 640px; margin: 0 auto; }
@@ -185,7 +194,7 @@
 
     /* ---------- Bottom nav: floating bubble bar ---------- */
     .bottom-nav {
-      position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 20;
+      position: fixed; left: 12px; right: 12px; bottom: 22px; z-index: 20;
       background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255,255,255,0.6); border-radius: 28px; padding: 6px;
       display: flex; gap: 2px; box-shadow: 0 12px 30px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
@@ -227,7 +236,7 @@
     .billing-step.hidden { display: none; }
 
     .sticky-continue-bar {
-      position: sticky; bottom: 90px; margin: 4px 0 0; background: var(--card); border: 1px solid var(--border);
+      position: sticky; bottom: 98px; margin: 4px 0 0; background: var(--card); border: 1px solid var(--border);
       border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;
       gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 5;
     }
@@ -268,7 +277,7 @@
     /* Pops up right after an item is added so staff get quick confirmation
        without leaving the item-picking grid; the + reopens it any time. */
     .fab-cart-btn {
-      position: fixed; right: 18px; bottom: 100px; z-index: 22; width: 52px; height: 52px; border-radius: 50%;
+      position: fixed; right: 18px; bottom: 108px; z-index: 22; width: 52px; height: 52px; border-radius: 50%;
       background: var(--green); color: #fff; border: none; font-size: 26px; font-weight: 700; cursor: pointer;
       box-shadow: 0 8px 20px rgba(22,163,74,0.4); align-items: center; justify-content: center;
       line-height: 1; display: flex; transition: transform 0.15s ease;
@@ -346,12 +355,76 @@
     }
     .hamburger-menu.open { transform: translateX(0); }
     .hamburger-menu h4 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+    .menu-section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted);
+      margin: 14px 4px 4px; }
+    .menu-section-label:first-of-type { margin-top: 2px; }
+    .menu-divider { height: 1px; background: var(--border); margin: 8px 2px; border: none; }
     .menu-item {
-      display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 10px; border: none;
+      display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 12px; border: none;
       background: none; text-align: left; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--text);
+      transition: background 0.15s ease;
     }
     .menu-item:active, .menu-item.active { background: var(--green-light); color: var(--green-dark); }
-    .menu-item .icon { font-size: 18px; }
+    .menu-item .icon {
+      font-size: 16px; width: 30px; height: 30px; flex-shrink: 0; display: flex; align-items: center;
+      justify-content: center; border-radius: 9px; background: var(--bg);
+    }
+
+    /* Toggle rows (language, dark mode) — same footprint as a menu-item but with a switch on the right */
+    .menu-toggle-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 10px;
+      border-radius: 12px;
+    }
+    .menu-toggle-info { display: flex; align-items: center; gap: 12px; }
+    .menu-toggle-info .icon {
+      font-size: 16px; width: 30px; height: 30px; flex-shrink: 0; display: flex; align-items: center;
+      justify-content: center; border-radius: 9px; background: var(--bg);
+    }
+    .menu-toggle-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .menu-toggle-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    .toggle-switch { position: relative; display: inline-block; width: 44px; height: 26px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 26px;
+      transition: background 0.2s ease;
+    }
+    .toggle-slider::before {
+      position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff;
+      border-radius: 50%; transition: transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--green); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* ---------- SETTINGS MODAL ---------- */
+    .settings-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0); z-index: 94; transition: background 0.28s ease;
+    }
+    .settings-backdrop.hidden { display: none; }
+    .settings-backdrop.open { background: rgba(15,23,42,0.45); }
+    .settings-modal {
+      position: fixed; left: 16px; right: 16px; top: 50%; max-width: 400px; margin: 0 auto; background: var(--card);
+      border-radius: 18px; z-index: 95; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      transform: translateY(-50%) scale(0.92); opacity: 0; pointer-events: none;
+      transition: transform 0.22s cubic-bezier(.2,.8,.2,1), opacity 0.22s ease;
+    }
+    .settings-modal.open { transform: translateY(-50%) scale(1); opacity: 1; pointer-events: auto; }
+    .settings-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .settings-modal-header h3 { margin: 0; font-size: 17px; color: var(--text); }
+    .settings-close-btn { background: var(--bg); border: none; color: var(--muted); font-size: 16px; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
+    .settings-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-info { display: flex; align-items: center; gap: 12px; }
+    .settings-row-info .icon {
+      font-size: 16px; width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center;
+      justify-content: center; border-radius: 10px; background: var(--bg);
+    }
+    .settings-row-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
     /* Manual add form */
     .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -380,7 +453,7 @@
     .pill.credit { background: #FEF3C7; color: var(--amber); }
 
     .toast {
-      position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); background: #1F2937; color: #fff;
+      position: fixed; bottom: 104px; left: 50%; transform: translateX(-50%); background: #1F2937; color: #fff;
       padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       max-width: 90%; text-align: center;
     }
@@ -432,6 +505,14 @@
     .tutorial-btn-primary { background: var(--green); color: #fff; }
 
   </style>
+  <script>
+    // Applied immediately (before paint) so dark-mode users never see a light flash.
+    (function () {
+      if (localStorage.getItem('quickbill_theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -477,28 +558,69 @@
         <div class="sub" id="staffNameLabel">—</div>
       </div>
       <div class="right">
-        <button class="tutorial-toggle" id="tutorialToggleBtn" onclick="toggleTutorial()" title="Show app tutorial">
-          <span class="tt-icon">🎓</span><span class="tt-label" data-i18n="tutorial">Tutorial</span>
-        </button>
         <span class="day-badge closed" id="dayBadge" data-i18n="dayClosed">Day Closed</span>
         <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleHamburgerMenu()" title="More">☰</button>
         <button class="logout-btn" onclick="doLogout()" title="Logout">⏻</button>
       </div>
     </div>
 
-    <!-- Hamburger drawer: less-used sections live here -->
+    <!-- Hamburger drawer: less-used sections + preferences live here -->
     <div class="hamburger-backdrop hidden" id="hamburgerBackdrop" onclick="closeHamburgerMenu()"></div>
     <div class="hamburger-menu" id="hamburgerMenu">
       <h4 data-i18n="more">More</h4>
+
+      <div class="menu-section-label" data-i18n="menuSectionApp">App</div>
+      <button class="menu-item" id="tutorialMenuItem" onclick="startTutorialFromMenu()">
+        <span class="icon">🎓</span><span data-i18n="tutorial">Tutorial</span>
+      </button>
       <button class="menu-item" data-tab="reports" onclick="switchTab('reports')">
         <span class="icon">📊</span><span data-i18n="reports">Reports</span>
       </button>
       <button class="menu-item hidden" id="adminMenuItem" data-tab="admin" onclick="switchTab('admin')">
-        <span class="icon">⚙️</span><span data-i18n="admin">Admin</span>
+        <span class="icon">🛠️</span><span data-i18n="admin">Admin</span>
       </button>
-      <button class="menu-item" id="langToggleMenuItem" onclick="toggleLanguage()">
-        <span class="icon">🌐</span><span id="langToggleLabel">മലയാളം</span>
+
+      <hr class="menu-divider">
+
+      <div class="menu-section-label" data-i18n="menuSectionPreferences">Preferences</div>
+      <div class="menu-toggle-row">
+        <div class="menu-toggle-info">
+          <span class="icon">🌐</span>
+          <div>
+            <div class="menu-toggle-title" data-i18n="language">Language</div>
+            <div class="menu-toggle-sub" id="langToggleLabel">English</div>
+          </div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="langToggleSwitch" onchange="toggleLanguage()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <button class="menu-item" onclick="openSettingsModal()">
+        <span class="icon">⚙️</span><span data-i18n="settings">Settings</span>
       </button>
+    </div>
+
+    <!-- Settings modal -->
+    <div class="settings-backdrop hidden" id="settingsBackdrop" onclick="closeSettingsModal()"></div>
+    <div class="settings-modal" id="settingsModal">
+      <div class="settings-modal-header">
+        <h3 data-i18n="settings">Settings</h3>
+        <button class="settings-close-btn" onclick="closeSettingsModal()">✕</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <span class="icon">🌓</span>
+          <div>
+            <div class="settings-row-title" data-i18n="darkMode">Dark Mode</div>
+            <div class="settings-row-sub" id="darkModeSub" data-i18n="lightModeOn">Currently light</div>
+          </div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
 
     <div class="tab-content-wrapper" id="tabContentWrapper">
@@ -783,7 +905,8 @@ var I18N = {
     setupNeeded: 'Setup needed: open index.html and paste your Apps Script Web App URL into APPS_SCRIPT_URL.',
     // Topbar / menu
     tutorial: 'Tutorial', dayOpen: 'Day Open', dayClosed: 'Day Closed', more: 'More', reports: 'Reports', admin: 'Admin',
-    language: 'Language',
+    language: 'Language', menuSectionApp: 'App', menuSectionPreferences: 'Preferences',
+    settings: 'Settings', darkMode: 'Dark Mode', darkModeOn: 'Currently dark', lightModeOn: 'Currently light',
     // Billing
     newBill: 'New Bill', addItems: 'Add Items', reviewPay: 'Review & Pay', quickAdd: 'Quick Add',
     searchItems: 'Search items…', noItemsMatchPrefix: 'No items match "', quote: '"',
@@ -904,7 +1027,8 @@ var I18N = {
     loginFailedDefault: 'ലോഗിൻ പരാജയപ്പെട്ടു.', connectionErrorPrefix: 'കണക്ഷൻ പിശക്: ',
     setupNeeded: 'സജ്ജീകരണം ആവശ്യമാണ്: index.html തുറന്ന് APPS_SCRIPT_URL-ൽ നിങ്ങളുടെ Apps Script Web App URL പേസ്റ്റ് ചെയ്യുക.',
     tutorial: 'ട്യൂട്ടോറിയൽ', dayOpen: 'ദിവസം തുറന്നു', dayClosed: 'ദിവസം അടച്ചു', more: 'കൂടുതൽ', reports: 'റിപ്പോർട്ടുകൾ', admin: 'അഡ്മിൻ',
-    language: 'ഭാഷ',
+    language: 'ഭാഷ', menuSectionApp: 'ആപ്പ്', menuSectionPreferences: 'ക്രമീകരണങ്ങൾ',
+    settings: 'സെറ്റിംഗ്സ്', darkMode: 'ഡാർക്ക് മോഡ്', darkModeOn: 'ഇപ്പോൾ ഡാർക്ക് ആണ്', lightModeOn: 'ഇപ്പോൾ ലൈറ്റ് ആണ്',
     newBill: 'പുതിയ ബിൽ', addItems: 'ഇനങ്ങൾ ചേർക്കുക', reviewPay: 'പരിശോധിച്ച് പണം നൽകുക', quickAdd: 'ക്വിക്ക് ആഡ്',
     searchItems: 'ഇനങ്ങൾ തിരയുക…', noItemsMatchPrefix: '"', quote: '" എന്നതുമായി പൊരുത്തപ്പെടുന്ന ഇനങ്ങളില്ല',
     addItemManually: 'ഇനം സ്വയം ചേർക്കുക', itemName: 'ഇനത്തിന്റെ പേര്', egOnion: 'ഉദാ: ഉള്ളി',
@@ -1072,7 +1196,9 @@ function applyStaticTranslations() {
   });
   document.documentElement.lang = currentLang === 'ml' ? 'ml' : 'en';
   var langLabel = document.getElementById('langToggleLabel');
-  if (langLabel) langLabel.textContent = currentLang === 'ml' ? 'English' : 'മലയാളം';
+  if (langLabel) langLabel.textContent = currentLang === 'ml' ? 'മലയാളം' : 'English';
+  var langSwitch = document.getElementById('langToggleSwitch');
+  if (langSwitch) langSwitch.checked = currentLang === 'ml';
 }
 
 // Re-renders whatever dynamic content is currently on screen so a language
@@ -1101,7 +1227,53 @@ function toggleLanguage() {
   localStorage.setItem('quickbill_lang', currentLang);
   applyStaticTranslations();
   refreshDynamicContentForLanguage();
+}
+
+// ---------- SETTINGS MODAL & DARK MODE ----------
+function openSettingsModal() {
   closeHamburgerMenu();
+  var modal = document.getElementById('settingsModal');
+  var backdrop = document.getElementById('settingsBackdrop');
+  backdrop.classList.remove('hidden');
+  requestAnimationFrame(function () {
+    backdrop.classList.add('open');
+    modal.classList.add('open');
+  });
+}
+
+function closeSettingsModal() {
+  var modal = document.getElementById('settingsModal');
+  var backdrop = document.getElementById('settingsBackdrop');
+  modal.classList.remove('open');
+  backdrop.classList.remove('open');
+  setTimeout(function () { backdrop.classList.add('hidden'); }, 260);
+}
+
+function applyThemeUI() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  var sw = document.getElementById('darkModeSwitch');
+  var sub = document.getElementById('darkModeSub');
+  if (sw) sw.checked = isDark;
+  if (sub) sub.textContent = isDark ? tr('darkModeOn') : tr('lightModeOn');
+}
+
+function toggleDarkMode() {
+  var isDark = document.getElementById('darkModeSwitch').checked;
+  if (isDark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('quickbill_theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('quickbill_theme', 'light');
+  }
+  applyThemeUI();
+}
+
+// Tutorial launched from the hamburger menu — close the drawer first so the
+// overlay measures/positions against the real layout, not the open drawer.
+function startTutorialFromMenu() {
+  closeHamburgerMenu();
+  setTimeout(function () { toggleTutorial(); }, 280);
 }
 
 // ======================================================
@@ -1182,6 +1354,7 @@ function hideSplash() {
 
 window.onload = function () {
   applyStaticTranslations();
+  applyThemeUI();
   if (APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
     document.getElementById('loginError').innerText = tr('setupNeeded');
   }
@@ -2291,15 +2464,16 @@ function startTutorial() {
   tutorialActive = true;
   tutorialStep = 0;
   tutorialOverlayEl.classList.remove('hidden');
-  document.getElementById('tutorialToggleBtn').classList.add('active');
+  var menuBtn = document.getElementById('tutorialMenuItem');
+  if (menuBtn) menuBtn.classList.add('active');
   showTutorialStep(0);
 }
 
 function endTutorial() {
   tutorialActive = false;
   if (tutorialOverlayEl) tutorialOverlayEl.classList.add('hidden');
-  var btn = document.getElementById('tutorialToggleBtn');
-  if (btn) btn.classList.remove('active');
+  var menuBtn = document.getElementById('tutorialMenuItem');
+  if (menuBtn) menuBtn.classList.remove('active');
   document.querySelectorAll('.tutorial-target-highlight').forEach(function (el) { el.classList.remove('tutorial-target-highlight'); });
 }
 
