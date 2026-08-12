@@ -2360,7 +2360,14 @@ function removeBillItem(idx) {
 function renderBillItems() {
   var emptyHtml = '<div class="empty-state">' + tr('noItemsAddedYet') + '</div>';
   var rowsHtml = currentBillItems.length === 0 ? '' : currentBillItems.map(function (it, idx) {
-    var meta = it.qty ? (it.qty + ' × ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
+    var meta;
+    if (it.qty) {
+      meta = it.qty + ' ' + tr('unitPiece');
+    } else {
+      var weightNum = String(it.weight).match(/[\d.]+/);
+      weightNum = weightNum ? weightNum[0] : it.weight;
+      meta = weightNum + ' ' + (it.unit === 'g' ? tr('unitG') : tr('unitKg'));
+    }
     return '<div class="bill-item-row"><div class="info"><div class="name">' + it.name + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + it.lineTotal.toFixed(2) + '</div><button class="del-btn" onclick="removeBillItem(' + idx + ')">✕</button></div>';
   }).join('');
 
