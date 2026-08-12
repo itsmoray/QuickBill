@@ -949,6 +949,9 @@ var I18N = {
     dayClosedTitle: 'Day Closed', totalSales: 'Total Sales', totalExpenses: 'Total Expenses',
     closedByLabel: 'Closed by', dayAlreadyClosedMsg: "Today's day has already been closed. Come back tomorrow to open a new day.",
     dayNotOpenedYetTitle: 'Day Not Opened Yet', openDayBtn: 'Open Day',
+    reopenDayBtn: '🔓 Reopen Day', reopenDayManagerHint: 'Need to add a missed bill or fix the closing count? Reopen the day, make the change, then close it again.',
+    confirmReopenDay: 'Reopen today\u2019s day? You can add bills/expenses and it can be closed again afterwards.',
+    reopeningLabel: 'Reopening...', dayReopened: 'Day reopened.',
     // Credits
     udhaarLedger: 'Udhaar / Credit Ledger', addEntry: 'Add Entry', customerName: 'Customer Name',
     customerNamePh: 'Customer name', phoneOptional: 'Phone (optional)', theyOweMore: 'They owe more',
@@ -1029,6 +1032,7 @@ var I18N = {
     beDayAlreadyOpen: 'Day is already open.',
     beDayAlreadyClosed: 'Day already closed for today.',
     beDayNotOpen: 'Day is not currently open.',
+    beDayNotClosed: 'Day is not currently closed.',
     beOpenDayBeforeBilling: 'Please open the day before billing.',
     beBillNoItems: 'Bill has no items.',
     beVoidNotAllowed: 'Only the billing staff or a Manager can void this bill.',
@@ -1070,6 +1074,9 @@ var I18N = {
     dayClosedTitle: 'ദിവസം അടച്ചു', totalSales: 'ആകെ വിൽപ്പന', totalExpenses: 'ആകെ ചെലവ്',
     closedByLabel: 'അടച്ചത്', dayAlreadyClosedMsg: 'ഇന്നത്തെ ദിവസം ഇതിനകം അടച്ചു കഴിഞ്ഞു. പുതിയ ദിവസം തുറക്കാൻ നാളെ വരൂ.',
     dayNotOpenedYetTitle: 'ദിവസം ഇതുവരെ തുറന്നിട്ടില്ല', openDayBtn: 'ദിവസം തുറക്കുക',
+    reopenDayBtn: '🔓 ദിവസം വീണ്ടും തുറക്കുക', reopenDayManagerHint: 'ഒരു ബിൽ കൂട്ടിച്ചേർക്കണോ അല്ലെങ്കിൽ ക്ലോസിംഗ് കൗണ്ട് തിരുത്തണോ? ദിവസം വീണ്ടും തുറന്ന്, മാറ്റം വരുത്തി, പിന്നീട് വീണ്ടും അടയ്ക്കുക.',
+    confirmReopenDay: 'ഇന്നത്തെ ദിവസം വീണ്ടും തുറക്കണോ? ബില്ലുകൾ/ചെലവുകൾ ചേർക്കാം, ശേഷം ഇത് വീണ്ടും അടയ്ക്കാം.',
+    reopeningLabel: 'വീണ്ടും തുറക്കുന്നു...', dayReopened: 'ദിവസം വീണ്ടും തുറന്നു.',
     udhaarLedger: 'ഉധാരം / ക്രെഡിറ്റ് കണക്ക്', addEntry: 'എൻട്രി ചേർക്കുക', customerName: 'കസ്റ്റമറുടെ പേര്',
     customerNamePh: 'കസ്റ്റമറുടെ പേര്', phoneOptional: 'ഫോൺ (ഓപ്ഷണൽ)', theyOweMore: 'കൂടുതൽ കടം',
     theyPaidBack: 'തിരികെ അടച്ചു', notesOptional: 'കുറിപ്പുകൾ (ഓപ്ഷണൽ)', egGroceries: 'ഉദാ: ഈ ആഴ്ചത്തെ സാധനങ്ങൾ',
@@ -1140,6 +1147,7 @@ var I18N = {
     beDayAlreadyOpen: 'ദിവസം ഇതിനകം തുറന്നിരിക്കുന്നു.',
     beDayAlreadyClosed: 'ഇന്നത്തെ ദിവസം ഇതിനകം അടച്ചു.',
     beDayNotOpen: 'ദിവസം നിലവിൽ തുറന്നിട്ടില്ല.',
+    beDayNotClosed: 'ദിവസം നിലവിൽ അടച്ചിട്ടില്ല.',
     beOpenDayBeforeBilling: 'ബില്ലിംഗിന് മുമ്പ് ദിവസം തുറക്കുക.',
     beBillNoItems: 'ബില്ലിൽ ഇനങ്ങളൊന്നുമില്ല.',
     beVoidNotAllowed: 'ബില്ലിംഗ് സ്റ്റാഫിനോ മാനേജർക്കോ മാത്രമേ ഈ ബിൽ റദ്ദാക്കാൻ കഴിയൂ.',
@@ -1190,6 +1198,7 @@ var BACKEND_MSG_MAP = {
   'Day is already open.': 'beDayAlreadyOpen',
   'Day already closed for today.': 'beDayAlreadyClosed',
   'Day is not currently open.': 'beDayNotOpen',
+  'Day is not currently closed.': 'beDayNotClosed',
   'Please open the day before billing.': 'beOpenDayBeforeBilling',
   'Bill has no items.': 'beBillNoItems',
   'Only the billing staff or a Manager can void this bill.': 'beVoidNotAllowed',
@@ -1639,12 +1648,16 @@ function renderDayCard(status) {
       '<div class="field" style="margin-top:14px"><label>' + tr('closingCashCountLabel') + '</label><input type="number" id="closingCashInput" min="0" step="0.01"></div>' +
       '<button class="btn danger" onclick="submitCloseDay(this)">' + tr('closeDayBtn') + '</button>';
   } else if (status.status === 'Closed') {
+    var isManager = session.role === 'Manager';
     el.innerHTML =
       '<h3>' + tr('dayClosedTitle') + '</h3>' +
       '<div class="stat-row"><span>' + tr('totalSales') + '</span><span class="val">₹' + Number(status.totalSales).toFixed(2) + '</span></div>' +
       '<div class="stat-row"><span>' + tr('totalExpenses') + '</span><span class="val">₹' + Number(status.totalExpenses).toFixed(2) + '</span></div>' +
       '<div class="stat-row"><span>' + tr('closedByLabel') + '</span><span class="val">' + status.closedBy + ' ' + status.closeTime + '</span></div>' +
-      '<p style="color:var(--muted);font-size:13px;margin-top:10px">' + tr('dayAlreadyClosedMsg') + '</p>';
+      (isManager
+        ? '<p style="color:var(--muted);font-size:13px;margin:10px 0 14px">' + tr('reopenDayManagerHint') + '</p>' +
+          '<button class="btn secondary" onclick="submitReopenDay(this)">' + tr('reopenDayBtn') + '</button>'
+        : '<p style="color:var(--muted);font-size:13px;margin-top:10px">' + tr('dayAlreadyClosedMsg') + '</p>');
   } else {
     el.innerHTML =
       '<h3>' + tr('dayNotOpenedYetTitle') + '</h3>' +
@@ -1678,6 +1691,20 @@ function submitCloseDay(btn) {
           showToast(tr('dayClosedSalesMsg', { amt: '₹' + res.totalSales.toFixed(2), diff: diffMsg }));
           refreshDayStatus();
         } else showToast(trBackend(res.message));
+      })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
+  });
+}
+
+// Manager-only: undoes a day close so a missed bill/expense can be added or the
+// closing cash count corrected, then closed again once the fix is made.
+function submitReopenDay(btn) {
+  if (!confirm(tr('confirmReopenDay'))) return;
+  withLoading(btn, tr('reopeningLabel'), function () {
+    return callAPI('reopenDay', { token: session.token })
+      .then(function (res) {
+        if (res.success) { showToast(tr('dayReopened')); refreshDayStatus(); }
+        else showToast(trBackend(res.message));
       })
       .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
   });
