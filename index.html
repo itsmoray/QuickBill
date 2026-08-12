@@ -442,6 +442,18 @@
     .settings-row-title { font-size: 15px; font-weight: 600; color: var(--text); }
     .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
+    /* ---------- UPI SETTINGS (inside Settings panel, Manager only) ---------- */
+    .upi-settings-note { font-size: 12px; color: var(--muted); margin: 2px 2px 12px; line-height: 1.5; }
+    .upi-settings-savemsg { font-size: 12.5px; color: var(--green-dark); margin-top: 8px; min-height: 16px; }
+
+    /* ---------- UPI QR (Review & Pay step, shown when Payment Mode = UPI) ---------- */
+    .upi-qr-wrap { display: flex; justify-content: center; padding: 6px 0 4px; }
+    .upi-qr-img { width: 190px; height: 190px; border-radius: 10px; border: 1px solid var(--border); background: #fff; }
+    .upi-qr-amount { text-align: center; font-size: 20px; font-weight: 800; color: var(--green-dark); margin-top: 10px; }
+    .upi-qr-vpa { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 2px; word-break: break-all; }
+    .upi-qr-hint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .upi-not-configured { text-align: center; font-size: 13px; color: var(--amber); padding: 10px 4px; line-height: 1.5; }
+
     /* Manual add form */
     .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
     .form-row > div { flex: 1; }
@@ -763,6 +775,24 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
+
+      <!-- Manager-only: where the UPI QR at checkout sends money. Hidden for
+           Staff accounts — toggled visible in applySessionUI(). -->
+      <div id="upiSettingsSection" class="hidden">
+        <hr class="menu-divider">
+        <div class="menu-section-label" data-i18n="upiSettingsSection">Payment (UPI)</div>
+        <p class="upi-settings-note" data-i18n="upiSettingsNote">This UPI ID is used to generate the payment QR shown to customers at checkout.</p>
+        <div class="field">
+          <label data-i18n="upiIdLabel">UPI ID (VPA)</label>
+          <input type="text" id="settingsUpiId" placeholder="shopname@okhdfcbank" autocomplete="off" data-i18n-ph="upiIdPh">
+        </div>
+        <div class="field">
+          <label data-i18n="upiPayeeNameLabel">Payee Name (optional)</label>
+          <input type="text" id="settingsUpiPayeeName" placeholder="Shown in the customer's UPI app" autocomplete="off" data-i18n-ph="upiPayeeNamePh">
+        </div>
+        <button class="btn secondary small" id="saveUpiSettingsBtn" onclick="saveUpiSettings(this)" data-i18n="saveUpiSettingsBtn">Save UPI Settings</button>
+        <div class="upi-settings-savemsg" id="upiSettingsSaveMsg"></div>
+      </div>
     </div>
 
     <div class="tab-content-wrapper" id="tabContentWrapper">
@@ -843,7 +873,7 @@
           <div class="form-row">
             <div class="field-inline">
               <label data-i18n="paymentMode">Payment Mode</label>
-              <select id="paymentMode">
+              <select id="paymentMode" onchange="onPaymentModeChange()">
                 <option value="Cash" data-i18n="cash">Cash</option>
                 <option value="UPI">UPI</option>
                 <option value="Credit" data-i18n="creditUdhaar">Credit (Udhaar)</option>
@@ -858,6 +888,20 @@
             <div class="tag-btn selected" id="discTypeFlat" onclick="setDiscountType('flat')" data-i18n="flatDiscount">₹ Flat</div>
             <div class="tag-btn" id="discTypePercent" onclick="setDiscountType('percent')" data-i18n="percentDiscount">% Percent</div>
           </div>
+        </div>
+
+        <!-- Shown only when Payment Mode = UPI. QR + amount are regenerated
+             live as the bill total changes (see updateUpiQr()). -->
+        <div class="card hidden" id="upiQrCard">
+          <h3 data-i18n="scanToPay">Scan to Pay via UPI</h3>
+          <div id="upiQrConfigured">
+            <div class="upi-qr-wrap"><img id="upiQrImg" class="upi-qr-img" alt="UPI QR Code"></div>
+            <div class="upi-not-configured hidden" id="upiQrImgError" data-i18n="upiQrLoadError">Could not load QR — check your internet connection</div>
+            <div class="upi-qr-amount" id="upiQrAmount">₹0.00</div>
+            <div class="upi-qr-vpa" id="upiQrVpa"></div>
+            <div class="upi-qr-hint" data-i18n="upiQrHint">Customer scans this with any UPI app to pay</div>
+          </div>
+          <div class="upi-not-configured hidden" id="upiQrNotConfigured" data-i18n="upiNotConfigured">UPI ID not set up yet. Ask a Manager to add it from Settings → Payment (UPI).</div>
         </div>
 
         <div class="card" id="billTotalsCard">
@@ -1058,6 +1102,10 @@ var I18N = {
     language: 'Language', menuSectionApp: 'App', menuSectionPreferences: 'Preferences',
     settings: 'Settings', darkMode: 'Dark Mode', darkModeOn: 'Currently dark', lightModeOn: 'Currently light',
     matchSystem: 'Match System', matchSystemSub: "Follow your phone's setting", followingSystem: "Following your phone's setting",
+    upiSettingsSection: 'Payment (UPI)', upiSettingsNote: 'This UPI ID is used to generate the payment QR shown to customers at checkout.',
+    upiIdLabel: 'UPI ID (VPA)', upiIdPh: 'shopname@okhdfcbank', upiPayeeNameLabel: 'Payee Name (optional)',
+    upiPayeeNamePh: "Shown in the customer's UPI app", saveUpiSettingsBtn: 'Save UPI Settings',
+    upiSettingsSaved: 'UPI settings saved.', beInvalidUpiId: "That doesn't look like a valid UPI ID (should look like name@bank).",
     // Billing
     newBill: 'New Bill', addItems: 'Add Items', reviewPay: 'Review & Pay', quickAdd: 'Quick Add',
     searchItems: 'Search items…', noItemsMatchPrefix: 'No items match "', quote: '"',
@@ -1074,6 +1122,9 @@ var I18N = {
     totalPayable: 'Total Payable', completeBill: 'Complete Bill', lastBill: 'Last Bill', shareBill: '📤 Share Bill',
     editThisBill: '✏️ Edit This Bill', voidThisBill: '🗑 Void This Bill', billId: 'Bill ID', customer: 'Customer',
     items: 'Items', discountPercentPh: 'e.g. 10 for 10%',
+    scanToPay: 'Scan to Pay via UPI', upiQrHint: "Customer scans this with any UPI app to pay",
+    upiNotConfigured: 'UPI ID not set up yet. Ask a Manager to add it from Settings → Payment (UPI).',
+    upiQrLoadError: 'Could not load QR — check your internet connection',
     // Day
     dayManagement: 'Day Management', logExpense: 'Log an Expense', description: 'Description',
     egAutoFare: 'e.g. Auto fare, packing bags', amountRupee: 'Amount (₹)', addExpense: '+ Add Expense',
@@ -1185,6 +1236,10 @@ var I18N = {
     language: 'ഭാഷ', menuSectionApp: 'ആപ്പ്', menuSectionPreferences: 'ക്രമീകരണങ്ങൾ',
     settings: 'സെറ്റിംഗ്സ്', darkMode: 'ഡാർക്ക് മോഡ്', darkModeOn: 'ഇപ്പോൾ ഡാർക്ക് ആണ്', lightModeOn: 'ഇപ്പോൾ ലൈറ്റ് ആണ്',
     matchSystem: 'സിസ്റ്റം സെറ്റിംഗ് പിന്തുടരുക', matchSystemSub: 'നിങ്ങളുടെ ഫോണിന്റെ സെറ്റിംഗ് അനുസരിക്കും', followingSystem: 'ഫോണിന്റെ സെറ്റിംഗ് അനുസരിക്കുന്നു',
+    upiSettingsSection: 'പേയ്‌മെന്റ് (UPI)', upiSettingsNote: 'ചെക്ക്ഔട്ടിൽ കസ്റ്റമർക്ക് കാണിക്കുന്ന പേയ്‌മെന്റ് QR ഉണ്ടാക്കാൻ ഈ UPI ഐഡി ഉപയോഗിക്കുന്നു.',
+    upiIdLabel: 'UPI ഐഡി (VPA)', upiIdPh: 'shopname@okhdfcbank', upiPayeeNameLabel: 'പണം സ്വീകരിക്കുന്നയാളുടെ പേര് (ഓപ്ഷണൽ)',
+    upiPayeeNamePh: 'കസ്റ്റമറുടെ UPI ആപ്പിൽ കാണിക്കും', saveUpiSettingsBtn: 'UPI സെറ്റിംഗ്സ് സേവ് ചെയ്യുക',
+    upiSettingsSaved: 'UPI സെറ്റിംഗ്സ് സേവ് ചെയ്തു.', beInvalidUpiId: 'ഇത് ശരിയായ UPI ഐഡി ആയി തോന്നുന്നില്ല (name@bank എന്ന രീതിയിൽ ആയിരിക്കണം).',
     newBill: 'പുതിയ ബിൽ', addItems: 'ഇനങ്ങൾ ചേർക്കുക', reviewPay: 'പരിശോധിച്ച് പണം നൽകുക', quickAdd: 'ക്വിക്ക് ആഡ്',
     searchItems: 'ഇനങ്ങൾ തിരയുക…', noItemsMatchPrefix: '"', quote: '" എന്നതുമായി പൊരുത്തപ്പെടുന്ന ഇനങ്ങളില്ല',
     addItemManually: 'ഇനം സ്വയം ചേർക്കുക', itemName: 'ഇനത്തിന്റെ പേര്', egOnion: 'ഉദാ: ഉള്ളി',
@@ -1200,6 +1255,9 @@ var I18N = {
     totalPayable: 'അടയ്‌ക്കേണ്ട ആകെ തുക', completeBill: 'ബിൽ പൂർത്തിയാക്കുക', lastBill: 'അവസാന ബിൽ', shareBill: '📤 ബിൽ ഷെയർ ചെയ്യുക',
     editThisBill: '✏️ ഈ ബിൽ എഡിറ്റ് ചെയ്യുക', voidThisBill: '🗑 ഈ ബിൽ റദ്ദാക്കുക', billId: 'ബിൽ ഐഡി', customer: 'കസ്റ്റമർ',
     items: 'ഇനങ്ങൾ', discountPercentPh: 'ഉദാ: 10% ആണെങ്കിൽ 10',
+    scanToPay: 'UPI വഴി പണം നൽകാൻ സ്കാൻ ചെയ്യുക', upiQrHint: 'കസ്റ്റമർ ഏതെങ്കിലും UPI ആപ്പ് ഉപയോഗിച്ച് ഇത് സ്കാൻ ചെയ്ത് പണം നൽകാം',
+    upiNotConfigured: 'UPI ഐഡി ഇതുവരെ സെറ്റ് ചെയ്തിട്ടില്ല. സെറ്റിംഗ്സ് → പേയ്‌മെന്റ് (UPI) എന്നതിൽ നിന്ന് ഒരു മാനേജർ ഇത് ചേർക്കാൻ ആവശ്യപ്പെടുക.',
+    upiQrLoadError: 'QR ലോഡ് ചെയ്യാനായില്ല — ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക',
     dayManagement: 'ദിവസ മാനേജ്‌മെന്റ്', logExpense: 'ചെലവ് രേഖപ്പെടുത്തുക', description: 'വിവരണം',
     egAutoFare: 'ഉദാ: ഓട്ടോ ചാർജ്, പാക്കിംഗ് ബാഗ്', amountRupee: 'തുക (₹)', addExpense: '+ ചെലവ് ചേർക്കുക',
     todaysExpenses: 'ഇന്നത്തെ ചെലവുകൾ', noExpensesLoggedToday: 'ഇന്ന് ചെലവുകളൊന്നും രേഖപ്പെടുത്തിയിട്ടില്ല',
@@ -1340,7 +1398,8 @@ var BACKEND_MSG_MAP = {
   'Customer name is required.': 'beCustomerNameRequired',
   'Username already exists.': 'beUsernameExists',
   'User not found.': 'beUserNotFound',
-  'Server error': 'beServerError'
+  'Server error': 'beServerError',
+  'That doesn\'t look like a valid UPI ID (should look like name@bank).': 'beInvalidUpiId'
 };
 function trBackend(msg) {
   if (!msg) return msg;
@@ -1411,6 +1470,9 @@ function openSettingsModal() {
   closeHamburgerMenu();
   var panel = document.getElementById('settingsModal');
   var backdrop = document.getElementById('settingsBackdrop');
+  document.getElementById('settingsUpiId').value = upiSettings.upiId;
+  document.getElementById('settingsUpiPayeeName').value = upiSettings.payeeName;
+  document.getElementById('upiSettingsSaveMsg').innerText = '';
   backdrop.classList.remove('hidden');
   requestAnimationFrame(function () {
     backdrop.classList.add('open');
@@ -1540,6 +1602,9 @@ var entryMode = 'piece';
 var creditType = 'Credit';
 var discountType = 'flat';
 var lastBill = null; // { billId, items, customerName, customerPhone, paymentMode, subtotal, discount, total }
+// Cached from the backend after login (see loadUpiSettings()). Used to build the
+// checkout QR without a round-trip on every keystroke/total change.
+var upiSettings = { upiId: '', payeeName: '' };
 
 // ---------- SPLASH SCREEN ----------
 // Shown the instant the app opens (before we know if there's a saved session
@@ -1698,9 +1763,112 @@ function showApp() {
   document.getElementById('topProgressBar').classList.remove('on-dark');
   document.getElementById('staffNameLabel').innerText = session.fullName + ' • ' + (session.role === 'Manager' ? tr('managerRole') : tr('staffRole'));
   if (session.role === 'Manager') document.getElementById('adminMenuItem').classList.remove('hidden');
+  document.getElementById('upiSettingsSection').classList.toggle('hidden', session.role !== 'Manager');
   refreshDayStatus();
   loadQuickItems();
   loadCustomers();
+  loadUpiSettings();
+}
+
+// ---------- UPI PAYMENT: SETTINGS + CHECKOUT QR ----------
+// Any logged-in user can read the UPI ID (needed to show the QR at checkout),
+// but only a Manager can change it (enforced server-side in Code.js too).
+function loadUpiSettings() {
+  callAPI('getUpiSettings', { token: session.token })
+    .then(function (res) {
+      upiSettings.upiId = res.upiId || '';
+      upiSettings.payeeName = res.payeeName || '';
+      // Manager's Settings panel may already be open with stale/empty fields.
+      var upiIdField = document.getElementById('settingsUpiId');
+      if (upiIdField) {
+        upiIdField.value = upiSettings.upiId;
+        document.getElementById('settingsUpiPayeeName').value = upiSettings.payeeName;
+      }
+      // If the checkout step is already showing UPI (e.g. after a reload mid-bill), refresh the QR.
+      var modeEl = document.getElementById('paymentMode');
+      if (modeEl && modeEl.value === 'UPI') updateUpiQr();
+    })
+    .catch(function () { /* Non-critical — checkout just shows "not configured" until this succeeds. */ });
+}
+
+function saveUpiSettings(btn) {
+  var upiId = document.getElementById('settingsUpiId').value.trim();
+  var payeeName = document.getElementById('settingsUpiPayeeName').value.trim();
+  var msgEl = document.getElementById('upiSettingsSaveMsg');
+  msgEl.style.color = ''; msgEl.innerText = '';
+  var original = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = tr('savingLabel');
+  callAPI('saveUpiSettings', { token: session.token, upiId: upiId, payeeName: payeeName })
+    .then(function (res) {
+      btn.disabled = false; btn.innerHTML = original;
+      if (res.success) {
+        upiSettings.upiId = upiId;
+        upiSettings.payeeName = payeeName;
+        msgEl.innerText = tr('upiSettingsSaved');
+        var modeEl = document.getElementById('paymentMode');
+        if (modeEl && modeEl.value === 'UPI') updateUpiQr();
+      } else {
+        msgEl.style.color = 'var(--red)';
+        msgEl.innerText = trBackend(res.message);
+      }
+    })
+    .catch(function (err) {
+      btn.disabled = false; btn.innerHTML = original;
+      if (err.message !== 'SESSION_EXPIRED') { msgEl.style.color = 'var(--red)'; msgEl.innerText = tr('connectionErrorPrefix') + err.message; }
+    });
+}
+
+// Toggles the checkout QR card when the payment mode select changes.
+function onPaymentModeChange() {
+  var mode = document.getElementById('paymentMode').value;
+  var card = document.getElementById('upiQrCard');
+  if (mode === 'UPI') {
+    card.classList.remove('hidden');
+    updateUpiQr();
+  } else {
+    card.classList.add('hidden');
+  }
+}
+
+// Builds a standard UPI deep-link payment string. Any UPI app (GPay, PhonePe,
+// Paytm, BHIM, etc.) recognizes this format when scanned as a QR code.
+function buildUpiUri(amount) {
+  var parts = ['pa=' + encodeURIComponent(upiSettings.upiId)];
+  if (upiSettings.payeeName) parts.push('pn=' + encodeURIComponent(upiSettings.payeeName));
+  parts.push('am=' + encodeURIComponent(amount.toFixed(2)));
+  parts.push('cu=INR');
+  parts.push('tn=' + encodeURIComponent('QuickBill Payment'));
+  return 'upi://pay?' + parts.join('&');
+}
+
+// Regenerates the checkout QR for the current bill total. Called whenever the
+// total changes (see updateTotals()) while Payment Mode = UPI, and right after
+// switching into UPI mode.
+function updateUpiQr() {
+  var card = document.getElementById('upiQrCard');
+  if (!card || card.classList.contains('hidden')) return;
+  var configuredEl = document.getElementById('upiQrConfigured');
+  var notConfiguredEl = document.getElementById('upiQrNotConfigured');
+  if (!upiSettings.upiId) {
+    configuredEl.classList.add('hidden');
+    notConfiguredEl.classList.remove('hidden');
+    return;
+  }
+  configuredEl.classList.remove('hidden');
+  notConfiguredEl.classList.add('hidden');
+  var subtotal = currentBillItems.reduce(function (s, it) { return s + it.lineTotal; }, 0);
+  var discount = computeDiscountAmount(subtotal);
+  var total = Math.max(subtotal - discount, 0);
+  var uri = buildUpiUri(total);
+  var img = document.getElementById('upiQrImg');
+  var errEl = document.getElementById('upiQrImgError');
+  errEl.classList.add('hidden');
+  img.classList.remove('hidden');
+  img.onerror = function () { img.classList.add('hidden'); errEl.classList.remove('hidden'); };
+  img.onload = function () { img.classList.remove('hidden'); errEl.classList.add('hidden'); };
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=380x380&data=' + encodeURIComponent(uri);
+  document.getElementById('upiQrAmount').innerText = '₹' + total.toFixed(2);
+  document.getElementById('upiQrVpa').innerText = upiSettings.payeeName ? (upiSettings.payeeName + ' • ' + upiSettings.upiId) : upiSettings.upiId;
 }
 
 // ---------- TABS ----------
@@ -2166,6 +2334,9 @@ function updateTotals() {
   var badge = document.getElementById('billingItemCountBadge');
   badge.innerText = count;
   badge.classList.toggle('hidden', count === 0);
+
+  var modeEl = document.getElementById('paymentMode');
+  if (modeEl && modeEl.value === 'UPI') updateUpiQr();
 }
 document.addEventListener('input', function (e) { if (e.target && e.target.id === 'discount') updateTotals(); });
 
@@ -2204,6 +2375,7 @@ function completeBill() {
         document.getElementById('custId').value = '';
         document.getElementById('discount').value = 0;
         document.getElementById('paymentMode').value = 'Cash';
+        onPaymentModeChange();
         setDiscountType('flat');
         renderBillItems();
         switchBillingStep('items');
@@ -2344,6 +2516,7 @@ function editLastBill(btn) {
       document.getElementById('custName').value = lastBill.customerName || '';
       document.getElementById('custPhone').value = lastBill.customerPhone || '';
       document.getElementById('paymentMode').value = lastBill.paymentMode || 'Cash';
+      onPaymentModeChange();
       renderBillItems();
       switchBillingStep('items');
       lastBill = null;
