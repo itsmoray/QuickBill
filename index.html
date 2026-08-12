@@ -160,11 +160,17 @@
       .tutorial-toggle { padding: 6px 9px; }
     }
 
+    .tab-content-wrapper { position: relative; }
     .tab-content { padding: 16px; max-width: 640px; margin: 0 auto; }
-    /* Page transition between tabs — a gentle fade + slide-up */
-    .tab-content.tab-entering { opacity: 0; transform: translateY(14px); }
-    .tab-content.tab-entered { opacity: 1; transform: translateY(0); transition: opacity 0.32s ease, transform 0.32s cubic-bezier(.2,.8,.2,1); }
-    .tab-content.tab-leaving { opacity: 0; transform: translateY(-10px); transition: opacity 0.22s ease, transform 0.22s ease; }
+    /* Page transition between tabs — a gentle fade + slide-up.
+       The leaving tab is taken out of flow (position: absolute) so it
+       overlays the entering tab instead of stacking below/above it in
+       normal flow — without this, for the ~240ms both panels are visible
+       at once and the page height jumps to their combined height, which
+       is very noticeable leaving the long Billing tab for a short one. */
+    .tab-content.tab-entering { opacity: 0; transform: translateY(14px); z-index: 2; }
+    .tab-content.tab-entered { opacity: 1; transform: translateY(0); transition: opacity 0.32s ease, transform 0.32s cubic-bezier(.2,.8,.2,1); z-index: 2; }
+    .tab-content.tab-leaving { position: absolute; top: 0; left: 0; right: 0; opacity: 0; transform: translateY(-10px); transition: opacity 0.22s ease, transform 0.22s ease; z-index: 1; }
     .card {
       background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--border);
@@ -495,6 +501,7 @@
       </button>
     </div>
 
+    <div class="tab-content-wrapper" id="tabContentWrapper">
     <!-- TAB: BILLING -->
     <div class="tab-content" id="tab-billing">
       <div class="section-title" data-i18n="newBill">New Bill</div>
@@ -701,6 +708,7 @@
         <h3 data-i18n="existingQuickItems">Existing Quick Items</h3>
         <div id="quickItemsAdminList"></div>
       </div>
+    </div>
     </div>
 
     <!-- These two are position:fixed overlays for Billing → Add Items.
