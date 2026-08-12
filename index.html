@@ -442,6 +442,29 @@
     .settings-row-title { font-size: 15px; font-weight: 600; color: var(--text); }
     .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
+    /* ---------- QUICK-ADD QTY/WEIGHT MODAL (replaces native prompt()) ---------- */
+    .qty-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0); z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      transition: background 0.2s ease; pointer-events: none;
+    }
+    .qty-modal-backdrop.open { background: rgba(15,23,42,0.5); pointer-events: auto; }
+    .qty-modal {
+      background: var(--card); border-radius: 16px; padding: 22px 20px; width: 100%; max-width: 340px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: scale(0.92); opacity: 0; transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .qty-modal-backdrop.open .qty-modal { transform: scale(1); opacity: 1; }
+    .qty-modal h3 { margin: 0 0 4px; font-size: 16px; color: var(--text); }
+    .qty-modal .qty-modal-sub { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
+    .qty-modal input {
+      width: 100%; padding: 13px 14px; border-radius: 10px; border: 1.5px solid var(--border);
+      font-size: 20px; font-weight: 700; text-align: center; outline: none; background: var(--card); color: var(--text);
+    }
+    .qty-modal input:focus { border-color: var(--green); }
+    .qty-modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .qty-modal-btns .btn { margin-top: 0; }
+    .qty-modal-err { color: var(--red); font-size: 12.5px; margin-top: 8px; min-height: 16px; }
+
     /* ---------- UPI SETTINGS (inside Settings panel, Manager only) ---------- */
     .upi-settings-note { font-size: 12px; color: var(--muted); margin: 2px 2px 12px; line-height: 1.5; }
     .upi-settings-savemsg { font-size: 12.5px; color: var(--green-dark); margin-top: 8px; min-height: 16px; }
@@ -1003,6 +1026,10 @@
         <h3 data-i18n="existingStaff">Existing Staff</h3>
         <div id="usersList"></div>
       </div>
+    </div>
+
+    <div class="tab-content hidden" id="tab-inventory">
+      <div class="section-title" data-i18n="inventoryPanel">Inventory</div>
       <div class="card" id="addQuickItemCard">
         <h3 id="quickItemFormTitle" data-i18n="addQuickItem">Add Quick Item</h3>
         <input type="hidden" id="qiOriginalName" value="">
@@ -1024,7 +1051,6 @@
         <h3 data-i18n="existingQuickItems">Existing Quick Items</h3>
         <div id="quickItemsAdminList"></div>
       </div>
-    </div>
     </div>
 
     <!-- These two are position:fixed overlays for Billing → Add Items.
@@ -1065,6 +1091,21 @@
       </div>
       <button class="btn secondary" onclick="addManualItem()" data-i18n="addToBillBtn">+ Add to Bill</button>
     </div>
+
+    <!-- Quick-Add qty/weight modal: replaces the native browser prompt() so it
+         matches the app's theme (incl. dark mode) instead of an OS dialog. -->
+    <div class="qty-modal-backdrop" id="qtyModalBackdrop" onclick="if (event.target === this) qtyModalCancel()">
+      <div class="qty-modal">
+        <h3 id="qtyModalTitle"></h3>
+        <p class="qty-modal-sub" id="qtyModalSub"></p>
+        <input type="number" id="qtyModalInput" inputmode="decimal" min="0.001" step="any">
+        <div class="qty-modal-err" id="qtyModalErr"></div>
+        <div class="qty-modal-btns">
+          <button type="button" class="btn secondary" style="flex:1" onclick="qtyModalCancel()" data-i18n="cancelBtn">Cancel</button>
+          <button type="button" class="btn" style="flex:1" id="qtyModalOkBtn" onclick="qtyModalConfirm()" data-i18n="addToBillBtn">+ Add to Bill</button>
+        </div>
+      </div>
+    </div>
     <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openManualAddCard()" aria-label="Add item manually">+</button>
 
     <div class="bottom-nav" id="bottomNav">
@@ -1079,6 +1120,10 @@
       <button class="nav-btn" data-tab="credits" onclick="switchTab('credits')">
         <span class="icon-wrap"><span class="icon">📒</span></span>
         <span class="label" data-i18n="udhaar">Udhaar</span>
+      </button>
+      <button class="nav-btn hidden" id="inventoryNavBtn" data-tab="inventory" onclick="switchTab('inventory')">
+        <span class="icon-wrap"><span class="icon">📦</span></span>
+        <span class="label" data-i18n="inventory">Inventory</span>
       </button>
     </div>
   </div>
@@ -1149,14 +1194,14 @@ var I18N = {
     totalLabel: 'Total', daysOperated: 'Days Operated', netProfit: 'Net Profit', dateLabel: 'Date',
     statusLabel: 'Status', salesLabel: 'Sales', expensesLabel: 'Expenses', errorLoadingReport: 'Error loading report.',
     // Admin
-    adminPanel: 'Admin Panel', addStaffLogin: 'Add Staff Login', fullName: 'Full Name', role: 'Role',
+    adminPanel: 'Admin Panel', inventoryPanel: 'Inventory', addStaffLogin: 'Add Staff Login', fullName: 'Full Name', role: 'Role',
     staffRole: 'Staff', managerRole: 'Manager', addUser: '+ Add User', existingStaff: 'Existing Staff',
     addQuickItem: 'Add Quick Item', editQuickItemTitle: 'Edit Quick Item', price: 'Price (₹)',
     categoryOptional: 'Category (optional)', addQuickItemBtn: '+ Add Quick Item', qiSubmitSave: 'Save Changes',
-    cancelEdit: 'Cancel Edit', existingQuickItems: 'Existing Quick Items', editLabel: 'Edit', deleteLabel: 'Delete',
+    cancelEdit: 'Cancel Edit', cancelBtn: 'Cancel', existingQuickItems: 'Existing Quick Items', editLabel: 'Edit', deleteLabel: 'Delete',
     activateLabel: 'Activate', deactivateLabel: 'Deactivate',
     // Bottom nav
-    bill: 'Bill', day: 'Day', udhaar: 'Udhaar',
+    bill: 'Bill', day: 'Day', udhaar: 'Udhaar', inventory: 'Inventory',
     // Loading labels
     openingLabel: 'Opening...', closingLabel: 'Closing...', addingLabel: 'Adding...', savingLabel: 'Saving...',
     voidingLabel: 'Voiding...', preparingPDFLabel: 'Preparing PDF...', loadingLabel: 'Loading...',
@@ -1167,7 +1212,7 @@ var I18N = {
     cashMatchesExactly: 'Cash matches exactly!', moreThanExpected: '{amt} more than expected.', shortAmount: '{amt} short.',
     dayClosedSalesMsg: 'Day closed. Sales: {amt}. {diff}', enterDescAmount: 'Enter description and amount.',
     expenseAdded: 'Expense added.', noItemsSetup: 'No quick items set up yet',
-    weightPromptFor: 'Weight in kg for {name}:', qtyPromptFor: 'Quantity for {name}:',
+    enterWeightKg: 'Weight (kg)', enterQty: 'Quantity', qtyModalInvalid: 'Enter a valid amount greater than 0',
     enterItemName: 'Enter an item name.', enterQtyPrice: 'Enter quantity and price.',
     enterWeightPrice: 'Enter weight and price per kg.', addAtLeastOneItem: 'Add at least one item.',
     custNameRequiredCredit: 'Customer name is required for credit sales.', billSavedTotal: 'Bill saved! Total {amt}',
@@ -1278,13 +1323,13 @@ var I18N = {
     downloadExcel: '⬇ എക്സൽ ഡൗൺലോഡ് ചെയ്യുക', timeLabel: 'സമയം', staffLabel: 'സ്റ്റാഫ്', modeLabel: 'രീതി',
     totalLabel: 'ആകെ', daysOperated: 'പ്രവർത്തിച്ച ദിവസങ്ങൾ', netProfit: 'അറ്റാദായം', dateLabel: 'തീയതി',
     statusLabel: 'നില', salesLabel: 'വിൽപ്പന', expensesLabel: 'ചെലവ്', errorLoadingReport: 'റിപ്പോർട്ട് ലോഡ് ചെയ്യുന്നതിൽ പിശക്.',
-    adminPanel: 'അഡ്മിൻ പാനൽ', addStaffLogin: 'സ്റ്റാഫ് ലോഗിൻ ചേർക്കുക', fullName: 'മുഴുവൻ പേര്', role: 'റോൾ',
+    adminPanel: 'അഡ്മിൻ പാനൽ', inventoryPanel: 'ഇൻവെന്ററി', addStaffLogin: 'സ്റ്റാഫ് ലോഗിൻ ചേർക്കുക', fullName: 'മുഴുവൻ പേര്', role: 'റോൾ',
     staffRole: 'സ്റ്റാഫ്', managerRole: 'മാനേജർ', addUser: '+ യൂസറെ ചേർക്കുക', existingStaff: 'നിലവിലുള്ള സ്റ്റാഫ്',
     addQuickItem: 'ക്വിക്ക് ഇനം ചേർക്കുക', editQuickItemTitle: 'ക്വിക്ക് ഇനം എഡിറ്റ് ചെയ്യുക', price: 'വില (₹)',
     categoryOptional: 'വിഭാഗം (ഓപ്ഷണൽ)', addQuickItemBtn: '+ ക്വിക്ക് ഇനം ചേർക്കുക', qiSubmitSave: 'മാറ്റങ്ങൾ സേവ് ചെയ്യുക',
-    cancelEdit: 'എഡിറ്റ് റദ്ദാക്കുക', existingQuickItems: 'നിലവിലുള്ള ക്വിക്ക് ഇനങ്ങൾ', editLabel: 'എഡിറ്റ്', deleteLabel: 'ഡിലീറ്റ്',
+    cancelEdit: 'എഡിറ്റ് റദ്ദാക്കുക', cancelBtn: 'റദ്ദാക്കുക', existingQuickItems: 'നിലവിലുള്ള ക്വിക്ക് ഇനങ്ങൾ', editLabel: 'എഡിറ്റ്', deleteLabel: 'ഡിലീറ്റ്',
     activateLabel: 'ആക്ടിവേറ്റ് ചെയ്യുക', deactivateLabel: 'ഡീആക്ടിവേറ്റ് ചെയ്യുക',
-    bill: 'ബിൽ', day: 'ദിവസം', udhaar: 'ഉധാരം',
+    bill: 'ബിൽ', day: 'ദിവസം', udhaar: 'ഉധാരം', inventory: 'ഇൻവെന്ററി',
     openingLabel: 'തുറക്കുന്നു...', closingLabel: 'അടയ്ക്കുന്നു...', addingLabel: 'ചേർക്കുന്നു...', savingLabel: 'സേവ് ചെയ്യുന്നു...',
     voidingLabel: 'റദ്ദാക്കുന്നു...', preparingPDFLabel: 'PDF തയ്യാറാക്കുന്നു...', loadingLabel: 'ലോഡ് ചെയ്യുന്നു...',
     preparingLabel: 'തയ്യാറാക്കുന്നു...', deletingLabel: 'ഡിലീറ്റ് ചെയ്യുന്നു...', pleaseWaitDefault: 'കാത്തിരിക്കുക...', dotsLoading: '...',
@@ -1293,7 +1338,7 @@ var I18N = {
     cashMatchesExactly: 'ക്യാഷ് കൃത്യമായി പൊരുത്തപ്പെടുന്നു!', moreThanExpected: 'പ്രതീക്ഷിച്ചതിലും {amt} കൂടുതൽ.', shortAmount: '{amt} കുറവ്.',
     dayClosedSalesMsg: 'ദിവസം അടച്ചു. വിൽപ്പന: {amt}. {diff}', enterDescAmount: 'വിവരണവും തുകയും നൽകുക.',
     expenseAdded: 'ചെലവ് ചേർത്തു.', noItemsSetup: 'ഇതുവരെ ക്വിക്ക് ഇനങ്ങളൊന്നും സജ്ജീകരിച്ചിട്ടില്ല',
-    weightPromptFor: '{name}-ന്റെ തൂക്കം (കി.ഗ്രാം):', qtyPromptFor: '{name}-ന്റെ എണ്ണം:',
+    enterWeightKg: 'തൂക്കം (കി.ഗ്രാം)', enterQty: 'എണ്ണം', qtyModalInvalid: '0-ൽ കൂടുതലുള്ള ശരിയായ സംഖ്യ നൽകുക',
     enterItemName: 'ഒരു ഇനത്തിന്റെ പേര് നൽകുക.', enterQtyPrice: 'എണ്ണവും വിലയും നൽകുക.',
     enterWeightPrice: 'തൂക്കവും കി.ഗ്രാം വിലയും നൽകുക.', addAtLeastOneItem: 'ചുരുങ്ങിയത് ഒരു ഇനമെങ്കിലും ചേർക്കുക.',
     custNameRequiredCredit: 'ക്രെഡിറ്റ് വിൽപ്പനയ്ക്ക് കസ്റ്റമറുടെ പേര് ആവശ്യമാണ്.', billSavedTotal: 'ബിൽ സേവ് ചെയ്തു! ആകെ {amt}',
@@ -1762,7 +1807,10 @@ function showApp() {
   document.getElementById('appScreen').style.display = 'block';
   document.getElementById('topProgressBar').classList.remove('on-dark');
   document.getElementById('staffNameLabel').innerText = session.fullName + ' • ' + (session.role === 'Manager' ? tr('managerRole') : tr('staffRole'));
-  if (session.role === 'Manager') document.getElementById('adminMenuItem').classList.remove('hidden');
+  if (session.role === 'Manager') {
+    document.getElementById('adminMenuItem').classList.remove('hidden');
+    document.getElementById('inventoryNavBtn').classList.remove('hidden');
+  }
   document.getElementById('upiSettingsSection').classList.toggle('hidden', session.role !== 'Manager');
   refreshDayStatus();
   loadQuickItems();
@@ -1907,7 +1955,8 @@ function switchTab(tab) {
 function runTabLoaders(tab) {
   if (tab === 'day') refreshDayStatus();
   if (tab === 'credits') loadCreditLedger();
-  if (tab === 'admin') { loadUsers(); loadQuickItemsAdmin(); }
+  if (tab === 'admin') { loadUsers(); }
+  if (tab === 'inventory') { loadQuickItemsAdmin(); }
 }
 
 // ---------- HAMBURGER MENU (less-used tabs: Reports, Admin) ----------
@@ -2127,18 +2176,65 @@ function clearQuickItemSearch() {
 function quickAdd(idx) {
   var it = window._quickItemsCache[idx];
   if (it.Unit === 'kg') {
-    var wt = prompt(tr('weightPromptFor', { name: it.ItemName }), '1');
-    if (wt === null || isNaN(wt) || Number(wt) <= 0) return;
-    var lineTotal = Number(wt) * Number(it.DefaultPrice);
-    currentBillItems.push({ name: it.ItemName, qty: '', weight: wt, unit: 'kg', price: it.DefaultPrice, lineTotal: lineTotal });
+    showQtyModal(it.ItemName, tr('enterWeightKg') + ' • ₹' + it.DefaultPrice + '/kg').then(function (wt) {
+      if (wt === null) return;
+      var lineTotal = Number(wt) * Number(it.DefaultPrice);
+      currentBillItems.push({ name: it.ItemName, qty: '', weight: wt, unit: 'kg', price: it.DefaultPrice, lineTotal: lineTotal });
+      renderBillItems();
+    });
   } else {
-    var qty = prompt(tr('qtyPromptFor', { name: it.ItemName }), '1');
-    if (qty === null || isNaN(qty) || Number(qty) <= 0) return;
-    var lineTotal2 = Number(qty) * Number(it.DefaultPrice);
-    currentBillItems.push({ name: it.ItemName, qty: qty, weight: '', unit: 'piece', price: it.DefaultPrice, lineTotal: lineTotal2 });
+    showQtyModal(it.ItemName, tr('enterQty') + ' • ₹' + it.DefaultPrice + '/' + it.Unit).then(function (qty) {
+      if (qty === null) return;
+      var lineTotal2 = Number(qty) * Number(it.DefaultPrice);
+      currentBillItems.push({ name: it.ItemName, qty: qty, weight: '', unit: 'piece', price: it.DefaultPrice, lineTotal: lineTotal2 });
+      renderBillItems();
+    });
   }
-  renderBillItems();
 }
+
+// ---------- QUICK-ADD QTY/WEIGHT MODAL ----------
+// In-app replacement for the native browser prompt() dialog, so it matches
+// the app's theme (including dark mode) instead of popping the OS/browser
+// chrome. Returns a Promise that resolves to the entered value as a string,
+// or null if the person cancelled — same contract prompt() had.
+var qtyModalResolve = null;
+
+function showQtyModal(title, subText, defaultValue) {
+  document.getElementById('qtyModalTitle').innerText = title;
+  document.getElementById('qtyModalSub').innerText = subText || '';
+  document.getElementById('qtyModalErr').innerText = '';
+  var input = document.getElementById('qtyModalInput');
+  input.value = defaultValue || '1';
+  document.getElementById('qtyModalBackdrop').classList.add('open');
+  setTimeout(function () { input.focus(); input.select(); }, 60);
+  return new Promise(function (resolve) { qtyModalResolve = resolve; });
+}
+
+function closeQtyModal() {
+  document.getElementById('qtyModalBackdrop').classList.remove('open');
+}
+
+function qtyModalCancel() {
+  closeQtyModal();
+  if (qtyModalResolve) { var r = qtyModalResolve; qtyModalResolve = null; r(null); }
+}
+
+function qtyModalConfirm() {
+  var input = document.getElementById('qtyModalInput');
+  var val = input.value;
+  if (val === '' || isNaN(val) || Number(val) <= 0) {
+    document.getElementById('qtyModalErr').innerText = tr('qtyModalInvalid');
+    input.focus();
+    return;
+  }
+  closeQtyModal();
+  if (qtyModalResolve) { var r = qtyModalResolve; qtyModalResolve = null; r(val); }
+}
+
+document.getElementById('qtyModalInput').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { e.preventDefault(); qtyModalConfirm(); }
+  else if (e.key === 'Escape') { e.preventDefault(); qtyModalCancel(); }
+});
 
 // ---------- ADD ITEM MANUALLY SHEET ----------
 // Opens from the floating + button. No backdrop, so it doesn't dim/blur the
@@ -2819,7 +2915,7 @@ function buildTutorialSteps() {
   var steps = tutorialBaseSteps.slice();
   if (session.role === 'Manager') {
     steps.push({ tab: 'admin', target: '#addStaffCard', title: 'Manage Staff (Admin)', text: 'As a Manager, add staff logins here and control who can access QuickBill.' });
-    steps.push({ tab: 'admin', target: '#addQuickItemCard', title: 'Manage Quick Items (Admin)', text: "Add, edit or mark items low-stock — they'll show up in the Quick Add grid for everyone." });
+    steps.push({ tab: 'inventory', target: '#addQuickItemCard', title: 'Manage Quick Items (Inventory)', text: "Add, edit or mark items low-stock — they'll show up in the Quick Add grid for everyone." });
   }
   return steps;
 }
