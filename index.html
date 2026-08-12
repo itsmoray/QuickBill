@@ -426,6 +426,8 @@
     .settings-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .settings-panel-header h3 { margin: 0; font-size: 17px; color: var(--text); }
     .settings-close-btn { background: var(--bg); border: none; color: var(--muted); font-size: 16px; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; flex-shrink: 0; }
+    .settings-back-btn { background: var(--bg); border: none; color: var(--muted); font-size: 18px; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; flex-shrink: 0; margin-right: 8px; }
+    .settings-panel-header-left { display: flex; align-items: center; }
     .settings-row {
       display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 4px;
       border-bottom: 1px solid var(--border);
@@ -729,7 +731,10 @@
     <div class="settings-backdrop hidden" id="settingsBackdrop" onclick="closeSettingsModal()"></div>
     <div class="settings-panel" id="settingsModal">
       <div class="settings-panel-header">
-        <h3 data-i18n="settings">Settings</h3>
+        <div class="settings-panel-header-left">
+          <button class="settings-back-btn" onclick="backToHamburgerMenu()" title="Back">‹</button>
+          <h3 data-i18n="settings">Settings</h3>
+        </div>
         <button class="settings-close-btn" onclick="closeSettingsModal()">✕</button>
       </div>
       <div class="settings-row">
@@ -1419,6 +1424,14 @@ function closeSettingsModal() {
   panel.classList.remove('open');
   backdrop.classList.remove('open');
   setTimeout(function () { backdrop.classList.add('hidden'); }, 260);
+}
+
+// Small "‹" back button in the Settings panel header — closes Settings and
+// reopens the hamburger menu, so it feels like navigating back a level
+// instead of closing everything.
+function backToHamburgerMenu() {
+  closeSettingsModal();
+  toggleHamburgerMenu();
 }
 
 function applyThemeUI() {
