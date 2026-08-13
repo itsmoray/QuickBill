@@ -465,6 +465,39 @@
     .qty-modal-btns .btn { margin-top: 0; }
     .qty-modal-err { color: var(--red); font-size: 12.5px; margin-top: 8px; min-height: 16px; }
 
+    /* ---------- BILL COMPLETED MODAL ----------
+       Shown as a centered popup right after Complete Bill instead of a
+       persistent full-width card sitting in the tab flow — on desktop that
+       card used to sit awkwardly below the two-column billing grid, full
+       width and disconnected from everything above it. As a modal it works
+       identically (and looks intentional) on phone and laptop alike; same
+       centered flex-backdrop pattern as .qty-modal-backdrop above. */
+    .bill-success-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0); z-index: 210;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      transition: background 0.2s ease; pointer-events: none; overflow-y: auto;
+    }
+    .bill-success-backdrop.open { background: rgba(15,23,42,0.5); pointer-events: auto; }
+    .bill-success-modal {
+      background: var(--card); border-radius: 20px; padding: 28px 24px 24px; width: 100%; max-width: 380px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.35); transform: scale(0.92) translateY(8px); opacity: 0;
+      transition: transform 0.22s cubic-bezier(.32,.72,0,1), opacity 0.2s ease; margin: auto;
+    }
+    .bill-success-backdrop.open .bill-success-modal { transform: scale(1) translateY(0); opacity: 1; }
+    .bsm-check {
+      width: 54px; height: 54px; border-radius: 50%; background: var(--green-light); color: var(--green-dark);
+      display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 12px;
+    }
+    .bsm-title { text-align: center; font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 2px; }
+    .bsm-billid { text-align: center; font-size: 12.5px; color: var(--muted); margin-bottom: 16px; font-weight: 600; letter-spacing: 0.2px; }
+    .bsm-summary { border-top: 1px solid var(--border); margin-bottom: 16px; }
+    .bsm-summary .big-total { padding-top: 14px; }
+    .bsm-actions { display: flex; gap: 8px; }
+    .bsm-actions .btn { margin-top: 0; flex: 1; padding: 11px 6px; font-size: 12.5px; }
+    .bsm-void-row { margin-top: 8px; }
+    .bsm-void-row .btn { margin-top: 0; width: 100%; }
+    .bsm-done-btn { margin-top: 16px; }
+
     /* ---------- UPI SETTINGS (inside Settings panel, Manager only) ---------- */
     .upi-settings-note { font-size: 12px; color: var(--muted); margin: 2px 2px 12px; line-height: 1.5; }
     .upi-settings-savemsg { font-size: 12.5px; color: var(--green-dark); margin-top: 8px; min-height: 16px; }
@@ -939,14 +972,6 @@
         </div>
       </div>
       </div><!-- /#billingGrid -->
-
-      <div class="card hidden" id="lastBillCard">
-        <h3 data-i18n="lastBill">Last Bill</h3>
-        <div id="lastBillSummary"></div>
-        <button class="btn secondary" id="shareBillBtn" style="margin-top:10px" onclick="shareLastBillWhatsApp()" data-i18n="shareBill">📤 Share Bill</button>
-        <button class="btn secondary" id="editLastBillBtn" style="margin-top:10px" onclick="editLastBill(this)" data-i18n="editThisBill">✏️ Edit This Bill</button>
-        <button class="btn danger" id="voidLastBillBtn" style="margin-top:10px" onclick="voidLastBill(this)" data-i18n="voidThisBill">🗑 Void This Bill</button>
-      </div>
     </div>
 
     <!-- TAB: DAY -->
@@ -1108,6 +1133,28 @@
     </div>
     <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openManualAddCard()" aria-label="Add item manually">+</button>
 
+    <!-- Bill Completed popup: shown right after Complete Bill. Replaces the
+         old persistent "Last Bill" card that used to sit inline in the
+         billing tab (and looked disconnected below the desktop two-column
+         layout). Closes via the Done button, the ✕, or a backdrop tap;
+         Edit/Void also close it automatically once they finish. -->
+    <div class="bill-success-backdrop" id="billSuccessBackdrop" onclick="if (event.target === this) closeBillSuccessModal()">
+      <div class="bill-success-modal" id="billSuccessModal">
+        <div class="bsm-check">✅</div>
+        <div class="bsm-title" data-i18n="billCompleted">Bill Completed</div>
+        <div class="bsm-billid" id="bsmBillId"></div>
+        <div class="bsm-summary" id="lastBillSummary"></div>
+        <div class="bsm-actions">
+          <button class="btn secondary" id="shareBillBtn" onclick="shareLastBillWhatsApp()" data-i18n="shareBill">📤 Share Bill</button>
+          <button class="btn secondary" id="editLastBillBtn" onclick="editLastBill(this)" data-i18n="editThisBill">✏️ Edit This Bill</button>
+        </div>
+        <div class="bsm-void-row">
+          <button class="btn danger" id="voidLastBillBtn" onclick="voidLastBill(this)" data-i18n="voidThisBill">🗑 Void This Bill</button>
+        </div>
+        <button class="btn bsm-done-btn" onclick="closeBillSuccessModal()" data-i18n="done">✓ Done</button>
+      </div>
+    </div>
+
     <div class="bottom-nav" id="bottomNav">
       <button class="nav-btn active" data-tab="billing" onclick="switchTab('billing')">
         <span class="icon-wrap"><span class="icon">🧾</span></span>
@@ -1165,6 +1212,7 @@ var I18N = {
     paymentMode: 'Payment Mode', cash: 'Cash', upi: 'UPI', creditUdhaar: 'Credit (Udhaar)', discount: 'Discount',
     flatDiscount: '₹ Flat', percentDiscount: '% Percent', total: 'Total', subtotal: 'Subtotal',
     totalPayable: 'Total Payable', completeBill: 'Complete Bill', lastBill: 'Last Bill', shareBill: '📤 Share Bill',
+    billCompleted: 'Bill Completed', done: '✓ Done',
     editThisBill: '✏️ Edit This Bill', voidThisBill: '🗑 Void This Bill', billId: 'Bill ID', customer: 'Customer',
     items: 'Items', discountPercentPh: 'e.g. 10 for 10%',
     scanToPay: 'Scan to Pay via UPI', upiQrHint: "Customer scans this with any UPI app to pay",
@@ -1298,6 +1346,7 @@ var I18N = {
     paymentMode: 'പേയ്‌മെന്റ് രീതി', cash: 'ക്യാഷ്', upi: 'UPI', creditUdhaar: 'ക്രെഡിറ്റ് (ഉധാരം)', discount: 'കിഴിവ്',
     flatDiscount: '₹ ഫ്ലാറ്റ്', percentDiscount: '% ശതമാനം', total: 'ആകെ', subtotal: 'സബ്ടോട്ടൽ',
     totalPayable: 'അടയ്‌ക്കേണ്ട ആകെ തുക', completeBill: 'ബിൽ പൂർത്തിയാക്കുക', lastBill: 'അവസാന ബിൽ', shareBill: '📤 ബിൽ ഷെയർ ചെയ്യുക',
+    billCompleted: 'ബിൽ പൂർത്തിയായി', done: '✓ ശരി',
     editThisBill: '✏️ ഈ ബിൽ എഡിറ്റ് ചെയ്യുക', voidThisBill: '🗑 ഈ ബിൽ റദ്ദാക്കുക', billId: 'ബിൽ ഐഡി', customer: 'കസ്റ്റമർ',
     items: 'ഇനങ്ങൾ', discountPercentPh: 'ഉദാ: 10% ആണെങ്കിൽ 10',
     scanToPay: 'UPI വഴി പണം നൽകാൻ സ്കാൻ ചെയ്യുക', upiQrHint: 'കസ്റ്റമർ ഏതെങ്കിലും UPI ആപ്പ് ഉപയോഗിച്ച് ഇത് സ്കാൻ ചെയ്ത് പണം നൽകാം',
@@ -2494,15 +2543,17 @@ function completeBill() {
 }
 
 // ---------- LAST BILL: SHARE / EDIT / VOID ----------
+function openBillSuccessModal() { document.getElementById('billSuccessBackdrop').classList.add('open'); }
+function closeBillSuccessModal() { document.getElementById('billSuccessBackdrop').classList.remove('open'); }
+
 function renderLastBillCard() {
-  var card = document.getElementById('lastBillCard');
-  if (!lastBill) { card.classList.add('hidden'); return; }
-  card.classList.remove('hidden');
+  if (!lastBill) { closeBillSuccessModal(); return; }
+  document.getElementById('bsmBillId').innerText = tr('billId') + ': ' + lastBill.billId;
   document.getElementById('lastBillSummary').innerHTML =
-    '<div class="stat-row"><span>' + tr('billId') + '</span><span class="val">' + lastBill.billId + '</span></div>' +
     '<div class="stat-row"><span>' + tr('customer') + '</span><span class="val">' + (lastBill.customerName || tr('walkInCustomer')) + '</span></div>' +
     '<div class="stat-row"><span>' + tr('items') + '</span><span class="val">' + lastBill.items.length + '</span></div>' +
-    '<div class="stat-row"><span>' + tr('total') + '</span><span class="val">₹' + Number(lastBill.total).toFixed(2) + '</span></div>';
+    '<div class="big-total"><div class="label">' + tr('total') + '</div><div class="amount">₹' + Number(lastBill.total).toFixed(2) + '</div></div>';
+  openBillSuccessModal();
 }
 
 function buildReceiptText() {
