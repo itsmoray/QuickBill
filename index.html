@@ -153,16 +153,72 @@
       width: 100%; padding: 13px 14px; border-radius: 10px; border: 1.5px solid var(--border);
       font-size: 16px; outline: none; background: #fff;
     }
-    .field input:focus, .field select:focus { border-color: var(--green); }
+    .field input:focus, .field select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,0.12); }
+    .link-muted { display: inline-block; margin-top: 16px; font-size: 13px; color: var(--muted); text-decoration: none; }
+    .link-muted:active { color: var(--green-dark); }
+
+    /* ---------- QUICK-UNLOCK LOCK SCREEN ---------- */
+    #lockScreen {
+      position: fixed; inset: 0; z-index: 480; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: linear-gradient(160deg, var(--green) 0%, var(--green-dark) 100%); padding: 24px;
+    }
+    #lockScreen .login-card h1 { font-size: 20px; }
+    .pin-input {
+      width: 100%; padding: 16px; border-radius: 12px; border: 1.5px solid var(--border); text-align: center;
+      font-size: 30px; letter-spacing: 14px; font-weight: 700; outline: none; background: #fff;
+    }
+    .pin-input:focus { border-color: var(--green); }
+    @keyframes shake-x {
+      10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); }
+      30%, 50%, 70% { transform: translateX(-5px); } 40%, 60% { transform: translateX(5px); }
+    }
+    .shake { animation: shake-x 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+    .pin-settings-row { display: flex; gap: 8px; margin: 4px 0 6px; }
+    .pin-settings-row .btn { margin-top: 0; }
+
+    /* ---------- SMALL UTILITY MODALS (PIN setup, offline queue review) ---------- */
+    .mini-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0); z-index: 220; display: flex; align-items: center;
+      justify-content: center; padding: 20px; transition: background 0.2s ease; pointer-events: none; overflow-y: auto;
+    }
+    .mini-modal-backdrop.open { background: rgba(15,23,42,0.5); pointer-events: auto; }
+    .mini-modal {
+      background: var(--card); border-radius: 18px; padding: 22px 20px; width: 100%; max-width: 380px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.35); transform: scale(0.94) translateY(6px); opacity: 0; margin: auto;
+      transition: transform 0.2s cubic-bezier(.32,.72,0,1), opacity 0.2s ease; max-height: 80vh; overflow-y: auto;
+    }
+    .mini-modal-backdrop.open .mini-modal { transform: scale(1) translateY(0); opacity: 1; }
+    .mini-modal h3 { margin: 0 0 14px; font-size: 17px; }
+    .mini-modal .btn { margin-top: 10px; }
+
+    /* ---------- OFFLINE BANNER + PENDING-SYNC BADGE ---------- */
+    #offlineBanner {
+      background: var(--amber); color: #fff; font-size: 12.5px; font-weight: 600; text-align: center;
+      padding: 7px 14px; line-height: 1.4;
+    }
+    .pending-sync-badge {
+      display: flex; align-items: center; gap: 4px; background: var(--green-light); color: var(--green-dark);
+      border: none; border-radius: 20px; padding: 5px 10px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    }
+    .pending-sync-badge.needs-attention { background: #FEE2E2; color: var(--red); }
+    .psb-icon { font-size: 12px; }
+    [data-theme="dark"] .pending-sync-badge { background: #163A25; }
+    [data-theme="dark"] .pending-sync-badge.needs-attention { background: #3F1D1D; }
+    .pill.offlinetag { background: var(--green-light); color: var(--green-dark); }
+    [data-theme="dark"] .pill.offlinetag { background: #163A25; }
+
     .btn {
       width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--green);
       color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 6px;
+      transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 2px 6px rgba(22,163,74,0.25);
     }
-    .btn:active { background: var(--green-dark); }
-    .btn.secondary { background: #fff; color: var(--green); border: 1.5px solid var(--green); }
-    .btn.danger { background: var(--red); }
+    .btn:active { background: var(--green-dark); transform: scale(0.98); box-shadow: 0 1px 3px rgba(22,163,74,0.2); }
+    .btn.secondary { background: #fff; color: var(--green); border: 1.5px solid var(--green); box-shadow: none; }
+    .btn.danger { background: var(--red); box-shadow: 0 2px 6px rgba(220,38,38,0.25); }
     .btn.small { padding: 9px 14px; font-size: 14px; width: auto; }
-    .btn:disabled { opacity: 0.5; }
+    .btn:disabled { opacity: 0.5; transform: none; box-shadow: none; }
+    [data-theme="dark"] .btn { box-shadow: none; }
     .error-msg { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 16px; }
     .success-msg { color: var(--green-dark); font-size: 13px; margin-top: 10px; }
 
@@ -183,6 +239,11 @@
       font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap;
       background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.4); color: #fff;
     }
+    .today-total-badge .ttb-label { opacity: 0.85; font-weight: 600; margin-right: 3px; }
+    @media (max-width: 380px) {
+      .today-total-badge .ttb-label { display: none; }
+      .today-total-badge { padding: 4px 8px; }
+    }
     .day-badge.open { background: #fff; color: var(--green-dark); }
     .day-badge.closed { background: rgba(255,255,255,0.25); color: #fff; }
     .logout-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
@@ -200,7 +261,8 @@
     .tab-content.tab-leaving { position: absolute; top: 0; left: 0; right: 0; opacity: 0; transform: translateY(-10px); transition: opacity 0.22s ease, transform 0.22s ease; z-index: 1; }
     .card {
       background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); border: 1px solid var(--border);
+      transition: box-shadow 0.2s ease;
     }
     .card h3 { margin: 0 0 12px; font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
     .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
@@ -548,15 +610,30 @@
     table.report-table td:nth-last-child(1), table.report-table th:nth-last-child(1) { text-align: right; font-weight: 600; }
     .report-table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--border); border-radius: 10px; }
     .report-table-wrap table.report-table th:first-child, .report-table-wrap table.report-table th:last-child { border-radius: 0; }
+
+    /* ---------- PAYMENT MODE BREAKDOWN (Daily Report) ---------- */
+    .payment-breakdown { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+    .pb-row { display: grid; grid-template-columns: 74px 1fr auto; align-items: center; gap: 10px; margin-bottom: 9px; }
+    .pb-row:last-child { margin-bottom: 0; }
+    .pb-label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+    .pb-bar-wrap { background: var(--bg); border-radius: 6px; height: 8px; overflow: hidden; }
+    .pb-bar { height: 100%; border-radius: 6px; transition: width 0.4s cubic-bezier(.2,.8,.2,1); }
+    .pb-amt { font-size: 12.5px; font-weight: 700; white-space: nowrap; text-align: right; }
+    .pb-pct { font-weight: 500; color: var(--muted); font-size: 11px; }
     .pill { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
     .pill.open, .pill.completed, .pill.closed { background: var(--green-light); color: var(--green-dark); }
     .pill.void, .pill.notopened { background: #FEE2E2; color: var(--red); }
     .pill.credit { background: #FEF3C7; color: var(--amber); }
 
     .toast {
-      position: fixed; bottom: 104px; left: 50%; transform: translateX(-50%); background: #1F2937; color: #fff;
-      padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      max-width: 90%; text-align: center;
+      position: fixed; bottom: 104px; left: 50%; background: #1F2937; color: #fff;
+      padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+      max-width: 90%; text-align: center; animation: toast-in-out 2.6s ease forwards;
+    }
+    @keyframes toast-in-out {
+      0% { transform: translate(-50%, 10px); opacity: 0; }
+      8%, 88% { transform: translate(-50%, 0); opacity: 1; }
+      100% { transform: translate(-50%, 6px); opacity: 0; }
     }
     .spinner {
       border: 3px solid var(--border); border-top: 3px solid var(--green); border-radius: 50%;
@@ -564,10 +641,19 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .section-title { font-size: 18px; font-weight: 700; margin: 4px 0 14px; }
-    .customer-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .customer-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; gap: 10px; transition: background 0.15s ease; }
+    .customer-row:active { background: var(--bg); }
     .customer-row .name { font-weight: 600; }
     .customer-row .phone { font-size: 12px; color: var(--muted); }
-    .customer-row .bal { font-weight: 700; color: var(--amber); }
+    .customer-row .bal { font-weight: 700; color: var(--amber); text-align: right; }
+    .cr-row-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .last-reminded { color: var(--green-dark); }
+    .remind-btn {
+      background: var(--green-light); color: var(--green-dark); border: none; padding: 6px 10px;
+      border-radius: 8px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .remind-btn:active { transform: scale(0.96); }
+    [data-theme="dark"] .remind-btn { background: #163A25; }
     .tag-row { display: flex; gap: 8px; margin-bottom: 12px; }
     .tag-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; text-align: center; cursor: pointer; font-weight: 600; font-size: 14px; }
     .tag-btn.selected { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
@@ -753,6 +839,26 @@
     <div class="action-overlay-card"><div class="spinner"></div><span id="actionOverlayText">Please wait...</span></div>
   </div>
 
+  <!-- ===================== QUICK-UNLOCK LOCK SCREEN ===================== -->
+  <!-- Shown instead of a full re-login when this device has a PIN saved for the
+       current user's session. The 6-hour token underneath is untouched. -->
+  <div id="lockScreen" class="hidden">
+    <div class="login-card" id="lockScreenCard">
+      <div class="shop-icon"><img src="icon-192.png" alt="QuickBill"></div>
+      <h1 id="lockScreenName">—</h1>
+      <p class="sub" data-i18n="enterPinToUnlock">Enter PIN to unlock</p>
+      <div class="field">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="lockPinInput"
+          class="pin-input" placeholder="••••" autocomplete="off"
+          oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
+          onkeydown="if(event.key==='Enter')attemptUnlock()">
+      </div>
+      <button class="btn" onclick="attemptUnlock()" data-i18n="unlockBtn">Unlock</button>
+      <div class="error-msg" id="lockPinError"></div>
+      <a href="javascript:void(0)" class="link-muted" onclick="lockScreenUseFullLogin()" data-i18n="useFullLoginInstead">Use full login instead</a>
+    </div>
+  </div>
+
   <!-- ===================== LOGIN SCREEN ===================== -->
   <div id="loginScreen">
     <div class="login-card">
@@ -780,12 +886,19 @@
         <div class="sub" id="staffNameLabel">—</div>
       </div>
       <div class="right">
+        <button class="pending-sync-badge hidden" id="pendingSyncBadge" onclick="openOfflineQueueModal()" title="Offline bills">
+          <span class="psb-icon">⏳</span><span id="pendingSyncCount">0</span>
+        </button>
         <span class="today-total-badge hidden" id="todayTotalBadge"></span>
         <span class="day-badge closed" id="dayBadge" data-i18n="dayClosed">Day Closed</span>
         <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleHamburgerMenu()" title="More">☰</button>
         <button class="logout-btn" onclick="doLogout()" title="Logout">⏻</button>
       </div>
     </div>
+
+    <!-- Shown whenever the browser reports no connection. Billing still works —
+         sales are queued and synced automatically once back online. -->
+    <div id="offlineBanner" class="hidden" data-i18n="offlineBannerText">You're offline — bills will be saved and synced automatically</div>
 
     <!-- Hamburger drawer: less-used sections + preferences live here -->
     <div class="hamburger-backdrop hidden" id="hamburgerBackdrop" onclick="closeHamburgerMenu()"></div>
@@ -821,6 +934,9 @@
       </div>
       <button class="menu-item" onclick="openSettingsModal()">
         <span class="icon">⚙️</span><span data-i18n="settings">Settings</span>
+      </button>
+      <button class="menu-item hidden" id="lockAppMenuItem" onclick="lockApp()">
+        <span class="icon">🔒</span><span data-i18n="lockAppLabel">Lock App</span>
       </button>
     </div>
 
@@ -861,6 +977,14 @@
         </label>
       </div>
 
+      <hr class="menu-divider">
+      <div class="menu-section-label" data-i18n="setupQuickUnlock">Quick Unlock (PIN)</div>
+      <p class="upi-settings-note" data-i18n="quickUnlockSub">Skip full login on this device with a 4-digit PIN</p>
+      <div class="pin-settings-row">
+        <button class="btn secondary small" id="pinSetBtn" onclick="openPinSetupModal()" data-i18n="setPinLabel">Set PIN</button>
+        <button class="btn small danger hidden" id="pinRemoveBtn" onclick="removePin()" data-i18n="removePinLabel">Remove PIN</button>
+      </div>
+
       <!-- Manager-only: where the UPI QR at checkout sends money. Hidden for
            Staff accounts — toggled visible in applySessionUI(). -->
       <div id="upiSettingsSection" class="hidden">
@@ -877,6 +1001,34 @@
         </div>
         <button class="btn secondary small" id="saveUpiSettingsBtn" onclick="saveUpiSettings(this)" data-i18n="saveUpiSettingsBtn">Save UPI Settings</button>
         <div class="upi-settings-savemsg" id="upiSettingsSaveMsg"></div>
+      </div>
+    </div>
+
+    <!-- PIN setup modal (Settings → Quick Unlock) -->
+    <div class="mini-modal-backdrop" id="pinSetupBackdrop" onclick="if(event.target===this)closePinSetupModal()">
+      <div class="mini-modal">
+        <h3 data-i18n="setupQuickUnlock">Quick Unlock (PIN)</h3>
+        <div class="field">
+          <label data-i18n="enterNewPin">Enter a 4-digit PIN</label>
+          <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinSetupStep1" class="pin-input" placeholder="••••" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
+        </div>
+        <div class="field">
+          <label data-i18n="confirmNewPin">Confirm PIN</label>
+          <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinSetupStep2" class="pin-input" placeholder="••••" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)" onkeydown="if(event.key==='Enter')savePinSetup()">
+        </div>
+        <div class="error-msg" id="pinSetupError"></div>
+        <button class="btn" onclick="savePinSetup()" data-i18n="setPinLabel">Set PIN</button>
+        <button class="btn secondary" onclick="closePinSetupModal()" data-i18n="cancel">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Offline bills review (tap the pending-sync badge in the topbar) -->
+    <div class="mini-modal-backdrop" id="offlineQueueBackdrop" onclick="if(event.target===this)closeOfflineQueueModal()">
+      <div class="mini-modal">
+        <h3 data-i18n="reviewOfflineBills">Offline Bills</h3>
+        <div id="offlineQueueList"></div>
+        <button class="btn secondary" onclick="syncOfflineQueue_()" data-i18n="syncNowLabel">Sync Now</button>
+        <button class="btn secondary" onclick="closeOfflineQueueModal()" data-i18n="closeLabel">Close</button>
       </div>
     </div>
 
@@ -1283,6 +1435,7 @@ var I18N = {
     dailyReport: 'Daily Report', selectDate: 'Select Date', viewReport: 'View Report', monthlyReport: 'Monthly Report',
     selectMonth: 'Select Month', dayStatusLabel: 'Day Status', netLabel: 'Net', billsLabel: 'Bills',
     voidedBillsLabel: 'Voided Bills', topItemsLabel: 'Top Items', salesTrendLabel: 'Sales Trend',
+    todayLabel: 'Today', todaysSalesSoFar: "Today's sales so far: {amt}",
     downloadExcel: '⬇ Download Excel', timeLabel: 'Time', staffLabel: 'Staff', modeLabel: 'Mode',
     totalLabel: 'Total', daysOperated: 'Days Operated', netProfit: 'Net Profit', dateLabel: 'Date',
     statusLabel: 'Status', salesLabel: 'Sales', expensesLabel: 'Expenses', errorLoadingReport: 'Error loading report.',
@@ -1367,7 +1520,25 @@ var I18N = {
     beCustomerNameRequired: 'Customer name is required.',
     beUsernameExists: 'Username already exists.',
     beUserNotFound: 'User not found.',
-    beServerError: 'Server error'
+    beServerError: 'Server error',
+    // Payment breakdown (Reports)
+    paymentBreakdownLabel: 'Payment Mode Breakdown',
+    // Udhaar reminders
+    remindLabel: 'Remind', reminderMsgTemplate: 'Hi {name}, this is a friendly reminder from QuickBill that you have an outstanding balance of ₹{amt}. Please pay at your convenience whenever you visit next. Thank you!',
+    remindedAgo: 'Reminded {time} ago', noPhoneForReminder: 'No phone number saved for this customer.',
+    // Offline billing
+    offlineBannerText: "You're offline — bills will be saved and synced automatically", pendingSyncLabel: 'pending sync', syncNowLabel: 'Sync Now',
+    billSavedOffline: 'Saved offline — will sync when back online', syncingLabel: 'Syncing…', syncCompleteMsg: 'Synced {n} offline bill(s).',
+    syncFailedNeedsAttention: '{n} offline bill(s) need attention — tap to review', offlineQueueEmpty: 'No offline bills pending', reviewOfflineBills: 'Offline Bills',
+    offlineBillTag: 'Offline', dayNotOpenOffline: "Couldn't sync — day wasn't open on the server", discardBillLabel: 'Discard', retryLabel: 'Retry', syncFailedTag: 'Failed',
+    youAreBackOnline: "Back online — syncing pending bills…",
+    // Quick unlock (PIN)
+    setupQuickUnlock: 'Quick Unlock (PIN)', quickUnlockSub: 'Skip full login on this device with a 4-digit PIN', setPinLabel: 'Set PIN',
+    changePinLabel: 'Change PIN', removePinLabel: 'Remove PIN', enterNewPin: 'Enter a 4-digit PIN', confirmNewPin: 'Confirm PIN',
+    pinMismatch: 'PINs do not match.', pinMustBe4Digits: 'PIN must be exactly 4 digits.', pinSetSuccess: 'Quick Unlock PIN set.',
+    pinRemovedSuccess: 'Quick Unlock PIN removed.', lockAppLabel: 'Lock App', enterPinToUnlock: 'Enter PIN to unlock', wrongPin: 'Incorrect PIN.',
+    unlockBtn: 'Unlock', useFullLoginInstead: 'Use full login instead', lockedForLabel: 'Locked for',
+    cancel: 'Cancel', closeLabel: 'Close'
   },
   ml: {
     signInSub: 'ബില്ലിംഗ് തുടങ്ങാൻ സൈൻ ഇൻ ചെയ്യുക', username: 'യൂസർനെയിം', password: 'പാസ്‌വേഡ്', login: 'ലോഗിൻ',
@@ -1420,6 +1591,7 @@ var I18N = {
     dailyReport: 'ദിവസ റിപ്പോർട്ട്', selectDate: 'തീയതി തിരഞ്ഞെടുക്കുക', viewReport: 'റിപ്പോർട്ട് കാണുക', monthlyReport: 'മാസ റിപ്പോർട്ട്',
     selectMonth: 'മാസം തിരഞ്ഞെടുക്കുക', dayStatusLabel: 'ദിവസ നില', netLabel: 'നെറ്റ്', billsLabel: 'ബില്ലുകൾ',
     voidedBillsLabel: 'റദ്ദാക്കിയ ബില്ലുകൾ', topItemsLabel: 'ടോപ്പ് ഇനങ്ങൾ', salesTrendLabel: 'വിൽപ്പന ട്രെൻഡ്',
+    todayLabel: 'ഇന്ന്', todaysSalesSoFar: 'ഇന്നത്തെ വിൽപ്പന ഇതുവരെ: {amt}',
     downloadExcel: '⬇ എക്സൽ ഡൗൺലോഡ് ചെയ്യുക', timeLabel: 'സമയം', staffLabel: 'സ്റ്റാഫ്', modeLabel: 'രീതി',
     totalLabel: 'ആകെ', daysOperated: 'പ്രവർത്തിച്ച ദിവസങ്ങൾ', netProfit: 'അറ്റാദായം', dateLabel: 'തീയതി',
     statusLabel: 'നില', salesLabel: 'വിൽപ്പന', expensesLabel: 'ചെലവ്', errorLoadingReport: 'റിപ്പോർട്ട് ലോഡ് ചെയ്യുന്നതിൽ പിശക്.',
@@ -1496,7 +1668,21 @@ var I18N = {
     beCustomerNameRequired: 'കസ്റ്റമറുടെ പേര് ആവശ്യമാണ്.',
     beUsernameExists: 'ഈ ഉപയോക്തൃനാമം ഇതിനകം നിലവിലുണ്ട്.',
     beUserNotFound: 'ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല.',
-    beServerError: 'സെർവർ പിശക്'
+    beServerError: 'സെർവർ പിശക്',
+    paymentBreakdownLabel: 'പേയ്‌മെന്റ് രീതി തിരിച്ചുള്ള കണക്ക്',
+    remindLabel: 'ഓർമ്മിപ്പിക്കുക', reminderMsgTemplate: 'ഹായ് {name}, QuickBill-ൽ നിന്നുള്ള ഒരു ഓർമ്മപ്പെടുത്തൽ — നിങ്ങളുടെ അക്കൗണ്ടിൽ ₹{amt} ബാക്കി ഉണ്ട്. അടുത്ത തവണ വരുമ്പോൾ സൗകര്യം പോലെ അടയ്ക്കുക. നന്ദി!',
+    remindedAgo: '{time} മുമ്പ് ഓർമ്മിപ്പിച്ചു', noPhoneForReminder: 'ഈ കസ്റ്റമറുടെ ഫോൺ നമ്പർ സേവ് ചെയ്തിട്ടില്ല.',
+    offlineBannerText: 'നിങ്ങൾ ഓഫ്‌ലൈൻ ആണ് — ബില്ലുകൾ സേവ് ചെയ്ത് പിന്നീട് ഓട്ടോമാറ്റിക് ആയി സിങ്ക് ചെയ്യും', pendingSyncLabel: 'സിങ്ക് ചെയ്യാൻ ബാക്കി', syncNowLabel: 'ഇപ്പോൾ സിങ്ക് ചെയ്യുക',
+    billSavedOffline: 'ഓഫ്‌ലൈൻ ആയി സേവ് ചെയ്തു — ഓൺലൈൻ ആകുമ്പോൾ സിങ്ക് ചെയ്യും', syncingLabel: 'സിങ്ക് ചെയ്യുന്നു…', syncCompleteMsg: '{n} ഓഫ്‌ലൈൻ ബിൽ സിങ്ക് ചെയ്തു.',
+    syncFailedNeedsAttention: '{n} ഓഫ്‌ലൈൻ ബിൽ ശ്രദ്ധ വേണം — പരിശോധിക്കാൻ ടാപ്പ് ചെയ്യുക', offlineQueueEmpty: 'ഓഫ്‌ലൈൻ ബില്ലുകൾ ഒന്നും ബാക്കിയില്ല', reviewOfflineBills: 'ഓഫ്‌ലൈൻ ബില്ലുകൾ',
+    offlineBillTag: 'ഓഫ്‌ലൈൻ', dayNotOpenOffline: 'സിങ്ക് ചെയ്യാനായില്ല — സെർവറിൽ ദിവസം തുറന്നിട്ടില്ല', discardBillLabel: 'ഒഴിവാക്കുക', retryLabel: 'വീണ്ടും ശ്രമിക്കുക', syncFailedTag: 'പരാജയപ്പെട്ടു',
+    youAreBackOnline: 'വീണ്ടും ഓൺലൈൻ ആയി — ബാക്കിയുള്ള ബില്ലുകൾ സിങ്ക് ചെയ്യുന്നു…',
+    setupQuickUnlock: 'ക്വിക്ക് അൺലോക്ക് (PIN)', quickUnlockSub: '4 അക്ക PIN ഉപയോഗിച്ച് ഈ ഡിവൈസിൽ പൂർണ്ണ ലോഗിൻ ഒഴിവാക്കുക', setPinLabel: 'PIN സെറ്റ് ചെയ്യുക',
+    changePinLabel: 'PIN മാറ്റുക', removePinLabel: 'PIN നീക്കം ചെയ്യുക', enterNewPin: '4 അക്ക PIN നൽകുക', confirmNewPin: 'PIN സ്ഥിരീകരിക്കുക',
+    pinMismatch: 'PIN പൊരുത്തപ്പെടുന്നില്ല.', pinMustBe4Digits: 'PIN കൃത്യമായി 4 അക്കം ആയിരിക്കണം.', pinSetSuccess: 'ക്വിക്ക് അൺലോക്ക് PIN സെറ്റ് ചെയ്തു.',
+    pinRemovedSuccess: 'ക്വിക്ക് അൺലോക്ക് PIN നീക്കം ചെയ്തു.', lockAppLabel: 'ആപ്പ് ലോക്ക് ചെയ്യുക', enterPinToUnlock: 'അൺലോക്ക് ചെയ്യാൻ PIN നൽകുക', wrongPin: 'PIN തെറ്റാണ്.',
+    unlockBtn: 'അൺലോക്ക്', useFullLoginInstead: 'പകരം പൂർണ്ണ ലോഗിൻ ഉപയോഗിക്കുക', lockedForLabel: 'ലോക്ക് ചെയ്തിരിക്കുന്നു',
+    cancel: 'റദ്ദാക്കുക', closeLabel: 'അടയ്ക്കുക'
   }
 };
 
@@ -1755,6 +1941,204 @@ var lastBill = null; // { billId, items, customerName, customerPhone, paymentMod
 // checkout QR without a round-trip on every keystroke/total change.
 var upiSettings = { upiId: '', payeeName: '' };
 
+// ======================================================
+// ---------- OFFLINE BILLING ----------
+// ======================================================
+// A shop with patchy signal can still open the app, add items, and complete
+// a sale — the bill is queued on the device and synced automatically the
+// moment connectivity returns. Quick items, day status, customers, and UPI
+// settings are cached locally as a side effect of their normal online loads
+// so the billing screen itself keeps working while offline, not just the
+// "save" step.
+var OFFLINE_QUEUE_KEY = 'quickbillOfflineQueueV1';
+var OFFLINE_CACHE_PREFIX = 'quickbillCache_';
+var syncInProgress = false;
+
+function getOfflineQueue_() {
+  try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); } catch (e) { return []; }
+}
+function setOfflineQueue_(q) {
+  try { localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q)); } catch (e) { /* storage full — best effort */ }
+}
+// Bills billed offline generate their own ID client-side (instead of waiting
+// on the server) so the same bill can be shown/shared immediately and so a
+// sync retry never double-bills — saveBill() on the backend treats a repeat
+// of the same billId as a no-op. Used for online bills too now, for the same
+// idempotency guarantee if a save is retried after a dropped response.
+function generateBillId_() {
+  return 'B' + Date.now() + '-' + Math.floor(Math.random() * 900 + 100);
+}
+
+function getCachedDayStatus_() {
+  try { return JSON.parse(localStorage.getItem(OFFLINE_CACHE_PREFIX + 'dayStatus') || 'null'); } catch (e) { return null; }
+}
+
+// Reads a cached copy of a GET immediately (if any), then refreshes it from
+// the network and caches the fresh result. On a network-level failure, falls
+// back to the cached copy instead of rejecting, so the UI it feeds keeps
+// working offline (just possibly a little stale).
+function cacheThenFetch_(cacheKey, apiPromiseFn, onData) {
+  var key = OFFLINE_CACHE_PREFIX + cacheKey;
+  var cached = null;
+  try { var raw = localStorage.getItem(key); if (raw) cached = JSON.parse(raw); } catch (e) {}
+  if (cached && onData) onData(cached, true);
+  return apiPromiseFn()
+    .then(function (data) {
+      try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+      if (onData) onData(data, false);
+      return data;
+    })
+    .catch(function (err) {
+      if (cached) return cached;
+      throw err;
+    });
+}
+
+function queueBillOffline_(billData) {
+  var queue = getOfflineQueue_();
+  queue.push({ billData: billData, queuedAt: Date.now(), status: 'pending' });
+  setOfflineQueue_(queue);
+  updatePendingSyncBadge_();
+}
+
+function updateOfflineUI_() {
+  var banner = document.getElementById('offlineBanner');
+  if (banner) banner.classList.toggle('hidden', navigator.onLine);
+}
+
+function handleGoneOffline_() {
+  updateOfflineUI_();
+}
+
+function handleBackOnline_() {
+  updateOfflineUI_();
+  if (session.token) {
+    showToast(tr('youAreBackOnline'));
+    syncOfflineQueue_();
+  }
+}
+
+function updatePendingSyncBadge_() {
+  var queue = getOfflineQueue_();
+  var pending = queue.filter(function (q) { return q.status === 'pending'; }).length;
+  var failed = queue.filter(function (q) { return q.status === 'failed'; }).length;
+  var badge = document.getElementById('pendingSyncBadge');
+  if (!badge) return;
+  var total = pending + failed;
+  badge.classList.toggle('hidden', total === 0);
+  badge.classList.toggle('needs-attention', failed > 0);
+  var countEl = document.getElementById('pendingSyncCount');
+  if (countEl) countEl.innerText = total;
+  refreshOfflineQueueModalIfOpen_();
+}
+
+// Walks the queue one bill at a time (not in parallel) so a mid-sync
+// reconnect hiccup can't fire the same bill twice. Bills the server actually
+// rejects (e.g. the day wasn't open when it's finally seen) are marked
+// "failed" and left for the shopkeeper to review/discard rather than retried
+// forever — a real rejection retrying won't fix.
+function syncOfflineQueue_() {
+  if (syncInProgress || !session.token) return;
+  var queue = getOfflineQueue_();
+  if (queue.filter(function (q) { return q.status !== 'synced'; }).length === 0) return;
+  syncInProgress = true;
+  var syncedCount = 0;
+  var i = 0;
+
+  function finish() {
+    queue = queue.filter(function (q) { return q.status !== 'synced'; });
+    setOfflineQueue_(queue);
+    syncInProgress = false;
+    updatePendingSyncBadge_();
+    if (syncedCount > 0) showToast(tr('syncCompleteMsg', { n: syncedCount }));
+    var failedCount = queue.filter(function (q) { return q.status === 'failed'; }).length;
+    if (failedCount > 0) showToast(tr('syncFailedNeedsAttention', { n: failedCount }));
+    loadTodayBillsForDay();
+    refreshDayStatus();
+  }
+
+  function next() {
+    while (i < queue.length && queue[i].status === 'synced') i++;
+    if (i >= queue.length) { finish(); return; }
+    var entry = queue[i];
+    callAPI('saveBill', { token: session.token, billData: entry.billData })
+      .then(function (res) {
+        if (res.success) { entry.status = 'synced'; syncedCount++; }
+        else { entry.status = 'failed'; entry.failReason = res.message; }
+        setOfflineQueue_(queue);
+        updatePendingSyncBadge_();
+        i++;
+        next();
+      })
+      .catch(function (err) {
+        if (err.message === tr('networkFailed')) {
+          // dropped again mid-sync — stop here, the next 'online' event or a manual Sync Now retries the rest
+          syncInProgress = false;
+          updatePendingSyncBadge_();
+          return;
+        }
+        entry.status = 'failed';
+        entry.failReason = err.message;
+        setOfflineQueue_(queue);
+        updatePendingSyncBadge_();
+        i++;
+        next();
+      });
+  }
+  next();
+}
+
+// ---- Offline bills review modal (tap the pending-sync badge) ----
+function openOfflineQueueModal() {
+  renderOfflineQueueModal_();
+  document.getElementById('offlineQueueBackdrop').classList.add('open');
+}
+function closeOfflineQueueModal() {
+  document.getElementById('offlineQueueBackdrop').classList.remove('open');
+}
+function refreshOfflineQueueModalIfOpen_() {
+  var backdrop = document.getElementById('offlineQueueBackdrop');
+  if (backdrop && backdrop.classList.contains('open')) renderOfflineQueueModal_();
+}
+function renderOfflineQueueModal_() {
+  var el = document.getElementById('offlineQueueList');
+  if (!el) return;
+  var queue = getOfflineQueue_();
+  if (queue.length === 0) { el.innerHTML = '<div class="empty-state">' + tr('offlineQueueEmpty') + '</div>'; return; }
+  el.innerHTML = queue.map(function (entry, idx) {
+    var b = entry.billData;
+    var total = Math.max(b.items.reduce(function (s, it) { return s + (Number(it.lineTotal) || 0); }, 0) - (Number(b.discount) || 0), 0);
+    var statusTag = entry.status === 'failed'
+      ? '<span class="pill void">' + tr('syncFailedTag') + (entry.failReason ? ': ' + trBackend(entry.failReason) : '') + '</span>'
+      : '<span class="pill offlinetag">' + tr('offlineBillTag') + '</span>';
+    var actions = entry.status === 'failed'
+      ? '<button class="btn small secondary" onclick="retryOfflineEntry_(' + idx + ')">' + tr('retryLabel') + '</button>' +
+        '<button class="btn small danger" onclick="discardOfflineEntry_(' + idx + ')">' + tr('discardBillLabel') + '</button>'
+      : '';
+    return '<div class="bill-item-row"><div class="info"><div class="name">' + (b.customerName || tr('walkInCustomer')) + ' ' + statusTag + '</div>' +
+      '<div class="meta">' + new Date(entry.queuedAt).toLocaleString() + '</div></div>' +
+      '<div class="amt">₹' + total.toFixed(2) + actions + '</div></div>';
+  }).join('');
+}
+function retryOfflineEntry_(idx) {
+  var queue = getOfflineQueue_();
+  if (!queue[idx]) return;
+  queue[idx].status = 'pending';
+  delete queue[idx].failReason;
+  setOfflineQueue_(queue);
+  renderOfflineQueueModal_();
+  updatePendingSyncBadge_();
+  syncOfflineQueue_();
+}
+function discardOfflineEntry_(idx) {
+  if (!confirm(tr('discardBillLabel') + '?')) return;
+  var queue = getOfflineQueue_();
+  queue.splice(idx, 1);
+  setOfflineQueue_(queue);
+  renderOfflineQueueModal_();
+  updatePendingSyncBadge_();
+}
+
 // ---------- SPLASH SCREEN ----------
 // Shown the instant the app opens (before we know if there's a saved session
 // or the login screen should appear) so it never feels like a blank flash.
@@ -1784,8 +2168,12 @@ window.onload = function () {
     try {
       session = JSON.parse(saved);
       showApp();
+      maybeShowLockScreen(); // reopening the app (reload/relaunch) with a saved session — require the quick PIN if one's set, instead of a full re-login
     } catch (e) { localStorage.removeItem('grocerySession'); }
   }
+  window.addEventListener('online', handleBackOnline_);
+  window.addEventListener('offline', handleGoneOffline_);
+  updateOfflineUI_();
   document.getElementById('reportDate').valueAsDate = new Date();
   document.getElementById('reportMonth').value = new Date().toISOString().slice(0, 7);
   if (!saved) document.getElementById('topProgressBar').classList.add('on-dark');
@@ -1874,7 +2262,7 @@ function doLogin() {
       if (res.success) {
         // leave the button/progress bar in their loading state through the
         // hand-off to the app screen, so there's no "flash of restored button"
-        session = { token: res.token, role: res.role, fullName: res.fullName };
+        session = { token: res.token, role: res.role, fullName: res.fullName, username: u };
         localStorage.setItem('grocerySession', JSON.stringify(session));
         showApp();
         setTimeout(function () {
@@ -1899,6 +2287,7 @@ function doLogout() {
   localStorage.removeItem('grocerySession');
   session = { token: null, role: null, fullName: null };
   endTutorial();
+  hideLockScreen_(); // in case the device was mid-lock — a real logout always wins
   document.getElementById('appScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginUsername').value = '';
@@ -1921,6 +2310,116 @@ function showApp() {
   loadCustomers();
   loadUpiSettings();
   restoreDraftBillIfAny();
+  refreshQuickUnlockUI();
+  updatePendingSyncBadge_();
+  updateOfflineUI_();
+  if (navigator.onLine) syncOfflineQueue_();
+}
+
+// ======================================================
+// ---------- QUICK UNLOCK (PIN) FOR SHARED DEVICES ----------
+// ======================================================
+// A lightweight local screen-lock, not a second authentication factor: the
+// original 6-hour session token is untouched and still does all the real
+// authorization server-side. This just saves a counter-staff member from
+// retyping a username+password on a shared device — a wrong PIN can never
+// grant access beyond what the still-valid token already allows.
+function pinStorageKey_(username) { return 'quickbill_pin_' + username; }
+
+function hasPinSet_(username) {
+  if (!username) return false;
+  try { return !!localStorage.getItem(pinStorageKey_(username)); } catch (e) { return false; }
+}
+
+function hashPin_(username, pin) {
+  var data = new TextEncoder().encode('quickbill-pin:' + username + ':' + pin);
+  return crypto.subtle.digest('SHA-256', data).then(function (buf) {
+    return Array.prototype.map.call(new Uint8Array(buf), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  });
+}
+
+// Called after login and after app reload — shows the PIN screen instead of
+// the app if this device has a PIN saved for the current user.
+function maybeShowLockScreen() {
+  if (hasPinSet_(session.username)) lockApp();
+}
+
+function refreshQuickUnlockUI() {
+  var hasPin = hasPinSet_(session.username);
+  var menuItem = document.getElementById('lockAppMenuItem');
+  if (menuItem) menuItem.classList.toggle('hidden', !hasPin);
+  var setBtn = document.getElementById('pinSetBtn');
+  var removeBtn = document.getElementById('pinRemoveBtn');
+  if (setBtn) setBtn.innerText = hasPin ? tr('changePinLabel') : tr('setPinLabel');
+  if (removeBtn) removeBtn.classList.toggle('hidden', !hasPin);
+}
+
+function lockApp() {
+  closeHamburgerMenu();
+  document.getElementById('lockScreenName').innerText = session.fullName || '';
+  document.getElementById('lockPinInput').value = '';
+  document.getElementById('lockPinError').innerText = '';
+  document.getElementById('lockScreen').classList.remove('hidden');
+  setTimeout(function () { var el = document.getElementById('lockPinInput'); if (el) el.focus(); }, 250);
+}
+
+function hideLockScreen_() {
+  document.getElementById('lockScreen').classList.add('hidden');
+}
+
+function attemptUnlock() {
+  var pin = document.getElementById('lockPinInput').value.trim();
+  var errEl = document.getElementById('lockPinError');
+  if (!/^\d{4}$/.test(pin)) { errEl.innerText = tr('pinMustBe4Digits'); return; }
+  var stored = null;
+  try { stored = localStorage.getItem(pinStorageKey_(session.username)); } catch (e) {}
+  hashPin_(session.username, pin).then(function (hash) {
+    if (hash === stored) {
+      hideLockScreen_();
+    } else {
+      errEl.innerText = tr('wrongPin');
+      var card = document.getElementById('lockScreenCard');
+      card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+      document.getElementById('lockPinInput').value = '';
+      document.getElementById('lockPinInput').focus();
+    }
+  });
+}
+
+function lockScreenUseFullLogin() {
+  hideLockScreen_();
+  doLogout();
+}
+
+// ---- PIN setup (from Settings) ----
+function openPinSetupModal() {
+  document.getElementById('pinSetupStep1').value = '';
+  document.getElementById('pinSetupStep2').value = '';
+  document.getElementById('pinSetupError').innerText = '';
+  document.getElementById('pinSetupBackdrop').classList.add('open');
+  setTimeout(function () { var el = document.getElementById('pinSetupStep1'); if (el) el.focus(); }, 200);
+}
+function closePinSetupModal() {
+  document.getElementById('pinSetupBackdrop').classList.remove('open');
+}
+function savePinSetup() {
+  var p1 = document.getElementById('pinSetupStep1').value.trim();
+  var p2 = document.getElementById('pinSetupStep2').value.trim();
+  var errEl = document.getElementById('pinSetupError');
+  if (!/^\d{4}$/.test(p1)) { errEl.innerText = tr('pinMustBe4Digits'); return; }
+  if (p1 !== p2) { errEl.innerText = tr('pinMismatch'); return; }
+  hashPin_(session.username, p1).then(function (hash) {
+    try { localStorage.setItem(pinStorageKey_(session.username), hash); } catch (e) {}
+    closePinSetupModal();
+    showToast(tr('pinSetSuccess'));
+    refreshQuickUnlockUI();
+  });
+}
+function removePin() {
+  if (!confirm(tr('removePinLabel') + '?')) return;
+  try { localStorage.removeItem(pinStorageKey_(session.username)); } catch (e) {}
+  showToast(tr('pinRemovedSuccess'));
+  refreshQuickUnlockUI();
 }
 
 // ---------- IN-PROGRESS BILL DRAFT (survives an accidental reload/app kill) ----------
@@ -1978,21 +2477,19 @@ function restoreDraftBillIfAny() {
 // Any logged-in user can read the UPI ID (needed to show the QR at checkout),
 // but only a Manager can change it (enforced server-side in Code.js too).
 function loadUpiSettings() {
-  callAPI('getUpiSettings', { token: session.token })
-    .then(function (res) {
-      upiSettings.upiId = res.upiId || '';
-      upiSettings.payeeName = res.payeeName || '';
-      // Manager's Settings panel may already be open with stale/empty fields.
-      var upiIdField = document.getElementById('settingsUpiId');
-      if (upiIdField) {
-        upiIdField.value = upiSettings.upiId;
-        document.getElementById('settingsUpiPayeeName').value = upiSettings.payeeName;
-      }
-      // If the checkout step is already showing UPI (e.g. after a reload mid-bill), refresh the QR.
-      var modeEl = document.getElementById('paymentMode');
-      if (modeEl && modeEl.value === 'UPI') updateUpiQr();
-    })
-    .catch(function () { /* Non-critical — checkout just shows "not configured" until this succeeds. */ });
+  cacheThenFetch_('upiSettings', function () { return callAPI('getUpiSettings', { token: session.token }); }, function (res) {
+    upiSettings.upiId = res.upiId || '';
+    upiSettings.payeeName = res.payeeName || '';
+    // Manager's Settings panel may already be open with stale/empty fields.
+    var upiIdField = document.getElementById('settingsUpiId');
+    if (upiIdField) {
+      upiIdField.value = upiSettings.upiId;
+      document.getElementById('settingsUpiPayeeName').value = upiSettings.payeeName;
+    }
+    // If the checkout step is already showing UPI (e.g. after a reload mid-bill), refresh the QR.
+    var modeEl = document.getElementById('paymentMode');
+    if (modeEl && modeEl.value === 'UPI') updateUpiQr();
+  }).catch(function () { /* Non-critical — checkout just shows "not configured" until this succeeds. */ });
 }
 
 function saveUpiSettings(btn) {
@@ -2164,17 +2661,15 @@ function closeHamburgerMenu() {
 
 // ---------- DAY STATUS ----------
 function refreshDayStatus() {
-  callAPI('getTodayStatus', { token: session.token })
-    .then(function (status) {
-      var badge = document.getElementById('dayBadge');
-      var isOpen = status.status === 'Open';
-      badge.innerText = isOpen ? tr('dayOpen') : tr('dayClosed');
-      badge.className = 'day-badge ' + (isOpen ? 'open' : 'closed');
-      renderDayCard(status);
-      if (status.status === 'Open') loadTodayExpenses();
-      loadTodayBillsForDay(); // show today's bills regardless of open/closed so it's still useful right after closing
-    })
-    .catch(function () {});
+  cacheThenFetch_('dayStatus', function () { return callAPI('getTodayStatus', { token: session.token }); }, function (status) {
+    var badge = document.getElementById('dayBadge');
+    var isOpen = status.status === 'Open';
+    badge.innerText = isOpen ? tr('dayOpen') : tr('dayClosed');
+    badge.className = 'day-badge ' + (isOpen ? 'open' : 'closed');
+    renderDayCard(status);
+    if (status.status === 'Open') loadTodayExpenses();
+    loadTodayBillsForDay(); // show today's bills regardless of open/closed so it's still useful right after closing
+  }).catch(function () {});
 }
 
 function renderDayCard(status) {
@@ -2287,7 +2782,8 @@ function loadTodayBillsForDay() {
       if (badge) {
         var runningTotal = list.reduce(function (sum, b) { return b.status === 'Void' ? sum : sum + (Number(b.total) || 0); }, 0);
         if (runningTotal > 0) {
-          badge.innerText = '₹' + runningTotal.toFixed(0);
+          badge.innerHTML = '<span class="ttb-label">' + tr('todayLabel') + '</span>₹' + runningTotal.toFixed(0);
+          badge.title = tr('todaysSalesSoFar', { amt: '₹' + runningTotal.toFixed(2) });
           badge.classList.remove('hidden');
         } else {
           badge.classList.add('hidden');
@@ -2316,12 +2812,10 @@ function trPaymentMode(m) {
 
 // ---------- QUICK ITEMS (BILLING) ----------
 function loadQuickItems() {
-  callAPI('getQuickItems', { token: session.token })
-    .then(function (items) {
-      window._quickItemsCache = items;
-      renderQuickItemsGrid('');
-    })
-    .catch(function () {});
+  cacheThenFetch_('quickItems', function () { return callAPI('getQuickItems', { token: session.token }); }, function (items) {
+    window._quickItemsCache = items;
+    renderQuickItemsGrid('');
+  }).catch(function () {});
 }
 
 // ---------- QUICK ADD SEARCH (fuzzy) ----------
@@ -2496,9 +2990,9 @@ function closeManualAddCardInstant() {
 window._customersCache = [];
 
 function loadCustomers() {
-  callAPI('getCustomers', { token: session.token })
-    .then(function (list) { window._customersCache = list || []; })
-    .catch(function () {});
+  cacheThenFetch_('customers', function () { return callAPI('getCustomers', { token: session.token }); }, function (list) {
+    window._customersCache = list || [];
+  }).catch(function () {});
 }
 
 // Wires an existing text input (nameInputId) to a dropdown of matching
@@ -2682,6 +3176,9 @@ function completeBill() {
   var discountAmt = computeDiscountAmount(subtotal);
   var itemsSnapshot = currentBillItems.slice(); // keep a copy before we clear the cart
   var billData = {
+    // Generated client-side (online or offline) so an offline bill and its
+    // eventual sync are the same bill, and a retried save is a safe no-op.
+    billId: generateBillId_(),
     customerName: custName,
     customerPhone: custPhone,
     paymentMode: paymentMode,
@@ -2692,46 +3189,69 @@ function completeBill() {
   var btnOriginal = btn.innerHTML;
   btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>' + tr('savingLabel');
 
+  function finishUI(total, subtotalOut, discountOut) {
+    btn.disabled = false; btn.innerHTML = btnOriginal;
+    lastBill = {
+      billId: billData.billId, items: itemsSnapshot, customerName: custName, customerPhone: custPhone,
+      paymentMode: paymentMode, subtotal: subtotalOut, discount: discountOut, total: total
+    };
+    renderLastBillCard();
+    openBillSuccessModal();
+    currentBillItems = [];
+    clearDraftBill();
+    document.getElementById('custName').value = '';
+    document.getElementById('custPhone').value = '';
+    document.getElementById('custId').value = '';
+    document.getElementById('discount').value = 0;
+    document.getElementById('paymentMode').value = 'Cash';
+    onPaymentModeChange();
+    setDiscountType('flat');
+    renderBillItems();
+    switchBillingStep('items');
+    if (custName) loadCustomers();
+    loadTodayBillsForDay(); // keep the Day tab's live list current even if the user hasn't switched there yet
+  }
+
+  // Queues the bill locally instead of failing the sale outright. Skipped if
+  // we can already tell (from the last known day status) that the day isn't
+  // open — that failure won't be fixed by going online later, so it's better
+  // to surface it now than to queue a bill that's doomed to fail on sync.
+  function goOffline() {
+    var cachedStatus = getCachedDayStatus_();
+    if (cachedStatus && cachedStatus.status !== 'Open') {
+      btn.disabled = false; btn.innerHTML = btnOriginal;
+      showToast(tr('beOpenDayBeforeBilling'));
+      return;
+    }
+    queueBillOffline_(billData);
+    var total = Math.max(subtotal - discountAmt, 0);
+    finishUI(total, subtotal, discountAmt);
+    showToast(tr('billSavedOffline'));
+  }
+
+  if (!navigator.onLine) { goOffline(); return; }
+
   // Flaky mobile data shouldn't lose a completed sale: if the very first
   // attempt fails at the network level (not a SESSION_EXPIRED or a server-
-  // returned validation error — those retrying won't fix), we silently retry
-  // once before bothering the person with an error toast.
+  // returned validation error — those retrying won't fix), we retry once,
+  // and if it's still failing at the network level after that, we treat the
+  // connection as gone and queue the bill offline instead of just erroring out.
   function attemptSave(isRetry) {
     return callAPI('saveBill', { token: session.token, billData: billData })
       .then(function (res) {
-        btn.disabled = false; btn.innerHTML = btnOriginal;
         if (res.success) {
           showToast(tr('billSavedTotal', { amt: '₹' + res.total.toFixed(2) }));
-          lastBill = {
-            billId: res.billId, items: itemsSnapshot, customerName: custName, customerPhone: custPhone,
-            paymentMode: paymentMode, subtotal: res.subtotal, discount: res.discount, total: res.total
-          };
-          renderLastBillCard();
-          openBillSuccessModal();
-          currentBillItems = [];
-          clearDraftBill();
-          document.getElementById('custName').value = '';
-          document.getElementById('custPhone').value = '';
-          document.getElementById('custId').value = '';
-          document.getElementById('discount').value = 0;
-          document.getElementById('paymentMode').value = 'Cash';
-          onPaymentModeChange();
-          setDiscountType('flat');
-          renderBillItems();
-          switchBillingStep('items');
-          if (custName) loadCustomers();
-          loadTodayBillsForDay(); // keep the Day tab's live list current even if the user hasn't switched there yet
+          finishUI(res.total, res.subtotal, res.discount);
         } else {
+          btn.disabled = false; btn.innerHTML = btnOriginal;
           showToast(trBackend(res.message));
         }
       })
       .catch(function (err) {
-        // Network-level failure (not a server response, not session expiry):
-        // the item list is still intact and nothing was saved server-side,
-        // so a single silent retry is safe and won't double-bill.
         if (!isRetry && err.message === tr('networkFailed')) {
           return attemptSave(true);
         }
+        if (err.message === tr('networkFailed')) { goOffline(); return; }
         btn.disabled = false; btn.innerHTML = btnOriginal;
         if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message);
       });
@@ -2935,10 +3455,50 @@ function loadCreditLedger() {
       var el = document.getElementById('creditLedgerList');
       if (list.length === 0) { el.innerHTML = '<div class="empty-state">' + tr('noOutstandingBalances') + '</div>'; return; }
       el.innerHTML = list.map(function (c) {
-        return '<div class="customer-row"><div><div class="name">' + c.customerName + '</div><div class="phone">' + (c.phone || '') + '</div></div><div class="bal">₹' + c.balance.toFixed(2) + '</div></div>';
+        var owesUs = c.balance > 0; // negative balance means we owe them / they overpaid — no reminder needed
+        var lastReminded = owesUs ? getLastRemindedLabel_(c.customerId) : '';
+        return '<div class="customer-row">' +
+          '<div><div class="name">' + c.customerName + '</div><div class="phone">' + (c.phone || '') + (lastReminded ? ' · <span class="last-reminded">' + lastReminded + '</span>' : '') + '</div></div>' +
+          '<div class="cr-row-right"><div class="bal">₹' + c.balance.toFixed(2) + '</div>' +
+          (owesUs ? '<button class="remind-btn" onclick="remindCustomer(this,\'' + c.customerId.replace(/'/g, "\\'") + '\',\'' + (c.customerName || '').replace(/'/g, "\\'") + '\',\'' + (c.phone || '') + '\',' + c.balance + ')">📣 ' + tr('remindLabel') + '</button>' : '') +
+          '</div></div>';
       }).join('');
     })
     .catch(function () {});
+}
+
+// ---------- UDHAAR REMINDERS ----------
+// Reminders are sent as a plain WhatsApp deep-link (no backend needed) so a
+// Manager/Staff can nudge a customer to pay down their balance in one tap.
+// We only track "last reminded" locally (per device) purely as a soft
+// courtesy cue in the UI — it's not synced or authoritative across devices.
+var REMINDER_LOG_KEY = 'quickbillReminderLogV1';
+
+function getReminderLog_() {
+  try { return JSON.parse(localStorage.getItem(REMINDER_LOG_KEY) || '{}'); } catch (e) { return {}; }
+}
+function setReminderLog_(log) {
+  try { localStorage.setItem(REMINDER_LOG_KEY, JSON.stringify(log)); } catch (e) {}
+}
+function getLastRemindedLabel_(customerId) {
+  var log = getReminderLog_();
+  var ts = log[customerId];
+  if (!ts) return '';
+  var mins = Math.round((Date.now() - ts) / 60000);
+  var timeStr = mins < 60 ? (mins + 'm') : (mins < 1440 ? Math.round(mins / 60) + 'h' : Math.round(mins / 1440) + 'd');
+  return tr('remindedAgo', { time: timeStr });
+}
+
+function remindCustomer(btn, customerId, customerName, phone, balance) {
+  var cleanPhone = (phone || '').replace(/\D/g, '');
+  if (!cleanPhone) { showToast(tr('noPhoneForReminder')); return; }
+  var msg = tr('reminderMsgTemplate', { name: customerName, amt: Number(balance).toFixed(2) });
+  var log = getReminderLog_();
+  log[customerId] = Date.now();
+  setReminderLog_(log);
+  window.open('https://wa.me/91' + cleanPhone + '?text=' + encodeURIComponent(msg), '_blank');
+  // Refresh so the "reminded Xm ago" cue shows immediately.
+  loadCreditLedger();
 }
 
 // ---------- REPORTS ----------
@@ -2956,8 +3516,27 @@ function loadDailyReport(btn) {
         '<div class="stat-row"><span>' + tr('totalExpenses') + '</span><span class="val">₹' + r.totalExpenses.toFixed(2) + '</span></div>' +
         '<div class="stat-row"><span>' + tr('netLabel') + '</span><span class="val">₹' + (r.totalSales - r.totalExpenses).toFixed(2) + '</span></div>' +
         '<div class="stat-row"><span>' + tr('billsLabel') + '</span><span class="val">' + r.billCount + '</span></div>' +
-        (r.voidCount > 0 ? '<div class="stat-row"><span>' + tr('voidedBillsLabel') + '</span><span class="val" style="color:var(--red)">' + r.voidCount + '</span></div>' : '') +
-        '<button class="btn secondary" style="margin-top:10px" onclick="downloadDayExcel(this, \'' + date + '\')">' + tr('downloadExcel') + '</button>';
+        (r.voidCount > 0 ? '<div class="stat-row"><span>' + tr('voidedBillsLabel') + '</span><span class="val" style="color:var(--red)">' + r.voidCount + '</span></div>' : '');
+      if (r.paymentBreakdown) {
+        var pb = r.paymentBreakdown;
+        var pbTotal = (pb.Cash || 0) + (pb.UPI || 0) + (pb.Credit || 0);
+        if (pbTotal > 0) {
+          var pbRows = [
+            { key: 'Cash', label: tr('cash'), icon: '💵', color: 'var(--green)' },
+            { key: 'UPI', label: tr('upi'), icon: '📱', color: '#2563EB' },
+            { key: 'Credit', label: tr('creditUdhaar'), icon: '📒', color: 'var(--amber)' }
+          ];
+          html += '<div class="payment-breakdown"><div class="section-title" style="font-size:14px;margin-bottom:8px">' + tr('paymentBreakdownLabel') + '</div>' +
+            pbRows.map(function (row) {
+              var amt = pb[row.key] || 0;
+              var pct = pbTotal > 0 ? Math.round((amt / pbTotal) * 100) : 0;
+              return '<div class="pb-row"><div class="pb-label"><span>' + row.icon + '</span><span>' + row.label + '</span></div>' +
+                '<div class="pb-bar-wrap"><div class="pb-bar" style="width:' + Math.max(amt > 0 ? 4 : 0, pct) + '%;background:' + row.color + '"></div></div>' +
+                '<div class="pb-amt">₹' + amt.toFixed(2) + ' <span class="pb-pct">(' + pct + '%)</span></div></div>';
+            }).join('') + '</div>';
+        }
+      }
+      html += '<button class="btn secondary" style="margin-top:10px" onclick="downloadDayExcel(this, \'' + date + '\')">' + tr('downloadExcel') + '</button>';
       if (r.topItems && r.topItems.length > 0) {
         var maxTop = r.topItems[0].total || 1;
         html += '<div style="margin-top:14px"><div class="section-title" style="font-size:14px;margin-bottom:8px">' + tr('topItemsLabel') + '</div>' +
