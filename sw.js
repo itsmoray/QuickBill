@@ -6,7 +6,7 @@
 // show up immediately on next app open, instead of being stuck on an old cached
 // copy until the user deletes and re-adds the app.
 
-const CACHE_NAME = 'grocery-billing-shell-v5'; // bump this string whenever you change SHELL_FILES
+const CACHE_NAME = 'grocery-billing-shell-v6'; // bump this string whenever you change SHELL_FILES
 const SHELL_FILES = [
   './index.html',
   './manifest.json',
