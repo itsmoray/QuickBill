@@ -2707,6 +2707,7 @@ function completeBill() {
             paymentMode: paymentMode, subtotal: res.subtotal, discount: res.discount, total: res.total
           };
           renderLastBillCard();
+          openBillSuccessModal();
           currentBillItems = [];
           clearDraftBill();
           document.getElementById('custName').value = '';
@@ -2750,7 +2751,6 @@ function renderLastBillCard() {
     '<div class="stat-row"><span>' + tr('customer') + '</span><span class="val">' + (lastBill.customerName || tr('walkInCustomer')) + '</span></div>' +
     '<div class="stat-row"><span>' + tr('items') + '</span><span class="val">' + lastBill.items.length + '</span></div>' +
     '<div class="big-total"><div class="label">' + tr('total') + '</div><div class="amount">₹' + Number(lastBill.total).toFixed(2) + '</div></div>';
-  openBillSuccessModal();
 }
 
 function buildReceiptText() {
