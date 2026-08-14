@@ -529,8 +529,19 @@
     .empty-state { text-align: center; color: var(--muted); padding: 24px 8px; font-size: 14px; }
 
     table.report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    table.report-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 6px 4px; border-bottom: 2px solid var(--border); }
-    table.report-table td { padding: 7px 4px; border-bottom: 1px solid var(--border); }
+    table.report-table th {
+      text-align: left; color: var(--muted); font-weight: 700; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.3px; padding: 9px 10px; border-bottom: 2px solid var(--border); background: var(--bg);
+      white-space: nowrap;
+    }
+    table.report-table th:first-child { border-radius: 8px 0 0 0; }
+    table.report-table th:last-child { border-radius: 0 8px 0 0; }
+    table.report-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table.report-table tr:last-child td { border-bottom: none; }
+    table.report-table tbody tr:nth-child(even) td { background: var(--bg); }
+    table.report-table td:nth-last-child(1), table.report-table th:nth-last-child(1) { text-align: right; font-weight: 600; }
+    .report-table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--border); border-radius: 10px; }
+    .report-table-wrap table.report-table th:first-child, .report-table-wrap table.report-table th:last-child { border-radius: 0; }
     .pill { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
     .pill.open, .pill.completed, .pill.closed { background: var(--green-light); color: var(--green-dark); }
     .pill.void, .pill.notopened { background: #FEE2E2; color: var(--red); }
@@ -598,9 +609,19 @@
 
     @media (min-width: 900px) {
       /* Give every tab some breathing room instead of a phone-width column
-         floating in the middle of a wide screen. */
-      .tab-content { max-width: 900px; padding: 28px 32px 56px; }
+         floating in the middle of a wide screen. Left-aligned (not
+         auto-centered) so content sits close to the sidebar instead of
+         drifting into the middle of the viewport with a huge empty gap on
+         wide/ultrawide monitors — margin:0 auto was centering a 900px box
+         across the *entire* remaining width, which looked like a mostly
+         blank page on anything wider than a regular laptop screen. */
+      .tab-content { max-width: 1100px; margin: 0; padding: 28px 32px 56px; }
       #tab-billing.tab-content { max-width: 1200px; }
+
+      /* ---- Reports: two-pane dashboard ----
+         Daily and Monthly report cards sit side by side instead of stacked
+         in a single narrow column — there's plenty of width to use. */
+      #reportGrid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
 
       /* ---- Left sidebar nav ----
          The floating bottom bubble bar is a phone pattern — on a laptop it
@@ -693,6 +714,7 @@
     @media (min-width: 1180px) {
       #tab-billing.tab-content { max-width: 1320px; }
       #billingGrid { grid-template-columns: minmax(0, 1fr) 440px; }
+      #reportGrid { grid-template-columns: 1fr 1fr; }
     }
 
   </style>
@@ -1019,6 +1041,7 @@
     <!-- TAB: REPORTS -->
     <div class="tab-content hidden" id="tab-reports">
       <div class="section-title" data-i18n="reports">Reports</div>
+      <div class="report-grid" id="reportGrid">
       <div class="card" id="dailyReportCard">
         <h3 data-i18n="dailyReport">Daily Report</h3>
         <div class="field"><label data-i18n="selectDate">Select Date</label><input type="date" id="reportDate"></div>
@@ -1031,6 +1054,7 @@
         <button class="btn secondary" onclick="loadMonthlyReport(this)" data-i18n="viewReport">View Report</button>
         <div id="monthlyReportResult"></div>
       </div>
+      </div><!-- /#reportGrid -->
     </div>
 
     <!-- TAB: ADMIN -->
@@ -2759,7 +2783,7 @@ function loadDailyReport(btn) {
         '<div class="stat-row"><span>' + tr('billsLabel') + '</span><span class="val">' + r.billCount + '</span></div>' +
         '<button class="btn secondary" style="margin-top:10px" onclick="downloadDayExcel(this, \'' + date + '\')">' + tr('downloadExcel') + '</button>';
       if (r.bills.length > 0) {
-        html += '<div style="overflow-x:auto;margin-top:14px"><table class="report-table"><tr><th>' + tr('timeLabel') + '</th><th>' + tr('staffLabel') + '</th><th>' + tr('customer') + '</th><th>' + tr('modeLabel') + '</th><th>' + tr('totalLabel') + '</th></tr>' +
+        html += '<div class="report-table-wrap"><table class="report-table"><tr><th>' + tr('timeLabel') + '</th><th>' + tr('staffLabel') + '</th><th>' + tr('customer') + '</th><th>' + tr('modeLabel') + '</th><th>' + tr('totalLabel') + '</th></tr>' +
           r.bills.map(function (b) {
             return '<tr><td>' + b.time + '</td><td>' + b.staff + '</td><td>' + (b.customer || '-') + '</td><td>' + b.paymentMode + '</td><td>₹' + Number(b.total).toFixed(2) + '</td></tr>';
           }).join('') + '</table></div>';
@@ -2784,7 +2808,7 @@ function loadMonthlyReport(btn) {
         '<div class="stat-row"><span>' + tr('netProfit') + '</span><span class="val">₹' + r.netProfit.toFixed(2) + '</span></div>' +
         '<button class="btn secondary" style="margin-top:10px" onclick="downloadMonthExcel(this, \'' + month + '\')">' + tr('downloadExcel') + '</button>';
       if (r.days.length > 0) {
-        html += '<div style="overflow-x:auto;margin-top:14px"><table class="report-table"><tr><th>' + tr('dateLabel') + '</th><th>' + tr('statusLabel') + '</th><th>' + tr('salesLabel') + '</th><th>' + tr('expensesLabel') + '</th><th>' + tr('netLabel') + '</th></tr>' +
+        html += '<div class="report-table-wrap"><table class="report-table"><tr><th>' + tr('dateLabel') + '</th><th>' + tr('statusLabel') + '</th><th>' + tr('salesLabel') + '</th><th>' + tr('expensesLabel') + '</th><th>' + tr('netLabel') + '</th></tr>' +
           r.days.map(function (d) {
             return '<tr><td>' + d.date + '</td><td>' + trStatus(d.status) + '</td><td>₹' + d.sales.toFixed(2) + '</td><td>₹' + d.expenses.toFixed(2) + '</td><td>₹' + d.net.toFixed(2) + '</td></tr>';
           }).join('') + '</table></div>';
