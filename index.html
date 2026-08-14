@@ -1000,6 +1000,10 @@
     <div class="tab-content hidden" id="tab-day">
       <div class="section-title" data-i18n="dayManagement">Day Management</div>
       <div class="card" id="dayStatusCard"></div>
+      <div class="card" id="dayBillsCard">
+        <h3 data-i18n="todaysBills">Today's Bills</h3>
+        <div id="dayBillsList"><div class="empty-state" data-i18n="noBillsToday">No bills yet today</div></div>
+      </div>
       <div class="card" id="expenseCard">
         <h3 data-i18n="logExpense">Log an Expense</h3>
         <div class="field"><label data-i18n="description">Description</label><input type="text" id="expDesc" placeholder="e.g. Auto fare, packing bags" data-i18n-ph="egAutoFare"></div>
@@ -1246,6 +1250,7 @@ var I18N = {
     dayManagement: 'Day Management', logExpense: 'Log an Expense', description: 'Description',
     egAutoFare: 'e.g. Auto fare, packing bags', amountRupee: 'Amount (₹)', addExpense: '+ Add Expense',
     todaysExpenses: "Today's Expenses", noExpensesLoggedToday: 'No expenses logged today',
+    todaysBills: "Today's Bills", noBillsToday: 'No bills yet today',
     dayIsOpen: 'Day is Open', openedByLabel: 'Opened by', openingTimeLabel: 'Opening Time',
     openingCashLabel: 'Opening Cash', closingCashCountLabel: 'Closing Cash Count (₹)', closeDayBtn: 'Close Day',
     dayClosedTitle: 'Day Closed', totalSales: 'Total Sales', totalExpenses: 'Total Expenses',
@@ -1379,6 +1384,7 @@ var I18N = {
     dayManagement: 'ദിവസ മാനേജ്‌മെന്റ്', logExpense: 'ചെലവ് രേഖപ്പെടുത്തുക', description: 'വിവരണം',
     egAutoFare: 'ഉദാ: ഓട്ടോ ചാർജ്, പാക്കിംഗ് ബാഗ്', amountRupee: 'തുക (₹)', addExpense: '+ ചെലവ് ചേർക്കുക',
     todaysExpenses: 'ഇന്നത്തെ ചെലവുകൾ', noExpensesLoggedToday: 'ഇന്ന് ചെലവുകളൊന്നും രേഖപ്പെടുത്തിയിട്ടില്ല',
+    todaysBills: 'ഇന്നത്തെ ബില്ലുകൾ', noBillsToday: 'ഇന്ന് ഇതുവരെ ബില്ലുകളൊന്നുമില്ല',
     dayIsOpen: 'ദിവസം തുറന്നിരിക്കുന്നു', openedByLabel: 'തുറന്നത്', openingTimeLabel: 'തുറന്ന സമയം',
     openingCashLabel: 'തുടക്ക ക്യാഷ്', closingCashCountLabel: 'അവസാന ക്യാഷ് എണ്ണം (₹)', closeDayBtn: 'ദിവസം അടയ്ക്കുക',
     dayClosedTitle: 'ദിവസം അടച്ചു', totalSales: 'ആകെ വിൽപ്പന', totalExpenses: 'ആകെ ചെലവ്',
@@ -2065,6 +2071,7 @@ function refreshDayStatus() {
       badge.className = 'day-badge ' + (isOpen ? 'open' : 'closed');
       renderDayCard(status);
       if (status.status === 'Open') loadTodayExpenses();
+      loadTodayBillsForDay(); // show today's bills regardless of open/closed so it's still useful right after closing
     })
     .catch(function () {});
 }
@@ -2169,6 +2176,31 @@ function loadTodayExpenses() {
       }).join('');
     })
     .catch(function () {});
+}
+
+// ---------- TODAY'S BILLS (live view on the Day tab) ----------
+function loadTodayBillsForDay() {
+  callAPI('getTodayBills', { token: session.token })
+    .then(function (list) {
+      var el = document.getElementById('dayBillsList');
+      if (!el) return; // tab not in DOM yet on first load, harmless no-op
+      if (list.length === 0) { el.innerHTML = '<div class="empty-state">' + tr('noBillsToday') + '</div>'; return; }
+      el.innerHTML = list.map(function (b) {
+        var statusClass = (b.status || '').toLowerCase().replace(' ', '');
+        var pill = b.status === 'Void' ? ' <span class="pill ' + statusClass + '">' + trStatus(b.status) + '</span>' : '';
+        var meta = b.time + ' • ' + b.staff + ' • ' + trPaymentMode(b.paymentMode);
+        return '<div class="bill-item-row"><div class="info"><div class="name">' + (b.customer || tr('walkInCustomer')) + pill + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + Number(b.total).toFixed(2) + '</div></div>';
+      }).join('');
+    })
+    .catch(function () {});
+}
+
+// Backend sends the raw English mode string ('Cash'/'UPI'/'Credit') — map it
+// to the current language the same way trStatus() does for statuses.
+var PAYMENT_MODE_KEY_MAP = { 'Cash': 'cash', 'UPI': 'upi', 'Credit': 'creditUdhaar' };
+function trPaymentMode(m) {
+  var key = PAYMENT_MODE_KEY_MAP[m];
+  return key ? tr(key) : m;
 }
 
 // ---------- QUICK ITEMS (BILLING) ----------
@@ -2556,6 +2588,7 @@ function completeBill() {
         renderBillItems();
         switchBillingStep('items');
         if (custName) loadCustomers();
+        loadTodayBillsForDay(); // keep the Day tab's live list current even if the user hasn't switched there yet
       } else {
         showToast(trBackend(res.message));
       }
@@ -2700,6 +2733,7 @@ function editLastBill(btn) {
       lastBill = null;
       renderLastBillCard();
       showToast(tr('lastBillVoidedEdit'));
+      loadTodayBillsForDay();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     })
     .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
@@ -2716,6 +2750,7 @@ function voidLastBill(btn) {
         showToast(tr('billVoided'));
         lastBill = null;
         renderLastBillCard();
+        loadTodayBillsForDay();
       } else showToast(trBackend(res.message));
     })
     .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
