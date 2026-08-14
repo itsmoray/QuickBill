@@ -179,6 +179,10 @@
     .topbar .sub { font-size: 12px; opacity: 0.85; }
     .topbar .right { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
     .day-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
+    .today-total-badge {
+      font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap;
+      background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.4); color: #fff;
+    }
     .day-badge.open { background: #fff; color: var(--green-dark); }
     .day-badge.closed { background: rgba(255,255,255,0.25); color: #fff; }
     .logout-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
@@ -273,6 +277,8 @@
     .quick-item-btn:active { border-color: var(--green); }
     .quick-item-btn .price { font-size: 11px; color: var(--muted); font-weight: 400; display: block; margin-top: 2px; }
     .quick-item-btn { position: relative; }
+    .low-stock-dot { position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
+    .low-stock-tag { font-size: 10px; font-weight: 700; color: var(--red); margin-left: 6px; }
 
     /* Quick Add search (fuzzy-filters the grid above) */
     .quick-search-wrap { position: relative; margin-bottom: 10px; }
@@ -774,6 +780,7 @@
         <div class="sub" id="staffNameLabel">—</div>
       </div>
       <div class="right">
+        <span class="today-total-badge hidden" id="todayTotalBadge"></span>
         <span class="day-badge closed" id="dayBadge" data-i18n="dayClosed">Day Closed</span>
         <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleHamburgerMenu()" title="More">☰</button>
         <button class="logout-btn" onclick="doLogout()" title="Logout">⏻</button>
@@ -1045,6 +1052,10 @@
     <!-- TAB: REPORTS -->
     <div class="tab-content hidden" id="tab-reports">
       <div class="section-title" data-i18n="reports">Reports</div>
+      <div class="card" id="salesTrendCard">
+        <h3 data-i18n="salesTrendLabel">Sales Trend</h3>
+        <div id="salesTrendChart"><div class="spinner"></div></div>
+      </div>
       <div class="report-grid" id="reportGrid">
       <div class="card" id="dailyReportCard">
         <h3 data-i18n="dailyReport">Daily Report</h3>
@@ -1096,6 +1107,10 @@
             <select id="qiUnit"><option value="kg" data-i18n="unitKg">kg</option><option value="piece" data-i18n="unitPiece">piece</option></select>
           </div>
           <div class="field-inline"><label data-i18n="categoryOptional">Category (optional)</label><input type="text" id="qiCategory"></div>
+        </div>
+        <div class="form-row">
+          <div class="field-inline"><label data-i18n="stockOptional">Stock qty (optional — leave blank to not track)</label><input type="number" id="qiStock" min="0" step="1"></div>
+          <div class="field-inline"><label data-i18n="lowStockAt">Low-stock alert at</label><input type="number" id="qiLowStockThreshold" min="0" step="1" value="5"></div>
         </div>
         <button class="btn secondary" id="qiSubmitBtn" onclick="submitQuickItemForm(this)" data-i18n="addQuickItemBtn">+ Add Quick Item</button>
         <button class="btn secondary hidden" id="qiCancelBtn" style="margin-top:8px" onclick="cancelQuickItemEdit()" data-i18n="cancelEdit">Cancel Edit</button>
@@ -1267,6 +1282,7 @@ var I18N = {
     // Reports
     dailyReport: 'Daily Report', selectDate: 'Select Date', viewReport: 'View Report', monthlyReport: 'Monthly Report',
     selectMonth: 'Select Month', dayStatusLabel: 'Day Status', netLabel: 'Net', billsLabel: 'Bills',
+    voidedBillsLabel: 'Voided Bills', topItemsLabel: 'Top Items', salesTrendLabel: 'Sales Trend',
     downloadExcel: '⬇ Download Excel', timeLabel: 'Time', staffLabel: 'Staff', modeLabel: 'Mode',
     totalLabel: 'Total', daysOperated: 'Days Operated', netProfit: 'Net Profit', dateLabel: 'Date',
     statusLabel: 'Status', salesLabel: 'Sales', expensesLabel: 'Expenses', errorLoadingReport: 'Error loading report.',
@@ -1277,6 +1293,9 @@ var I18N = {
     categoryOptional: 'Category (optional)', addQuickItemBtn: '+ Add Quick Item', qiSubmitSave: 'Save Changes',
     cancelEdit: 'Cancel Edit', cancelBtn: 'Cancel', existingQuickItems: 'Existing Quick Items', editLabel: 'Edit', deleteLabel: 'Delete',
     activateLabel: 'Activate', deactivateLabel: 'Deactivate',
+    stockOptional: 'Stock qty (optional — leave blank to not track)', lowStockAt: 'Low-stock alert at',
+    stockLabel: 'Stock', lowStockTag: 'Low stock', restockLabel: 'Restock', enterQtyToAdd: 'Qty to add',
+    stockUpdated: '{name} stock updated to {qty}',
     // Bottom nav
     bill: 'Bill', day: 'Day', udhaar: 'Udhaar', inventory: 'Inventory',
     // Loading labels
@@ -1292,6 +1311,7 @@ var I18N = {
     enterWeightKg: 'Weight (kg)', enterQty: 'Quantity', qtyModalInvalid: 'Enter a valid amount greater than 0',
     enterItemName: 'Enter an item name.', enterQtyPrice: 'Enter quantity and price.',
     enterWeightPrice: 'Enter weight and price per kg.', addAtLeastOneItem: 'Add at least one item.',
+    recoverDraftPrompt: 'You have an unsaved bill with {count} item(s) from before. Recover it?',
     custNameRequiredCredit: 'Customer name is required for credit sales.', billSavedTotal: 'Bill saved! Total {amt}',
     couldNotPreparePDF: 'Could not prepare the PDF. Sharing as text instead.',
     couldNotOpenShareMenu: 'Could not open the share menu.',
@@ -1399,6 +1419,7 @@ var I18N = {
     saveEntry: '+ എൻട്രി സേവ് ചെയ്യുക', outstandingBalances: 'ബാക്കിയുള്ള ബാലൻസുകൾ', noOutstandingBalances: 'ബാക്കി ബാലൻസുകളൊന്നുമില്ല',
     dailyReport: 'ദിവസ റിപ്പോർട്ട്', selectDate: 'തീയതി തിരഞ്ഞെടുക്കുക', viewReport: 'റിപ്പോർട്ട് കാണുക', monthlyReport: 'മാസ റിപ്പോർട്ട്',
     selectMonth: 'മാസം തിരഞ്ഞെടുക്കുക', dayStatusLabel: 'ദിവസ നില', netLabel: 'നെറ്റ്', billsLabel: 'ബില്ലുകൾ',
+    voidedBillsLabel: 'റദ്ദാക്കിയ ബില്ലുകൾ', topItemsLabel: 'ടോപ്പ് ഇനങ്ങൾ', salesTrendLabel: 'വിൽപ്പന ട്രെൻഡ്',
     downloadExcel: '⬇ എക്സൽ ഡൗൺലോഡ് ചെയ്യുക', timeLabel: 'സമയം', staffLabel: 'സ്റ്റാഫ്', modeLabel: 'രീതി',
     totalLabel: 'ആകെ', daysOperated: 'പ്രവർത്തിച്ച ദിവസങ്ങൾ', netProfit: 'അറ്റാദായം', dateLabel: 'തീയതി',
     statusLabel: 'നില', salesLabel: 'വിൽപ്പന', expensesLabel: 'ചെലവ്', errorLoadingReport: 'റിപ്പോർട്ട് ലോഡ് ചെയ്യുന്നതിൽ പിശക്.',
@@ -1408,6 +1429,9 @@ var I18N = {
     categoryOptional: 'വിഭാഗം (ഓപ്ഷണൽ)', addQuickItemBtn: '+ ക്വിക്ക് ഇനം ചേർക്കുക', qiSubmitSave: 'മാറ്റങ്ങൾ സേവ് ചെയ്യുക',
     cancelEdit: 'എഡിറ്റ് റദ്ദാക്കുക', cancelBtn: 'റദ്ദാക്കുക', existingQuickItems: 'നിലവിലുള്ള ക്വിക്ക് ഇനങ്ങൾ', editLabel: 'എഡിറ്റ്', deleteLabel: 'ഡിലീറ്റ്',
     activateLabel: 'ആക്ടിവേറ്റ് ചെയ്യുക', deactivateLabel: 'ഡീആക്ടിവേറ്റ് ചെയ്യുക',
+    stockOptional: 'സ്റ്റോക്ക് അളവ് (ഓപ്ഷണൽ — ട്രാക്ക് ചെയ്യേണ്ട എങ്കിൽ ശൂന്യമായി വിടുക)', lowStockAt: 'ലോ-സ്റ്റോക്ക് അലേർട്ട്',
+    stockLabel: 'സ്റ്റോക്ക്', lowStockTag: 'സ്റ്റോക്ക് കുറവ്', restockLabel: 'റീസ്റ്റോക്ക്', enterQtyToAdd: 'ചേർക്കേണ്ട അളവ്',
+    stockUpdated: '{name} സ്റ്റോക്ക് {qty} ആയി പുതുക്കി',
     bill: 'ബിൽ', day: 'ദിവസം', udhaar: 'ഉധാരം', inventory: 'ഇൻവെന്ററി',
     openingLabel: 'തുറക്കുന്നു...', closingLabel: 'അടയ്ക്കുന്നു...', addingLabel: 'ചേർക്കുന്നു...', savingLabel: 'സേവ് ചെയ്യുന്നു...',
     voidingLabel: 'റദ്ദാക്കുന്നു...', preparingPDFLabel: 'PDF തയ്യാറാക്കുന്നു...', loadingLabel: 'ലോഡ് ചെയ്യുന്നു...',
@@ -1420,6 +1444,7 @@ var I18N = {
     enterWeightKg: 'തൂക്കം (കി.ഗ്രാം)', enterQty: 'എണ്ണം', qtyModalInvalid: '0-ൽ കൂടുതലുള്ള ശരിയായ സംഖ്യ നൽകുക',
     enterItemName: 'ഒരു ഇനത്തിന്റെ പേര് നൽകുക.', enterQtyPrice: 'എണ്ണവും വിലയും നൽകുക.',
     enterWeightPrice: 'തൂക്കവും കി.ഗ്രാം വിലയും നൽകുക.', addAtLeastOneItem: 'ചുരുങ്ങിയത് ഒരു ഇനമെങ്കിലും ചേർക്കുക.',
+    recoverDraftPrompt: 'മുമ്പത്തെ {count} ഇനങ്ങളുള്ള സേവ് ചെയ്യാത്ത ബിൽ ഉണ്ട്. അത് വീണ്ടെടുക്കണോ?',
     custNameRequiredCredit: 'ക്രെഡിറ്റ് വിൽപ്പനയ്ക്ക് കസ്റ്റമറുടെ പേര് ആവശ്യമാണ്.', billSavedTotal: 'ബിൽ സേവ് ചെയ്തു! ആകെ {amt}',
     couldNotPreparePDF: 'PDF തയ്യാറാക്കാൻ കഴിഞ്ഞില്ല. പകരം ടെക്സ്റ്റായി ഷെയർ ചെയ്യുന്നു.',
     couldNotOpenShareMenu: 'ഷെയർ മെനു തുറക്കാൻ കഴിഞ്ഞില്ല.',
@@ -1895,6 +1920,58 @@ function showApp() {
   loadQuickItems();
   loadCustomers();
   loadUpiSettings();
+  restoreDraftBillIfAny();
+}
+
+// ---------- IN-PROGRESS BILL DRAFT (survives an accidental reload/app kill) ----------
+// The cart lives only in memory (currentBillItems), so if the PWA gets killed
+// mid-bill on Android or the page reloads, everything typed so far would be
+// lost. We mirror the cart to localStorage on every change and offer to
+// restore it the next time the app opens, same pattern already used for the
+// saved login session.
+var DRAFT_KEY = 'quickbillDraftV1';
+
+function saveDraftBill() {
+  try {
+    if (currentBillItems.length === 0) { localStorage.removeItem(DRAFT_KEY); return; }
+    var draft = {
+      items: currentBillItems,
+      customerName: (document.getElementById('custName') || {}).value || '',
+      customerPhone: (document.getElementById('custPhone') || {}).value || '',
+      savedAt: Date.now()
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch (e) { /* storage full/unavailable — non-critical, just skip persisting */ }
+}
+
+function clearDraftBill() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+
+// Called once right after login/app load. Only offers recovery if the draft
+// is reasonably recent (within 12 hours) so a stale draft from days ago
+// doesn't surprise the next person to log in on a shared device.
+function restoreDraftBillIfAny() {
+  var raw;
+  try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) { return; }
+  if (!raw) return;
+  var draft;
+  try { draft = JSON.parse(raw); } catch (e) { clearDraftBill(); return; }
+  if (!draft || !draft.items || draft.items.length === 0) { clearDraftBill(); return; }
+  if (Date.now() - (draft.savedAt || 0) > 12 * 60 * 60 * 1000) { clearDraftBill(); return; }
+  if (currentBillItems.length > 0) return; // don't clobber a cart already in progress
+
+  var itemCount = draft.items.length;
+  if (confirm(tr('recoverDraftPrompt', { count: itemCount }))) {
+    currentBillItems = draft.items;
+    if (draft.customerName) document.getElementById('custName').value = draft.customerName;
+    if (draft.customerPhone) document.getElementById('custPhone').value = draft.customerPhone;
+    renderBillItems();
+    switchTab('billing');
+    switchBillingStep('items');
+  } else {
+    clearDraftBill();
+  }
 }
 
 // ---------- UPI PAYMENT: SETTINGS + CHECKOUT QR ----------
@@ -2036,6 +2113,30 @@ function runTabLoaders(tab) {
   if (tab === 'credits') loadCreditLedger();
   if (tab === 'admin') { loadUsers(); }
   if (tab === 'inventory') { loadQuickItemsAdmin(); }
+  if (tab === 'reports') { loadSalesTrend(); }
+}
+
+// Renders a simple 14-day sales bar chart on the Reports tab — no charting
+// library needed, just proportional-height divs, so it stays lightweight and
+// fits the single-file constraint of this app.
+function loadSalesTrend() {
+  var el = document.getElementById('salesTrendChart');
+  if (!el) return;
+  el.innerHTML = '<div class="spinner"></div>';
+  callAPI('getSalesTrend', { token: session.token, days: 14 })
+    .then(function (trend) {
+      var max = Math.max.apply(null, trend.map(function (t) { return t.sales; }).concat([1]));
+      el.innerHTML = '<div style="display:flex;align-items:flex-end;gap:4px;height:110px;padding-top:6px">' +
+        trend.map(function (t) {
+          var pct = Math.max(3, Math.round((t.sales / max) * 100));
+          var dayLabel = t.date.slice(8, 10) + '/' + t.date.slice(5, 7);
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="' + t.date + ': ₹' + t.sales.toFixed(2) + '">' +
+            '<div style="width:100%;max-width:22px;background:var(--green);border-radius:4px 4px 0 0;height:' + pct + '%"></div>' +
+            '<div style="font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap">' + dayLabel + '</div>' +
+            '</div>';
+        }).join('') + '</div>';
+    })
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') el.innerHTML = '<div class="empty-state">' + tr('errorLoadingReport') + '</div>'; });
 }
 
 // ---------- HAMBURGER MENU (less-used tabs: Reports, Admin) ----------
@@ -2182,6 +2283,16 @@ function loadTodayExpenses() {
 function loadTodayBillsForDay() {
   callAPI('getTodayBills', { token: session.token })
     .then(function (list) {
+      var badge = document.getElementById('todayTotalBadge');
+      if (badge) {
+        var runningTotal = list.reduce(function (sum, b) { return b.status === 'Void' ? sum : sum + (Number(b.total) || 0); }, 0);
+        if (runningTotal > 0) {
+          badge.innerText = '₹' + runningTotal.toFixed(0);
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
       var el = document.getElementById('dayBillsList');
       if (!el) return; // tab not in DOM yet on first load, harmless no-op
       if (list.length === 0) { el.innerHTML = '<div class="empty-state">' + tr('noBillsToday') + '</div>'; return; }
@@ -2261,7 +2372,10 @@ function renderQuickItemsGrid(query) {
   grid.classList.toggle('hidden', noMatches);
   grid.innerHTML = ranked.map(function (r) {
     var it = r.it;
-    return '<div class="quick-item-btn" onclick="quickAdd(' + r.idx + ')">' + it.ItemName + '<span class="price">₹' + it.DefaultPrice + '/' + it.Unit + '</span></div>';
+    var hasStock = !(it.Stock === '' || it.Stock === undefined || it.Stock === null);
+    var isLow = hasStock && Number(it.Stock) <= Number(it.LowStockThreshold || 5);
+    var dot = isLow ? '<span class="low-stock-dot" title="' + tr('lowStockTag') + '"></span>' : '';
+    return '<div class="quick-item-btn" onclick="quickAdd(' + r.idx + ')">' + dot + it.ItemName + '<span class="price">₹' + it.DefaultPrice + '/' + it.Unit + '</span></div>';
   }).join('');
 }
 
@@ -2278,8 +2392,16 @@ function clearQuickItemSearch() {
   input.focus();
 }
 
+// Light haptic buzz on supported devices (Android Chrome mainly; iOS Safari
+// ignores navigator.vibrate silently, which is fine — this is a progressive
+// enhancement, not a requirement).
+function hapticTap() {
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+}
+
 function quickAdd(idx) {
   var it = window._quickItemsCache[idx];
+  hapticTap();
   if (it.Unit === 'kg') {
     showQtyModal(it.ItemName, tr('enterWeightKg') + ' • ₹' + it.DefaultPrice + '/kg').then(function (wt) {
       if (wt === null) return;
@@ -2434,6 +2556,7 @@ function setEntryMode(mode) {
 function addManualItem() {
   var name = document.getElementById('manualName').value.trim();
   if (!name) { showToast(tr('enterItemName')); return; }
+  hapticTap();
   var item;
   if (entryMode === 'piece') {
     var qty = Number(document.getElementById('manualQty').value);
@@ -2483,6 +2606,7 @@ function renderBillItems() {
   document.getElementById('billItemsList').innerHTML = html;
 
   updateTotals();
+  saveDraftBill();
 }
 
 // ---------- BILLING STEPS: Add Items -> Review & Pay ----------
@@ -2567,36 +2691,52 @@ function completeBill() {
   var btn = document.getElementById('completeBillBtn');
   var btnOriginal = btn.innerHTML;
   btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>' + tr('savingLabel');
-  callAPI('saveBill', { token: session.token, billData: billData })
-    .then(function (res) {
-      btn.disabled = false; btn.innerHTML = btnOriginal;
-      if (res.success) {
-        showToast(tr('billSavedTotal', { amt: '₹' + res.total.toFixed(2) }));
-        lastBill = {
-          billId: res.billId, items: itemsSnapshot, customerName: custName, customerPhone: custPhone,
-          paymentMode: paymentMode, subtotal: res.subtotal, discount: res.discount, total: res.total
-        };
-        renderLastBillCard();
-        currentBillItems = [];
-        document.getElementById('custName').value = '';
-        document.getElementById('custPhone').value = '';
-        document.getElementById('custId').value = '';
-        document.getElementById('discount').value = 0;
-        document.getElementById('paymentMode').value = 'Cash';
-        onPaymentModeChange();
-        setDiscountType('flat');
-        renderBillItems();
-        switchBillingStep('items');
-        if (custName) loadCustomers();
-        loadTodayBillsForDay(); // keep the Day tab's live list current even if the user hasn't switched there yet
-      } else {
-        showToast(trBackend(res.message));
-      }
-    })
-    .catch(function (err) {
-      btn.disabled = false; btn.innerHTML = btnOriginal;
-      if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message);
-    });
+
+  // Flaky mobile data shouldn't lose a completed sale: if the very first
+  // attempt fails at the network level (not a SESSION_EXPIRED or a server-
+  // returned validation error — those retrying won't fix), we silently retry
+  // once before bothering the person with an error toast.
+  function attemptSave(isRetry) {
+    return callAPI('saveBill', { token: session.token, billData: billData })
+      .then(function (res) {
+        btn.disabled = false; btn.innerHTML = btnOriginal;
+        if (res.success) {
+          showToast(tr('billSavedTotal', { amt: '₹' + res.total.toFixed(2) }));
+          lastBill = {
+            billId: res.billId, items: itemsSnapshot, customerName: custName, customerPhone: custPhone,
+            paymentMode: paymentMode, subtotal: res.subtotal, discount: res.discount, total: res.total
+          };
+          renderLastBillCard();
+          currentBillItems = [];
+          clearDraftBill();
+          document.getElementById('custName').value = '';
+          document.getElementById('custPhone').value = '';
+          document.getElementById('custId').value = '';
+          document.getElementById('discount').value = 0;
+          document.getElementById('paymentMode').value = 'Cash';
+          onPaymentModeChange();
+          setDiscountType('flat');
+          renderBillItems();
+          switchBillingStep('items');
+          if (custName) loadCustomers();
+          loadTodayBillsForDay(); // keep the Day tab's live list current even if the user hasn't switched there yet
+        } else {
+          showToast(trBackend(res.message));
+        }
+      })
+      .catch(function (err) {
+        // Network-level failure (not a server response, not session expiry):
+        // the item list is still intact and nothing was saved server-side,
+        // so a single silent retry is safe and won't double-bill.
+        if (!isRetry && err.message === tr('networkFailed')) {
+          return attemptSave(true);
+        }
+        btn.disabled = false; btn.innerHTML = btnOriginal;
+        if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message);
+      });
+  }
+
+  attemptSave(false);
 }
 
 // ---------- LAST BILL: SHARE / EDIT / VOID ----------
@@ -2816,7 +2956,17 @@ function loadDailyReport(btn) {
         '<div class="stat-row"><span>' + tr('totalExpenses') + '</span><span class="val">₹' + r.totalExpenses.toFixed(2) + '</span></div>' +
         '<div class="stat-row"><span>' + tr('netLabel') + '</span><span class="val">₹' + (r.totalSales - r.totalExpenses).toFixed(2) + '</span></div>' +
         '<div class="stat-row"><span>' + tr('billsLabel') + '</span><span class="val">' + r.billCount + '</span></div>' +
+        (r.voidCount > 0 ? '<div class="stat-row"><span>' + tr('voidedBillsLabel') + '</span><span class="val" style="color:var(--red)">' + r.voidCount + '</span></div>' : '') +
         '<button class="btn secondary" style="margin-top:10px" onclick="downloadDayExcel(this, \'' + date + '\')">' + tr('downloadExcel') + '</button>';
+      if (r.topItems && r.topItems.length > 0) {
+        var maxTop = r.topItems[0].total || 1;
+        html += '<div style="margin-top:14px"><div class="section-title" style="font-size:14px;margin-bottom:8px">' + tr('topItemsLabel') + '</div>' +
+          r.topItems.map(function (ti) {
+            var pct = Math.max(6, Math.round((ti.total / maxTop) * 100));
+            return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span>' + ti.name + '</span><span class="val">₹' + ti.total.toFixed(2) + '</span></div>' +
+              '<div style="background:var(--border);border-radius:6px;height:6px;overflow:hidden"><div style="background:var(--green);height:100%;width:' + pct + '%"></div></div></div>';
+          }).join('') + '</div>';
+      }
       if (r.bills.length > 0) {
         html += '<div class="report-table-wrap"><table class="report-table"><tr><th>' + tr('timeLabel') + '</th><th>' + tr('staffLabel') + '</th><th>' + tr('customer') + '</th><th>' + tr('modeLabel') + '</th><th>' + tr('totalLabel') + '</th></tr>' +
           r.bills.map(function (b) {
@@ -2930,13 +3080,15 @@ function submitQuickItemForm(btn) {
   var price = document.getElementById('qiPrice').value;
   var unit = document.getElementById('qiUnit').value;
   var category = document.getElementById('qiCategory').value.trim();
+  var stock = document.getElementById('qiStock').value;
+  var lowStockThreshold = document.getElementById('qiLowStockThreshold').value;
   if (!name || !price) { showToast(tr('enterItemNamePrice')); return; }
 
   var isEdit = !!originalName;
   var action = isEdit ? 'updateQuickItem' : 'addQuickItem';
   var params = isEdit
-    ? { token: session.token, originalName: originalName, name: name, price: price, unit: unit, category: category }
-    : { token: session.token, name: name, price: price, unit: unit, category: category };
+    ? { token: session.token, originalName: originalName, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold }
+    : { token: session.token, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold };
 
   withLoading(btn, isEdit ? tr('savingLabel') : tr('addingLabel'), function () {
     return callAPI(action, params)
@@ -2951,12 +3103,14 @@ function submitQuickItemForm(btn) {
   });
 }
 
-function startEditQuickItem(name, price, unit, category) {
+function startEditQuickItem(name, price, unit, category, stock, lowStockThreshold) {
   document.getElementById('qiOriginalName').value = name;
   document.getElementById('qiName').value = name;
   document.getElementById('qiPrice').value = price;
   document.getElementById('qiUnit').value = unit;
   document.getElementById('qiCategory').value = category || '';
+  document.getElementById('qiStock').value = (stock === '' || stock === undefined || stock === null) ? '' : stock;
+  document.getElementById('qiLowStockThreshold').value = (lowStockThreshold === '' || lowStockThreshold === undefined || lowStockThreshold === null) ? 5 : lowStockThreshold;
   document.getElementById('quickItemFormTitle').innerText = tr('editQuickItemTitle');
   document.getElementById('qiSubmitBtn').innerText = tr('qiSubmitSave');
   document.getElementById('qiCancelBtn').classList.remove('hidden');
@@ -2968,6 +3122,8 @@ function cancelQuickItemEdit() {
   document.getElementById('qiName').value = '';
   document.getElementById('qiPrice').value = '';
   document.getElementById('qiCategory').value = '';
+  document.getElementById('qiStock').value = '';
+  document.getElementById('qiLowStockThreshold').value = 5;
   document.getElementById('quickItemFormTitle').innerText = tr('addQuickItem');
   document.getElementById('qiSubmitBtn').innerText = tr('addQuickItemBtn');
   document.getElementById('qiCancelBtn').classList.add('hidden');
@@ -2978,15 +3134,42 @@ function loadQuickItemsAdmin() {
     .then(function (list) {
       var el = document.getElementById('quickItemsAdminList');
       el.innerHTML = list.map(function (it) {
-        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "'";
-        return '<div class="stat-row"><span>' + it.ItemName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + '</span>' +
-          '<span style="display:flex;gap:6px">' +
+        var stockVal = it.Stock;
+        var hasStock = !(stockVal === '' || stockVal === undefined || stockVal === null);
+        var threshold = it.LowStockThreshold || 5;
+        var stockStr = hasStock ? (' · ' + tr('stockLabel') + ': ' + stockVal) : '';
+        var lowBadge = (hasStock && Number(stockVal) <= Number(threshold)) ? ' <span class="low-stock-tag">' + tr('lowStockTag') + '</span>' : '';
+        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "', " + (hasStock ? stockVal : "''") + ", " + threshold;
+        return '<div class="stat-row"><span>' + it.ItemName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + stockStr + lowBadge + '</span>' +
+          '<span style="display:flex;gap:6px;flex-wrap:wrap">' +
+          (hasStock ? '<button class="btn small secondary" onclick="promptRestock(\'' + String(it.ItemName).replace(/'/g, "\\'") + '\')">' + tr('restockLabel') + '</button>' : '') +
           '<button class="btn small secondary" onclick="startEditQuickItem(' + argStr + ')">' + tr('editLabel') + '</button>' +
           '<button class="btn small danger" onclick="deleteQI(this, \'' + String(it.ItemName).replace(/'/g, "\\'") + '\')">' + tr('deleteLabel') + '</button>' +
           '</span></div>';
       }).join('');
     })
     .catch(function () {});
+}
+
+// Opens the existing qty modal to ask "how much stock to add" for a tracked
+// quick item, then calls the backend to add it. Reuses the same modal used
+// for quick-add weight/qty entry rather than a native prompt().
+function promptRestock(name) {
+  showQtyModal(tr('restockLabel') + ': ' + name, tr('enterQtyToAdd')).then(function (addQty) {
+    var qty = Number(addQty);
+    if (!qty || qty <= 0) return;
+    callAPI('restockQuickItem', { token: session.token, name: name, addQty: qty })
+      .then(function (res) {
+        if (res && res.success) {
+          showToast(tr('stockUpdated', { name: name, qty: res.newStock }));
+          loadQuickItemsAdmin();
+          loadQuickItems();
+        } else {
+          showToast(trBackend(res && res.message) || tr('somethingWentWrong'));
+        }
+      })
+      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
+  });
 }
 
 function deleteQI(btn, name) {
