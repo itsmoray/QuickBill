@@ -9,7 +9,9 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- jsPDF is loaded lazily on demand (see loadJsPDF_()) instead of here, since
+       most billing sessions never trigger a PDF export and shouldn't pay for it
+       on every page load. -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="QuickBill">
@@ -3294,6 +3296,24 @@ function buildReceiptText() {
   return lines.join('\n');
 }
 
+// Loads jsPDF from the CDN on first actual use instead of on every page load.
+// Resolves immediately (no re-fetch) once it's already been loaded once — the
+// service worker also caches the script itself after that first fetch, so
+// this stays fast and works offline on repeat exports.
+var _jsPDFLoadPromise = null;
+function loadJsPDF_() {
+  if (window.jspdf) return Promise.resolve();
+  if (_jsPDFLoadPromise) return _jsPDFLoadPromise;
+  _jsPDFLoadPromise = new Promise(function (resolve, reject) {
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = function () { resolve(); };
+    script.onerror = function () { _jsPDFLoadPromise = null; reject(new Error('Failed to load PDF library')); };
+    document.head.appendChild(script);
+  });
+  return _jsPDFLoadPromise;
+}
+
 // Renders the last bill as a simple one-page PDF receipt and returns a Blob.
 function buildReceiptPDFBlob() {
   if (!lastBill || !window.jspdf) return null;
@@ -3332,37 +3352,38 @@ function shareLastBillWhatsApp() {
   if (!lastBill) return;
   var btn = document.getElementById('shareBillBtn');
   withLoading(btn, tr('preparingPDFLabel'), function () {
-    return new Promise(function (resolve) {
-      // Slight delay so the spinner actually shows even on very fast devices —
-      // PDF generation itself can otherwise finish in the same tick.
-      setTimeout(function () {
-        var blob = buildReceiptPDFBlob();
-        if (!blob) {
-          showToast(tr('couldNotPreparePDF'));
-          var text = encodeURIComponent(buildReceiptText());
-          var phone = (lastBill.customerPhone || '').replace(/\D/g, '');
-          window.open(phone ? ('https://wa.me/91' + phone + '?text=' + text) : ('https://wa.me/?text=' + text), '_blank');
-          resolve();
-          return;
-        }
-        var filename = 'Receipt-' + lastBill.billId + '.pdf';
-        var file = new File([blob], filename, { type: 'application/pdf' });
+    return loadJsPDF_().catch(function () { /* fall through — buildReceiptPDFBlob() below returns null without window.jspdf, triggering the text-share fallback */ }).then(function () {
+      return new Promise(function (resolve) {
+        // Slight delay so the spinner actually shows even on very fast devices —
+        // PDF generation itself can otherwise finish in the same tick.
+        setTimeout(function () {
+          var blob = buildReceiptPDFBlob();
+          if (!blob) {
+            showToast(tr('couldNotPreparePDF'));
+            var text = encodeURIComponent(buildReceiptText());
+            var phone = (lastBill.customerPhone || '').replace(/\D/g, '');
+            window.open(phone ? ('https://wa.me/91' + phone + '?text=' + text) : ('https://wa.me/?text=' + text), '_blank');
+            resolve();
+            return;
+          }
+          var filename = 'Receipt-' + lastBill.billId + '.pdf';
+          var file = new File([blob], filename, { type: 'application/pdf' });
 
-        // Web Share API (with file support) opens the phone's native share sheet —
-        // WhatsApp, email, Bluetooth, etc. are all offered, and the user picks.
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({
-            files: [file],
-            title: 'QuickBill Receipt',
-            text: 'Receipt for Bill ' + lastBill.billId
-          }).catch(function (err) {
-            if (err && err.name !== 'AbortError') showToast(tr('couldNotOpenShareMenu'));
-          }).finally(resolve);
-        } else {
-          // Fallback for browsers without file-sharing support: download the PDF
-          // and open WhatsApp so it can be attached manually from Downloads.
-          var url = URL.createObjectURL(blob);
-          var link = document.createElement('a');
+          // Web Share API (with file support) opens the phone's native share sheet —
+          // WhatsApp, email, Bluetooth, etc. are all offered, and the user picks.
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: 'QuickBill Receipt',
+              text: 'Receipt for Bill ' + lastBill.billId
+            }).catch(function (err) {
+              if (err && err.name !== 'AbortError') showToast(tr('couldNotOpenShareMenu'));
+            }).finally(resolve);
+          } else {
+            // Fallback for browsers without file-sharing support: download the PDF
+            // and open WhatsApp so it can be attached manually from Downloads.
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
           link.href = url; link.download = filename;
           document.body.appendChild(link); link.click(); link.remove();
           setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
@@ -3372,6 +3393,7 @@ function shareLastBillWhatsApp() {
           resolve();
         }
       }, 150);
+    });
     });
   });
 }
