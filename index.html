@@ -1253,6 +1253,9 @@
         <input type="hidden" id="qiOriginalName" value="">
         <div class="form-row">
           <div class="field-inline"><label data-i18n="itemName">Item Name</label><input type="text" id="qiName"></div>
+          <div class="field-inline"><label data-i18n="itemNameML">Name in Malayalam</label><input type="text" id="qiNameML" data-i18n-ph="itemNameMLHint" placeholder="Auto-filled — you can correct it"></div>
+        </div>
+        <div class="form-row">
           <div class="field-inline"><label data-i18n="price">Price (₹)</label><input type="number" id="qiPrice" step="0.01"></div>
         </div>
         <div class="form-row">
@@ -1445,6 +1448,7 @@ var I18N = {
     adminPanel: 'Admin Panel', inventoryPanel: 'Inventory', addStaffLogin: 'Add Staff Login', fullName: 'Full Name', role: 'Role',
     staffRole: 'Staff', managerRole: 'Manager', addUser: '+ Add User', existingStaff: 'Existing Staff',
     addQuickItem: 'Add Quick Item', editQuickItemTitle: 'Edit Quick Item', price: 'Price (₹)',
+    itemNameML: 'Name in Malayalam', itemNameMLHint: 'Auto-filled — you can correct it', translatingLabel: 'Translating…',
     categoryOptional: 'Category (optional)', addQuickItemBtn: '+ Add Quick Item', qiSubmitSave: 'Save Changes',
     cancelEdit: 'Cancel Edit', cancelBtn: 'Cancel', existingQuickItems: 'Existing Quick Items', editLabel: 'Edit', deleteLabel: 'Delete',
     activateLabel: 'Activate', deactivateLabel: 'Deactivate',
@@ -1600,6 +1604,7 @@ var I18N = {
     adminPanel: 'അഡ്മിൻ പാനൽ', inventoryPanel: 'ഇൻവെന്ററി', addStaffLogin: 'സ്റ്റാഫ് ലോഗിൻ ചേർക്കുക', fullName: 'മുഴുവൻ പേര്', role: 'റോൾ',
     staffRole: 'സ്റ്റാഫ്', managerRole: 'മാനേജർ', addUser: '+ യൂസറെ ചേർക്കുക', existingStaff: 'നിലവിലുള്ള സ്റ്റാഫ്',
     addQuickItem: 'ക്വിക്ക് ഇനം ചേർക്കുക', editQuickItemTitle: 'ക്വിക്ക് ഇനം എഡിറ്റ് ചെയ്യുക', price: 'വില (₹)',
+    itemNameML: 'മലയാളത്തിൽ പേര്', itemNameMLHint: 'സ്വയമേവ പൂരിപ്പിക്കും — ആവശ്യമെങ്കിൽ തിരുത്താം', translatingLabel: 'വിവർത്തനം ചെയ്യുന്നു…',
     categoryOptional: 'വിഭാഗം (ഓപ്ഷണൽ)', addQuickItemBtn: '+ ക്വിക്ക് ഇനം ചേർക്കുക', qiSubmitSave: 'മാറ്റങ്ങൾ സേവ് ചെയ്യുക',
     cancelEdit: 'എഡിറ്റ് റദ്ദാക്കുക', cancelBtn: 'റദ്ദാക്കുക', existingQuickItems: 'നിലവിലുള്ള ക്വിക്ക് ഇനങ്ങൾ', editLabel: 'എഡിറ്റ്', deleteLabel: 'ഡിലീറ്റ്',
     activateLabel: 'ആക്ടിവേറ്റ് ചെയ്യുക', deactivateLabel: 'ഡീആക്ടിവേറ്റ് ചെയ്യുക',
@@ -2182,6 +2187,7 @@ window.onload = function () {
   document.getElementById('loginPassword').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
   attachCustomerAutocomplete('custName', 'custPhone', 'custId', 'custNameDropdown');
   attachCustomerAutocomplete('crName', 'crPhone', 'crCustId', 'crNameDropdown');
+  attachQuickItemAutoTranslate();
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(function (err) { console.warn('SW registration failed', err); });
@@ -2855,7 +2861,10 @@ function renderQuickItemsGrid(query) {
   }
   var q = (query || '').trim();
   var ranked = items
-    .map(function (it, idx) { return { it: it, idx: idx, score: fuzzyScore(q, it.ItemName) }; })
+    .map(function (it, idx) {
+      var mlScore = (currentLang === 'ml' && it.ItemNameML) ? fuzzyScore(q, it.ItemNameML) : -1;
+      return { it: it, idx: idx, score: Math.max(fuzzyScore(q, it.ItemName), mlScore) };
+    })
     .filter(function (r) { return r.score >= 0; });
   if (q) ranked.sort(function (a, b) { return b.score - a.score; });
 
@@ -2871,7 +2880,10 @@ function renderQuickItemsGrid(query) {
     var hasStock = !(it.Stock === '' || it.Stock === undefined || it.Stock === null);
     var isLow = hasStock && Number(it.Stock) <= Number(it.LowStockThreshold || 5);
     var dot = isLow ? '<span class="low-stock-dot" title="' + tr('lowStockTag') + '"></span>' : '';
-    return '<div class="quick-item-btn" onclick="quickAdd(' + r.idx + ')">' + dot + it.ItemName + '<span class="price">₹' + it.DefaultPrice + '/' + it.Unit + '</span></div>';
+    // Falls back to the English name whenever no Malayalam name has been set
+    // for that item yet, rather than showing a blank button label.
+    var displayName = (currentLang === 'ml' && it.ItemNameML) ? it.ItemNameML : it.ItemName;
+    return '<div class="quick-item-btn" onclick="quickAdd(' + r.idx + ')">' + dot + displayName + '<span class="price">₹' + it.DefaultPrice + '/' + it.Unit + '</span></div>';
   }).join('');
 }
 
@@ -3673,11 +3685,60 @@ function toggleUserActive(btn, username, active) {
   });
 }
 
-// Add Quick Item form doubles as the Edit form — qiOriginalName (hidden)
-// tells submitQuickItemForm whether this is a create or an update.
+// ---------- QUICK ITEM NAME AUTO-TRANSLATE (EN -> ML) ----------
+// When the manager types an English item name and moves on, we suggest a
+// Malayalam translation via a free public translation API. It's only ever a
+// starting point — the field stays a normal editable text input, so a wrong
+// or awkward auto-translation can always be corrected by hand before saving.
+// Never overwrites text the manager already typed/edited themselves.
+function translateToMalayalam_(text) {
+  var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|ml';
+  return fetch(url)
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      var out = data && data.responseData && data.responseData.translatedText;
+      // The API echoes the input back untranslated on failure — treat that as "no result".
+      if (!out || out.trim().toLowerCase() === text.trim().toLowerCase()) return '';
+      return out;
+    })
+    .catch(function () { return ''; });
+}
+
+function attachQuickItemAutoTranslate() {
+  var nameInput = document.getElementById('qiName');
+  var mlInput = document.getElementById('qiNameML');
+  if (!nameInput || !mlInput) return;
+  // Tracks whether the current qiNameML text was auto-filled by us (true) or
+  // typed/edited by the manager (false) — only auto-filled text is safe to
+  // silently replace if the English name changes again.
+  var mlWasAutoFilled = true;
+  mlInput.addEventListener('input', function () { mlWasAutoFilled = false; });
+
+  nameInput.addEventListener('blur', function () {
+    var text = nameInput.value.trim();
+    if (!text) return;
+    if (mlInput.value.trim() && !mlWasAutoFilled) return; // manager already has their own text — leave it
+    var originalPlaceholder = mlInput.placeholder;
+    mlInput.placeholder = tr('translatingLabel');
+    translateToMalayalam_(text).then(function (translated) {
+      mlInput.placeholder = originalPlaceholder;
+      if (!translated) return;
+      mlInput.value = translated;
+      mlWasAutoFilled = true;
+    });
+  });
+
+  // startEditQuickItem()/cancelQuickItemEdit() set qiNameML.value directly —
+  // treat those as "not manager-edited yet" so a subsequent name blur can
+  // still refresh the suggestion if the field was left at its loaded value.
+  window._resetQiNameMLAutoFillFlag = function () { mlWasAutoFilled = true; };
+}
+
+
 function submitQuickItemForm(btn) {
   var originalName = document.getElementById('qiOriginalName').value;
   var name = document.getElementById('qiName').value.trim();
+  var nameML = document.getElementById('qiNameML').value.trim();
   var price = document.getElementById('qiPrice').value;
   var unit = document.getElementById('qiUnit').value;
   var category = document.getElementById('qiCategory').value.trim();
@@ -3688,8 +3749,8 @@ function submitQuickItemForm(btn) {
   var isEdit = !!originalName;
   var action = isEdit ? 'updateQuickItem' : 'addQuickItem';
   var params = isEdit
-    ? { token: session.token, originalName: originalName, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold }
-    : { token: session.token, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold };
+    ? { token: session.token, originalName: originalName, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold, nameML: nameML }
+    : { token: session.token, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold, nameML: nameML };
 
   withLoading(btn, isEdit ? tr('savingLabel') : tr('addingLabel'), function () {
     return callAPI(action, params)
@@ -3704,9 +3765,11 @@ function submitQuickItemForm(btn) {
   });
 }
 
-function startEditQuickItem(name, price, unit, category, stock, lowStockThreshold) {
+function startEditQuickItem(name, price, unit, category, stock, lowStockThreshold, nameML) {
   document.getElementById('qiOriginalName').value = name;
   document.getElementById('qiName').value = name;
+  document.getElementById('qiNameML').value = nameML || '';
+  if (window._resetQiNameMLAutoFillFlag) window._resetQiNameMLAutoFillFlag();
   document.getElementById('qiPrice').value = price;
   document.getElementById('qiUnit').value = unit;
   document.getElementById('qiCategory').value = category || '';
@@ -3721,6 +3784,8 @@ function startEditQuickItem(name, price, unit, category, stock, lowStockThreshol
 function cancelQuickItemEdit() {
   document.getElementById('qiOriginalName').value = '';
   document.getElementById('qiName').value = '';
+  document.getElementById('qiNameML').value = '';
+  if (window._resetQiNameMLAutoFillFlag) window._resetQiNameMLAutoFillFlag();
   document.getElementById('qiPrice').value = '';
   document.getElementById('qiCategory').value = '';
   document.getElementById('qiStock').value = '';
@@ -3740,8 +3805,9 @@ function loadQuickItemsAdmin() {
         var threshold = it.LowStockThreshold || 5;
         var stockStr = hasStock ? (' · ' + tr('stockLabel') + ': ' + stockVal) : '';
         var lowBadge = (hasStock && Number(stockVal) <= Number(threshold)) ? ' <span class="low-stock-tag">' + tr('lowStockTag') + '</span>' : '';
-        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "', " + (hasStock ? stockVal : "''") + ", " + threshold;
-        return '<div class="stat-row"><span>' + it.ItemName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + stockStr + lowBadge + '</span>' +
+        var mlStr = it.ItemNameML ? (' (' + it.ItemNameML + ')') : '';
+        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "', " + (hasStock ? stockVal : "''") + ", " + threshold + ", '" + String(it.ItemNameML || '').replace(/'/g, "\\'") + "'";
+        return '<div class="stat-row"><span>' + it.ItemName + mlStr + ' — ₹' + it.DefaultPrice + '/' + it.Unit + stockStr + lowBadge + '</span>' +
           '<span style="display:flex;gap:6px;flex-wrap:wrap">' +
           (hasStock ? '<button class="btn small secondary" onclick="promptRestock(\'' + String(it.ItemName).replace(/'/g, "\\'") + '\')">' + tr('restockLabel') + '</button>' : '') +
           '<button class="btn small secondary" onclick="startEditQuickItem(' + argStr + ')">' + tr('editLabel') + '</button>' +
