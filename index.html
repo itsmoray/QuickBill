@@ -1188,7 +1188,7 @@
           <input type="hidden" id="crCustId">
           <div class="autocomplete-dropdown hidden" id="crNameDropdown"></div>
         </div>
-        <div class="field"><label data-i18n="phoneOptional">Phone (optional)</label><input type="text" id="crPhone" placeholder="10-digit number" data-i18n-ph="tenDigitNumber"></div>
+        <div class="field"><label data-i18n="phoneRequired">Phone</label><input type="text" id="crPhone" placeholder="10-digit number" data-i18n-ph="tenDigitNumber"></div>
         <div class="tag-row">
           <div class="tag-btn selected" id="crTypeCredit" onclick="setCreditType('Credit')" data-i18n="theyOweMore">They owe more</div>
           <div class="tag-btn" id="crTypePayment" onclick="setCreditType('Payment')" data-i18n="theyPaidBack">They paid back</div>
@@ -1331,6 +1331,19 @@
         </div>
       </div>
     </div>
+    <!-- Possible-duplicate-customer confirmation modal, shown when a freehand-typed
+         name on the Udhaar form exactly matches an existing customer. -->
+    <div class="qty-modal-backdrop" id="dupCustomerModalBackdrop" onclick="if (event.target === this) dupCustomerCreateNew()">
+      <div class="qty-modal">
+        <h3 id="dupCustomerTitle"></h3>
+        <p class="qty-modal-sub" id="dupCustomerSub"></p>
+        <div class="qty-modal-btns">
+          <button type="button" class="btn secondary" style="flex:1" onclick="dupCustomerCreateNew()" data-i18n="dupCustomerCreateNew">No, different person</button>
+          <button type="button" class="btn" style="flex:1" onclick="dupCustomerUseExisting()" data-i18n="dupCustomerUseExisting">Yes, use existing</button>
+        </div>
+      </div>
+    </div>
+
     <button type="button" class="fab-cart-btn" id="fabAddBtn" onclick="openManualAddCard()" aria-label="Add item manually">+</button>
 
     <!-- Bill Completed popup: shown right after Complete Bill. Replaces the
@@ -1433,9 +1446,13 @@ var I18N = {
     reopeningLabel: 'Reopening...', dayReopened: 'Day reopened.',
     // Credits
     udhaarLedger: 'Udhaar / Credit Ledger', addEntry: 'Add Entry', customerName: 'Customer Name',
-    customerNamePh: 'Customer name', phoneOptional: 'Phone (optional)', theyOweMore: 'They owe more',
+    customerNamePh: 'Customer name', phoneOptional: 'Phone (optional)', phoneRequired: 'Phone', theyOweMore: 'They owe more',
     theyPaidBack: 'They paid back', notesOptional: 'Notes (optional)', egGroceries: 'e.g. groceries for the week',
     saveEntry: '+ Save Entry', outstandingBalances: 'Outstanding Balances', noOutstandingBalances: 'No outstanding balances',
+    phoneRequiredForCredit: 'Phone number is required for a credit entry — it\'s the only reliable way to tell apart two customers with the same name.',
+    dupCustomerTitle: 'This name already exists', dupCustomerSub: '{name} ({phone}) is already a saved customer. Is this the same person?',
+    dupCustomerSubNoPhone: '{name} (no phone on file) is already a saved customer. Is this the same person?',
+    dupCustomerUseExisting: 'Yes, use existing', dupCustomerCreateNew: 'No, different person',
     // Reports
     dailyReport: 'Daily Report', selectDate: 'Select Date', viewReport: 'View Report', monthlyReport: 'Monthly Report',
     selectMonth: 'Select Month', dayStatusLabel: 'Day Status', netLabel: 'Net', billsLabel: 'Bills',
@@ -1591,9 +1608,13 @@ var I18N = {
     confirmReopenDay: 'ഇന്നത്തെ ദിവസം വീണ്ടും തുറക്കണോ? ബില്ലുകൾ/ചെലവുകൾ ചേർക്കാം, ശേഷം ഇത് വീണ്ടും അടയ്ക്കാം.',
     reopeningLabel: 'വീണ്ടും തുറക്കുന്നു...', dayReopened: 'ദിവസം വീണ്ടും തുറന്നു.',
     udhaarLedger: 'ഉധാരം / ക്രെഡിറ്റ് കണക്ക്', addEntry: 'എൻട്രി ചേർക്കുക', customerName: 'കസ്റ്റമറുടെ പേര്',
-    customerNamePh: 'കസ്റ്റമറുടെ പേര്', phoneOptional: 'ഫോൺ (ഓപ്ഷണൽ)', theyOweMore: 'കൂടുതൽ കടം',
+    customerNamePh: 'കസ്റ്റമറുടെ പേര്', phoneOptional: 'ഫോൺ (ഓപ്ഷണൽ)', phoneRequired: 'ഫോൺ', theyOweMore: 'കൂടുതൽ കടം',
     theyPaidBack: 'തിരികെ അടച്ചു', notesOptional: 'കുറിപ്പുകൾ (ഓപ്ഷണൽ)', egGroceries: 'ഉദാ: ഈ ആഴ്ചത്തെ സാധനങ്ങൾ',
     saveEntry: '+ എൻട്രി സേവ് ചെയ്യുക', outstandingBalances: 'ബാക്കിയുള്ള ബാലൻസുകൾ', noOutstandingBalances: 'ബാക്കി ബാലൻസുകളൊന്നുമില്ല',
+    phoneRequiredForCredit: 'ക്രെഡിറ്റ് എൻട്രിക്ക് ഫോൺ നമ്പർ നിർബന്ധമാണ് — ഒരേ പേരിലുള്ള രണ്ട് കസ്റ്റമർമാരെ വേർതിരിച്ചറിയാനുള്ള വിശ്വസനീയമായ ഏക മാർഗ്ഗം ഇതാണ്.',
+    dupCustomerTitle: 'ഈ പേര് നിലവിലുണ്ട്', dupCustomerSub: '{name} ({phone}) ഇതിനകം സേവ് ചെയ്ത കസ്റ്റമറാണ്. ഇത് അതേ വ്യക്തിയാണോ?',
+    dupCustomerSubNoPhone: '{name} (ഫോൺ നമ്പർ ഇല്ല) ഇതിനകം സേവ് ചെയ്ത കസ്റ്റമറാണ്. ഇത് അതേ വ്യക്തിയാണോ?',
+    dupCustomerUseExisting: 'അതെ, നിലവിലുള്ളത് ഉപയോഗിക്കുക', dupCustomerCreateNew: 'അല്ല, വേറെ വ്യക്തിയാണ്',
     dailyReport: 'ദിവസ റിപ്പോർട്ട്', selectDate: 'തീയതി തിരഞ്ഞെടുക്കുക', viewReport: 'റിപ്പോർട്ട് കാണുക', monthlyReport: 'മാസ റിപ്പോർട്ട്',
     selectMonth: 'മാസം തിരഞ്ഞെടുക്കുക', dayStatusLabel: 'ദിവസ നില', netLabel: 'നെറ്റ്', billsLabel: 'ബില്ലുകൾ',
     voidedBillsLabel: 'റദ്ദാക്കിയ ബില്ലുകൾ', topItemsLabel: 'ടോപ്പ് ഇനങ്ങൾ', salesTrendLabel: 'വിൽപ്പന ട്രെൻഡ്',
@@ -3458,28 +3479,102 @@ function setCreditType(type) {
   document.getElementById('crTypePayment').classList.toggle('selected', type === 'Payment');
 }
 
+// Normalizes a name for duplicate comparison the same way the backend does
+// for its no-phone customer ID fallback: lowercase, letters/digits only.
+function normalizeNameForMatch_(name) {
+  return (name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+// Looks for an existing customer whose name matches exactly (after
+// normalization) — catches the classic "typed a new Rajesh instead of
+// picking the existing one from the dropdown" case. Deliberately exact-match
+// only (not fuzzy) to avoid false-positive prompts on genuinely different
+// people who just happen to have similar-sounding names.
+function findDuplicateCustomerByName_(name, excludeCustomerId) {
+  var target = normalizeNameForMatch_(name);
+  if (!target) return null;
+  var list = window._customersCache || [];
+  for (var i = 0; i < list.length; i++) {
+    var c = list[i];
+    if (c.customerId === excludeCustomerId) continue;
+    if (normalizeNameForMatch_(c.name) === target) return c;
+  }
+  return null;
+}
+
+var dupCustomerModalResolve = null;
+function showDupCustomerModal(existingCustomer) {
+  document.getElementById('dupCustomerTitle').innerText = tr('dupCustomerTitle');
+  var sub = existingCustomer.phone
+    ? tr('dupCustomerSub', { name: existingCustomer.name, phone: existingCustomer.phone })
+    : tr('dupCustomerSubNoPhone', { name: existingCustomer.name });
+  document.getElementById('dupCustomerSub').innerText = sub;
+  document.getElementById('dupCustomerModalBackdrop').classList.add('open');
+  return new Promise(function (resolve) { dupCustomerModalResolve = resolve; });
+}
+function closeDupCustomerModal() {
+  document.getElementById('dupCustomerModalBackdrop').classList.remove('open');
+}
+function dupCustomerUseExisting() {
+  closeDupCustomerModal();
+  if (dupCustomerModalResolve) { var r = dupCustomerModalResolve; dupCustomerModalResolve = null; r(true); }
+}
+function dupCustomerCreateNew() {
+  closeDupCustomerModal();
+  if (dupCustomerModalResolve) { var r = dupCustomerModalResolve; dupCustomerModalResolve = null; r(false); }
+}
+
 function submitCredit(btn) {
   var name = document.getElementById('crName').value.trim();
+  var phone = document.getElementById('crPhone').value.trim();
   var amount = document.getElementById('crAmount').value;
+  var custId = document.getElementById('crCustId').value;
   if (!name || !amount) { showToast(tr('enterCustNameAmount')); return; }
-  withLoading(btn, tr('savingLabel'), function () {
-    return callAPI('addCreditEntry', {
-      token: session.token, customerName: name, phone: document.getElementById('crPhone').value.trim(),
-      type: creditType, amount: amount, notes: document.getElementById('crNotes').value.trim()
-    })
-      .then(function (res) {
-        if (res.success) {
-          showToast(tr('savedNewBalance', { amt: '₹' + res.newBalance.toFixed(2) }));
-          document.getElementById('crName').value = '';
-          document.getElementById('crPhone').value = '';
-          document.getElementById('crCustId').value = '';
-          document.getElementById('crAmount').value = '';
-          document.getElementById('crNotes').value = '';
-          loadCreditLedger();
-          loadCustomers();
-        } else showToast(trBackend(res.message));
+  // Phone is mandatory here (unlike the regular Billing screen's optional
+  // phone field) — it's the only reliable way the backend can tell two
+  // customers with the same name apart. See the note on resolveCustomer_.
+  if (!phone) { showToast(tr('phoneRequiredForCredit')); return; }
+
+  // If this wasn't picked from the autocomplete dropdown (custId is empty,
+  // meaning the name was freehand-typed), check for an existing customer
+  // with the exact same name before creating what might be a duplicate.
+  var proceed = Promise.resolve(true);
+  if (!custId) {
+    var dup = findDuplicateCustomerByName_(name, custId);
+    if (dup) {
+      proceed = showDupCustomerModal(dup).then(function (useExisting) {
+        if (useExisting) {
+          document.getElementById('crCustId').value = dup.customerId;
+          document.getElementById('crName').value = dup.name;
+          if (dup.phone) document.getElementById('crPhone').value = dup.phone;
+          name = dup.name;
+          phone = dup.phone || phone;
+        }
+        return true; // either choice proceeds with saving — only the linked customer differs
+      });
+    }
+  }
+
+  proceed.then(function () {
+    withLoading(btn, tr('savingLabel'), function () {
+      return callAPI('addCreditEntry', {
+        token: session.token, customerName: name, phone: phone,
+        type: creditType, amount: amount, notes: document.getElementById('crNotes').value.trim()
       })
-      .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
+        .then(function (res) {
+          if (res.success) {
+            showToast(tr('savedNewBalance', { amt: '₹' + res.newBalance.toFixed(2) }));
+            document.getElementById('crName').value = '';
+            document.getElementById('crPhone').value = '';
+            document.getElementById('crCustId').value = '';
+            document.getElementById('crAmount').value = '';
+            document.getElementById('crNotes').value = '';
+            loadCreditLedger();
+            loadCustomers();
+          } else showToast(trBackend(res.message));
+        })
+        .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
+    });
   });
 }
 
