@@ -3869,7 +3869,7 @@ function startEditQuickItem(name, price, unit, category, stock, lowStockThreshol
   document.getElementById('qiUnit').value = unit;
   document.getElementById('qiCategory').value = category || '';
   document.getElementById('qiStock').value = (stock === '' || stock === undefined || stock === null) ? '' : stock;
-  document.getElementById('qiLowStockThreshold').value = (lowStockThreshold === '' || lowStockThreshold === undefined || lowStockThreshold === null) ? 5 : lowStockThreshold;
+  document.getElementById('qiLowStockThreshold').value = (lowStockThreshold === '' || lowStockThreshold === undefined || lowStockThreshold === null) ? '' : lowStockThreshold;
   document.getElementById('quickItemFormTitle').innerText = tr('editQuickItemTitle');
   document.getElementById('qiSubmitBtn').innerText = tr('qiSubmitSave');
   document.getElementById('qiCancelBtn').classList.remove('hidden');
@@ -3897,12 +3897,18 @@ function loadQuickItemsAdmin() {
       el.innerHTML = list.map(function (it) {
         var stockVal = it.Stock;
         var hasStock = !(stockVal === '' || stockVal === undefined || stockVal === null);
-        var threshold = it.LowStockThreshold || 5;
+        // Raw threshold as actually stored — kept blank if unset, so re-opening
+        // this item for edit doesn't silently pre-fill a 5 the user never chose.
+        var thresholdRaw = (it.LowStockThreshold === '' || it.LowStockThreshold === undefined || it.LowStockThreshold === null) ? '' : it.LowStockThreshold;
+        // Effective threshold — only used to decide whether to show the "low stock" badge below.
+        var thresholdEffective = thresholdRaw === '' ? 5 : thresholdRaw;
         var stockStr = hasStock ? (' · ' + tr('stockLabel') + ': ' + stockVal) : '';
-        var lowBadge = (hasStock && Number(stockVal) <= Number(threshold)) ? ' <span class="low-stock-tag">' + tr('lowStockTag') + '</span>' : '';
-        var mlStr = it.ItemNameML ? (' (' + it.ItemNameML + ')') : '';
-        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "', " + (hasStock ? stockVal : "''") + ", " + threshold + ", '" + String(it.ItemNameML || '').replace(/'/g, "\\'") + "'";
-        return '<div class="stat-row"><span>' + it.ItemName + mlStr + ' — ₹' + it.DefaultPrice + '/' + it.Unit + stockStr + lowBadge + '</span>' +
+        var lowBadge = (hasStock && Number(stockVal) <= Number(thresholdEffective)) ? ' <span class="low-stock-tag">' + tr('lowStockTag') + '</span>' : '';
+        // Show only the name for the currently selected language (Settings toggle),
+        // not both English and Malayalam together.
+        var displayName = (currentLang === 'ml' && it.ItemNameML) ? it.ItemNameML : it.ItemName;
+        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "', " + (hasStock ? stockVal : "''") + ", " + (thresholdRaw === '' ? "''" : thresholdRaw) + ", '" + String(it.ItemNameML || '').replace(/'/g, "\\'") + "'";
+        return '<div class="stat-row"><span>' + displayName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + stockStr + lowBadge + '</span>' +
           '<span style="display:flex;gap:6px;flex-wrap:wrap">' +
           (hasStock ? '<button class="btn small secondary" onclick="promptRestock(\'' + String(it.ItemName).replace(/'/g, "\\'") + '\')">' + tr('restockLabel') + '</button>' : '') +
           '<button class="btn small secondary" onclick="startEditQuickItem(' + argStr + ')">' + tr('editLabel') + '</button>' +
