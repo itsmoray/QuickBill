@@ -1267,7 +1267,7 @@
         </div>
         <div class="form-row">
           <div class="field-inline"><label data-i18n="stockOptional">Stock qty (optional — leave blank to not track)</label><input type="number" id="qiStock" min="0" step="1"></div>
-          <div class="field-inline"><label data-i18n="lowStockAt">Low-stock alert at</label><input type="number" id="qiLowStockThreshold" min="0" step="1" value="5"></div>
+          <div class="field-inline"><label data-i18n="lowStockAt">Low-stock alert at</label><input type="number" id="qiLowStockThreshold" min="0" step="1"></div>
         </div>
         <button class="btn secondary" id="qiSubmitBtn" onclick="submitQuickItemForm(this)" data-i18n="addQuickItemBtn">+ Add Quick Item</button>
         <button class="btn secondary hidden" id="qiCancelBtn" style="margin-top:8px" onclick="cancelQuickItemEdit()" data-i18n="cancelEdit">Cancel Edit</button>
@@ -3884,7 +3884,7 @@ function cancelQuickItemEdit() {
   document.getElementById('qiPrice').value = '';
   document.getElementById('qiCategory').value = '';
   document.getElementById('qiStock').value = '';
-  document.getElementById('qiLowStockThreshold').value = 5;
+  document.getElementById('qiLowStockThreshold').value = '';
   document.getElementById('quickItemFormTitle').innerText = tr('addQuickItem');
   document.getElementById('qiSubmitBtn').innerText = tr('addQuickItemBtn');
   document.getElementById('qiCancelBtn').classList.add('hidden');
