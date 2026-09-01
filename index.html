@@ -368,6 +368,39 @@
       position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none;
       color: var(--muted); font-size: 13px; cursor: pointer; padding: 6px 8px;
     }
+    /* "Scan" barcode button sits to the right of the search bar, same row */
+    .quick-search-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 10px; }
+    .quick-search-row .quick-search-wrap { flex: 1; margin-bottom: 0; }
+    .quick-scan-btn {
+      flex-shrink: 0; display: flex; align-items: center; gap: 5px; padding: 0 14px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px;
+      font-weight: 600; cursor: pointer;
+    }
+    .quick-scan-btn:active { transform: scale(0.96); }
+
+    /* ---------- BARCODE SCANNER MODAL ---------- */
+    .scanner-modal { max-width: 400px; }
+    .barcode-reader {
+      width: 100%; min-height: 220px; border-radius: 12px; overflow: hidden; background: #0f172a;
+      display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; margin-bottom: 12px;
+    }
+    .barcode-reader video { border-radius: 12px; }
+    .barcode-manual-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .barcode-manual-row input {
+      flex: 1; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--border);
+      font-size: 14px; outline: none; background: var(--bg);
+    }
+    .barcode-manual-row input:focus { border-color: var(--green); background: #fff; }
+    .barcode-manual-row .btn { margin-top: 0; white-space: nowrap; }
+    .barcode-scan-error { font-size: 13px; color: var(--red); margin-bottom: 10px; }
+    .barcode-not-found-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    /* Scan-to-fill icon button next to the Inventory form's barcode input */
+    .field-inline-with-btn { display: flex; gap: 6px; align-items: flex-end; }
+    .field-inline-with-btn .field-inline { flex: 1; }
+    .scan-fill-btn {
+      flex-shrink: 0; height: 40px; padding: 0 12px; border-radius: 10px; border: 1.5px solid var(--border);
+      background: var(--bg); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer;
+    }
 
     /* ---------- FLOATING "+" BUTTON & RECENTLY-ADDED SLIDING SHEET ---------- */
     /* Pops up right after an item is added so staff get quick confirmation
@@ -1141,6 +1174,30 @@
       </div>
     </div>
 
+    <!-- Barcode / quick-scan: camera-based scanner (html5-qrcode, loaded on
+         first use, same lazy-CDN pattern as jsPDF) that matches a scanned
+         code against each Quick Item's Barcode field and adds it straight to
+         the bill. A manual text field is always shown alongside the camera
+         view as a fallback for a damaged label, a denied camera permission,
+         or a wedge (USB/Bluetooth) scanner that just types the digits in. -->
+    <div class="mini-modal-backdrop" id="barcodeScannerBackdrop" onclick="if(event.target===this)closeBarcodeScanner()">
+      <div class="mini-modal scanner-modal">
+        <h3 data-i18n="scanBarcodeTitle">Scan Barcode</h3>
+        <div class="barcode-reader" id="barcodeScannerReader">
+          <span id="barcodeScannerStatus" data-i18n="cameraStarting">Starting camera…</span>
+        </div>
+        <div class="barcode-manual-row">
+          <input type="text" id="barcodeManualInput" inputmode="numeric" data-i18n-ph="orTypeBarcodeManually" placeholder="Or type the barcode" onkeydown="if(event.key==='Enter')submitManualBarcode()">
+          <button type="button" class="btn small secondary" onclick="submitManualBarcode()" data-i18n="goLabel">Go</button>
+        </div>
+        <div class="barcode-scan-error hidden" id="barcodeScanError"></div>
+        <div class="barcode-not-found-row hidden" id="barcodeNotFoundRow">
+          <button type="button" class="btn secondary" id="barcodeAddNewItemBtn" onclick="goAddScannedItemToInventory()" data-i18n="addAsNewItemQ">Add it as a new inventory item?</button>
+        </div>
+        <button class="btn secondary" onclick="closeBarcodeScanner()" data-i18n="cancel">Cancel</button>
+      </div>
+    </div>
+
     <!-- Held Bills: bills parked mid-sale (via "Hold Bill") so the counter can
          start a new customer without losing what was already rung up. -->
     <div class="mini-modal-backdrop" id="heldBillsBackdrop" onclick="if(event.target===this)closeHeldBillsModal()">
@@ -1182,10 +1239,15 @@
       <div class="billing-step" id="billingStepItems">
         <div class="card" id="quickItemsCard">
           <h3 data-i18n="quickAdd">Quick Add</h3>
-          <div class="quick-search-wrap">
-            <span class="quick-search-icon">🔍</span>
-            <input type="text" id="quickItemSearch" class="quick-search-input" placeholder="Search items…" oninput="filterQuickItems(this.value)" data-i18n-ph="searchItems">
-            <button type="button" class="quick-search-clear hidden" id="quickSearchClear" onclick="clearQuickItemSearch()">✕</button>
+          <div class="quick-search-row">
+            <div class="quick-search-wrap">
+              <span class="quick-search-icon">🔍</span>
+              <input type="text" id="quickItemSearch" class="quick-search-input" placeholder="Search items…" oninput="filterQuickItems(this.value)" data-i18n-ph="searchItems">
+              <button type="button" class="quick-search-clear hidden" id="quickSearchClear" onclick="clearQuickItemSearch()">✕</button>
+            </div>
+            <button type="button" class="quick-scan-btn" onclick="openBarcodeScanner('quickAdd')" title="Scan Barcode">
+              <span class="icon">📷</span> <span data-i18n="scanBarcodeBtn">Scan</span>
+            </button>
           </div>
           <div class="quick-grid" id="quickItemsGrid"></div>
           <div class="empty-state hidden" id="quickSearchNoResults"><span data-i18n="noItemsMatchPrefix">No items match "</span><span id="quickSearchNoResultsTerm"></span><span data-i18n="quote">"</span></div>
@@ -1393,6 +1455,12 @@
           <div class="field-inline"><label data-i18n="stockOptional">Stock qty (optional — leave blank to not track)</label><input type="number" id="qiStock" min="0" step="1"></div>
           <div class="field-inline"><label data-i18n="lowStockAt">Low-stock alert at</label><input type="number" id="qiLowStockThreshold" min="0" step="1" value="5"></div>
         </div>
+        <div class="form-row">
+          <div class="field-inline-with-btn">
+            <div class="field-inline"><label data-i18n="barcodeOptional">Barcode (optional)</label><input type="text" id="qiBarcode" inputmode="numeric"></div>
+            <button type="button" class="scan-fill-btn" onclick="openBarcodeScanner('inventoryForm')" title="Scan to fill">📷 <span data-i18n="scanToFillLabel">Scan</span></button>
+          </div>
+        </div>
         <button class="btn secondary" id="qiSubmitBtn" onclick="submitQuickItemForm(this)" data-i18n="addQuickItemBtn">+ Add Quick Item</button>
         <button class="btn secondary hidden" id="qiCancelBtn" style="margin-top:8px" onclick="cancelQuickItemEdit()" data-i18n="cancelEdit">Cancel Edit</button>
       </div>
@@ -1552,6 +1620,12 @@ var I18N = {
     // Billing
     newBill: 'New Bill', addItems: 'Add Items', reviewPay: 'Review & Pay', quickAdd: 'Quick Add',
     searchItems: 'Search items…', noItemsMatchPrefix: 'No items match "', quote: '"',
+    scanBarcodeBtn: 'Scan', scanBarcodeTitle: 'Scan Barcode', orTypeBarcodeManually: 'Or type the barcode',
+    goLabel: 'Go', barcodeLabel: 'Barcode', barcodeOptional: 'Barcode (optional)', scanToFillLabel: 'Scan',
+    cameraStarting: 'Starting camera…', cameraNotAvailable: 'Camera not available. You can still type the barcode below.',
+    barcodeNotFound: 'No item matches barcode {code}.', addAsNewItemQ: 'Add it as a new inventory item?',
+    itemAddedViaScan: '{name} added', barcodeAlreadyUsed: 'That barcode is already used by another item.',
+    enterBarcodeFirst: 'Scan or type a barcode first.', managerOnlyAddItem: 'Ask a Manager to add new items.',
     addItemManually: 'Add Item Manually', itemName: 'Item Name', egOnion: 'e.g. Onion',
     qtyPieces: 'Qty (pieces)', weightKgG: 'Weight (kg/g)', quantity: 'Quantity',
     pricePerPiece: 'Price per piece (₹)', egZeroFive: 'e.g. 0.5', weight: 'Weight', unit: 'Unit',
@@ -1724,6 +1798,12 @@ var I18N = {
     upiSettingsSaved: 'UPI സെറ്റിംഗ്സ് സേവ് ചെയ്തു.', beInvalidUpiId: 'ഇത് ശരിയായ UPI ഐഡി ആയി തോന്നുന്നില്ല (name@bank എന്ന രീതിയിൽ ആയിരിക്കണം).',
     newBill: 'പുതിയ ബിൽ', addItems: 'ഇനങ്ങൾ ചേർക്കുക', reviewPay: 'പരിശോധിച്ച് പണം നൽകുക', quickAdd: 'ക്വിക്ക് ആഡ്',
     searchItems: 'ഇനങ്ങൾ തിരയുക…', noItemsMatchPrefix: '"', quote: '" എന്നതുമായി പൊരുത്തപ്പെടുന്ന ഇനങ്ങളില്ല',
+    scanBarcodeBtn: 'സ്കാൻ', scanBarcodeTitle: 'ബാർകോഡ് സ്കാൻ ചെയ്യുക', orTypeBarcodeManually: 'അല്ലെങ്കിൽ ബാർകോഡ് ടൈപ്പ് ചെയ്യുക',
+    goLabel: 'പോകുക', barcodeLabel: 'ബാർകോഡ്', barcodeOptional: 'ബാർകോഡ് (ഓപ്ഷണൽ)', scanToFillLabel: 'സ്കാൻ',
+    cameraStarting: 'ക്യാമറ ആരംഭിക്കുന്നു…', cameraNotAvailable: 'ക്യാമറ ലഭ്യമല്ല. താഴെ ബാർകോഡ് ടൈപ്പ് ചെയ്യാം.',
+    barcodeNotFound: '{code} എന്ന ബാർകോഡുമായി പൊരുത്തപ്പെടുന്ന ഇനമില്ല.', addAsNewItemQ: 'ഇത് പുതിയ ഇൻവെന്ററി ഇനമായി ചേർക്കണോ?',
+    itemAddedViaScan: '{name} ചേർത്തു', barcodeAlreadyUsed: 'ഈ ബാർകോഡ് മറ്റൊരു ഇനത്തിന് ഇതിനകം ഉപയോഗിച്ചിട്ടുണ്ട്.',
+    enterBarcodeFirst: 'ആദ്യം ഒരു ബാർകോഡ് സ്കാൻ ചെയ്യുക അല്ലെങ്കിൽ ടൈപ്പ് ചെയ്യുക.', managerOnlyAddItem: 'പുതിയ ഇനങ്ങൾ ചേർക്കാൻ ഒരു മാനേജറോട് ചോദിക്കുക.',
     addItemManually: 'ഇനം സ്വയം ചേർക്കുക', itemName: 'ഇനത്തിന്റെ പേര്', egOnion: 'ഉദാ: ഉള്ളി',
     qtyPieces: 'എണ്ണം (പീസ്)', weightKgG: 'തൂക്കം (കി.ഗ്രാം/ഗ്രാം)', quantity: 'എണ്ണം',
     pricePerPiece: 'ഒരു പീസിന്റെ വില (₹)', egZeroFive: 'ഉദാ: 0.5', weight: 'തൂക്കം', unit: 'യൂണിറ്റ്',
@@ -3156,6 +3236,7 @@ function trPaymentMode(m) {
 function loadQuickItems() {
   cacheThenFetch_('quickItems', function () { return callAPI('getQuickItems', { token: session.token }); }, function (items) {
     window._quickItemsCache = items;
+    buildBarcodeIndex_();
     renderQuickItemsGrid('');
   }).catch(function () {});
 }
@@ -3260,6 +3341,214 @@ function quickAdd(idx) {
     });
   }
 }
+
+// ---------- BARCODE / QUICK-SCAN ----------
+// Two ways in: (1) the device camera via html5-qrcode, loaded from a CDN on
+// first use — same lazy-load pattern as jsPDF elsewhere in this file — and
+// (2) a physical USB/Bluetooth "wedge" scanner, which just types the digits
+// followed by Enter, exactly like a very fast keyboard. Both funnel into
+// handleScannedBarcode_(), which looks the code up against each Quick Item's
+// Barcode field and adds it to the bill the same way tapping its Quick Add
+// tile would.
+
+// Barcode -> index into window._quickItemsCache, rebuilt whenever the quick
+// items list is (re)loaded so lookups stay O(1) instead of scanning the
+// whole list on every scan.
+window._barcodeIndex = {};
+function buildBarcodeIndex_() {
+  var idx = {};
+  (window._quickItemsCache || []).forEach(function (it, i) {
+    var code = (it.Barcode || '').toString().trim();
+    if (code) idx[code] = i;
+  });
+  window._barcodeIndex = idx;
+}
+
+function matchItemIdxByBarcode_(code) {
+  code = (code || '').toString().trim();
+  if (!code) return -1;
+  return (code in window._barcodeIndex) ? window._barcodeIndex[code] : -1;
+}
+
+var _scannerMode = 'quickAdd'; // 'quickAdd' (Billing) or 'inventoryForm' (Admin barcode field)
+var _html5QrInstance = null;
+var _scannerBusy = false; // true while a decode is being handled, to ignore duplicate frames
+
+function openBarcodeScanner(mode) {
+  _scannerMode = mode || 'quickAdd';
+  document.getElementById('barcodeScanError').classList.add('hidden');
+  document.getElementById('barcodeNotFoundRow').classList.add('hidden');
+  document.getElementById('barcodeManualInput').value = '';
+  document.getElementById('barcodeScannerBackdrop').classList.add('open');
+  startCameraScanner_();
+  setTimeout(function () { document.getElementById('barcodeManualInput').focus(); }, 250);
+}
+
+function closeBarcodeScanner() {
+  document.getElementById('barcodeScannerBackdrop').classList.remove('open');
+  stopCameraScanner_();
+}
+
+// Loads html5-qrcode from the CDN on first actual use instead of on every
+// page load. The service worker's generic cache-first-with-network-fallback
+// rule (see sw.js) picks this up and caches it after the first fetch, same
+// as jsPDF, so repeat scans work offline too (once the library itself is
+// cached — obviously the live camera feed doesn't need network at all).
+var _html5QrLoadPromise = null;
+function loadHtml5Qrcode_() {
+  if (window.Html5Qrcode) return Promise.resolve();
+  if (_html5QrLoadPromise) return _html5QrLoadPromise;
+  _html5QrLoadPromise = new Promise(function (resolve, reject) {
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+    script.onload = function () { resolve(); };
+    script.onerror = function () { _html5QrLoadPromise = null; reject(new Error('Failed to load scanner library')); };
+    document.head.appendChild(script);
+  });
+  return _html5QrLoadPromise;
+}
+
+function startCameraScanner_() {
+  var statusEl = document.getElementById('barcodeScannerStatus');
+  var errEl = document.getElementById('barcodeScanError');
+  if (statusEl) { statusEl.classList.remove('hidden'); statusEl.innerText = tr('cameraStarting'); }
+  errEl.classList.add('hidden');
+  _scannerBusy = false;
+
+  loadHtml5Qrcode_().then(function () {
+    // Modal might have been closed already while the library was loading.
+    if (!document.getElementById('barcodeScannerBackdrop').classList.contains('open')) return;
+    try {
+      _html5QrInstance = new Html5Qrcode('barcodeScannerReader');
+      var config = {
+        fps: 10,
+        qrbox: { width: 260, height: 140 },
+        formatsToSupport: window.Html5QrcodeSupportedFormats ? [
+          Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E, Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39, Html5QrcodeSupportedFormats.ITF
+        ] : undefined
+      };
+      _html5QrInstance.start({ facingMode: 'environment' }, config, function (decodedText) {
+        if (_scannerBusy) return; // ignore extra frames while we're already acting on a match
+        _scannerBusy = true;
+        handleScannedBarcode_(decodedText);
+      }, function () { /* per-frame "no code found" — expected constantly, ignore */ })
+        .then(function () { if (statusEl) statusEl.classList.add('hidden'); })
+        .catch(function () { showCameraUnavailable_(); });
+    } catch (e) {
+      showCameraUnavailable_();
+    }
+  }).catch(function () {
+    showCameraUnavailable_();
+  });
+}
+
+function showCameraUnavailable_() {
+  var statusEl = document.getElementById('barcodeScannerStatus');
+  if (statusEl) statusEl.innerText = tr('cameraNotAvailable');
+  document.getElementById('barcodeScanError').classList.add('hidden');
+}
+
+function stopCameraScanner_() {
+  if (_html5QrInstance) {
+    var inst = _html5QrInstance;
+    _html5QrInstance = null;
+    try {
+      inst.stop().then(function () { try { inst.clear(); } catch (e) {} }).catch(function () {});
+    } catch (e) {}
+  }
+}
+
+function submitManualBarcode() {
+  var val = document.getElementById('barcodeManualInput').value.trim();
+  if (!val) { showToast(tr('enterBarcodeFirst')); return; }
+  handleScannedBarcode_(val);
+}
+
+// Shared entry point for a decoded/typed code, regardless of source (camera,
+// manual field, or a wedge scanner via the global keydown listener below).
+function handleScannedBarcode_(code) {
+  code = (code || '').toString().trim();
+  if (!code) return;
+
+  if (_scannerMode === 'inventoryForm') {
+    document.getElementById('qiBarcode').value = code;
+    closeBarcodeScanner();
+    return;
+  }
+
+  var idx = matchItemIdxByBarcode_(code);
+  if (idx === -1) {
+    _scannerBusy = false;
+    var errEl = document.getElementById('barcodeScanError');
+    errEl.innerText = tr('barcodeNotFound', { code: code });
+    errEl.classList.remove('hidden');
+    document.getElementById('barcodeNotFoundRow').classList.toggle('hidden', session.role !== 'Manager');
+    document.getElementById('barcodeAddNewItemBtn').dataset.scannedCode = code;
+    return;
+  }
+
+  closeBarcodeScanner();
+  quickAdd(idx);
+}
+
+// Manager tapped "Add it as a new inventory item?" after a scan didn't match
+// anything — jumps to the Inventory tab with the scanned code pre-filled so
+// they don't have to retype it.
+function goAddScannedItemToInventory() {
+  var code = document.getElementById('barcodeAddNewItemBtn').dataset.scannedCode || '';
+  closeBarcodeScanner();
+  switchTab('inventory');
+  cancelQuickItemEdit();
+  document.getElementById('qiBarcode').value = code;
+  document.getElementById('qiName').focus();
+}
+
+// ---------- WEDGE (USB/BLUETOOTH) SCANNER SUPPORT ----------
+// A wedge scanner behaves like a keyboard: it "types" each digit of the
+// barcode in rapid succession (usually a few ms apart — far faster than any
+// human) and finishes with Enter. This buffers keystrokes and only treats
+// them as a scan if they arrived fast enough; slower, human-paced typing
+// resets the buffer and is left completely alone, so this never interferes
+// with normal typing in the search box or anywhere else.
+var _wedgeBuffer = '';
+var _wedgeLastCharTime = 0;
+var WEDGE_MAX_GAP_MS = 60;
+
+document.addEventListener('keydown', function (e) {
+  // Only listen while the counter is actually on the Add Items step with no
+  // modal open — otherwise a scan (or a fast typist!) elsewhere in the app
+  // could trigger an unintended add.
+  var onItemsStep = typeof billingStep !== 'undefined' && billingStep === 'items'
+    && document.getElementById('tab-billing') && !document.getElementById('tab-billing').classList.contains('hidden');
+  if (!onItemsStep) { _wedgeBuffer = ''; return; }
+  var anyModalOpen = document.querySelector('.mini-modal-backdrop.open, .cart-sheet-backdrop.open, #manualAddCard.open');
+  if (anyModalOpen) { _wedgeBuffer = ''; return; }
+
+  var now = Date.now();
+  var gap = now - _wedgeLastCharTime;
+  _wedgeLastCharTime = now;
+
+  if (e.key === 'Enter') {
+    var candidate = _wedgeBuffer;
+    _wedgeBuffer = '';
+    if (candidate.length >= 4 && matchItemIdxByBarcode_(candidate) !== -1) {
+      e.preventDefault();
+      hapticTap();
+      quickAdd(matchItemIdxByBarcode_(candidate));
+    }
+    return;
+  }
+
+  if (e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key)) {
+    if (gap > WEDGE_MAX_GAP_MS) _wedgeBuffer = ''; // too slow to be a scanner — start fresh
+    _wedgeBuffer += e.key;
+  } else if (e.key !== 'Shift') {
+    _wedgeBuffer = ''; // any other key (arrows, backspace, etc.) breaks the sequence
+  }
+});
 
 // ---------- QUICK-ADD QTY/WEIGHT MODAL ----------
 // In-app replacement for the native browser prompt() dialog, so it matches
@@ -4381,13 +4670,14 @@ function submitQuickItemForm(btn) {
   var category = document.getElementById('qiCategory').value.trim();
   var stock = document.getElementById('qiStock').value;
   var lowStockThreshold = document.getElementById('qiLowStockThreshold').value;
+  var barcode = document.getElementById('qiBarcode').value.trim();
   if (!name || !price) { showToast(tr('enterItemNamePrice')); return; }
 
   var isEdit = !!originalName;
   var action = isEdit ? 'updateQuickItem' : 'addQuickItem';
   var params = isEdit
-    ? { token: session.token, originalName: originalName, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold, nameML: nameML }
-    : { token: session.token, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold, nameML: nameML };
+    ? { token: session.token, originalName: originalName, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold, nameML: nameML, barcode: barcode }
+    : { token: session.token, name: name, price: price, unit: unit, category: category, stock: stock, lowStockThreshold: lowStockThreshold, nameML: nameML, barcode: barcode };
 
   withLoading(btn, isEdit ? tr('savingLabel') : tr('addingLabel'), function () {
     return callAPI(action, params)
@@ -4402,7 +4692,7 @@ function submitQuickItemForm(btn) {
   });
 }
 
-function startEditQuickItem(name, price, unit, category, stock, lowStockThreshold, nameML) {
+function startEditQuickItem(name, price, unit, category, stock, lowStockThreshold, nameML, barcode) {
   document.getElementById('qiOriginalName').value = name;
   document.getElementById('qiName').value = name;
   document.getElementById('qiNameML').value = nameML || '';
@@ -4412,6 +4702,7 @@ function startEditQuickItem(name, price, unit, category, stock, lowStockThreshol
   document.getElementById('qiCategory').value = category || '';
   document.getElementById('qiStock').value = (stock === '' || stock === undefined || stock === null) ? '' : stock;
   document.getElementById('qiLowStockThreshold').value = (lowStockThreshold === '' || lowStockThreshold === undefined || lowStockThreshold === null) ? '' : lowStockThreshold;
+  document.getElementById('qiBarcode').value = barcode || '';
   document.getElementById('quickItemFormTitle').innerText = tr('editQuickItemTitle');
   document.getElementById('qiSubmitBtn').innerText = tr('qiSubmitSave');
   document.getElementById('qiCancelBtn').classList.remove('hidden');
@@ -4427,6 +4718,7 @@ function cancelQuickItemEdit() {
   document.getElementById('qiCategory').value = '';
   document.getElementById('qiStock').value = '';
   document.getElementById('qiLowStockThreshold').value = 5;
+  document.getElementById('qiBarcode').value = '';
   document.getElementById('quickItemFormTitle').innerText = tr('addQuickItem');
   document.getElementById('qiSubmitBtn').innerText = tr('addQuickItemBtn');
   document.getElementById('qiCancelBtn').classList.add('hidden');
@@ -4446,11 +4738,12 @@ function loadQuickItemsAdmin() {
         var thresholdEffective = thresholdRaw === '' ? 5 : thresholdRaw;
         var stockStr = hasStock ? (' · ' + tr('stockLabel') + ': ' + stockVal) : '';
         var lowBadge = (hasStock && Number(stockVal) <= Number(thresholdEffective)) ? ' <span class="low-stock-tag">' + tr('lowStockTag') + '</span>' : '';
+        var barcodeStr = it.Barcode ? (' · 🏷 ' + it.Barcode) : '';
         // Show only the name for the currently selected language (Settings toggle),
         // not both English and Malayalam together.
         var displayName = (currentLang === 'ml' && it.ItemNameML) ? it.ItemNameML : it.ItemName;
-        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "', " + (hasStock ? stockVal : "''") + ", " + (thresholdRaw === '' ? "''" : thresholdRaw) + ", '" + String(it.ItemNameML || '').replace(/'/g, "\\'") + "'";
-        return '<div class="stat-row"><span>' + displayName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + stockStr + lowBadge + '</span>' +
+        var argStr = "'" + String(it.ItemName).replace(/'/g, "\\'") + "', " + it.DefaultPrice + ", '" + it.Unit + "', '" + String(it.Category || '').replace(/'/g, "\\'") + "', " + (hasStock ? stockVal : "''") + ", " + (thresholdRaw === '' ? "''" : thresholdRaw) + ", '" + String(it.ItemNameML || '').replace(/'/g, "\\'") + "', '" + String(it.Barcode || '').replace(/'/g, "\\'") + "'";
+        return '<div class="stat-row"><span>' + displayName + ' — ₹' + it.DefaultPrice + '/' + it.Unit + stockStr + barcodeStr + lowBadge + '</span>' +
           '<span style="display:flex;gap:6px;flex-wrap:wrap">' +
           (hasStock ? '<button class="btn small secondary" onclick="promptRestock(\'' + String(it.ItemName).replace(/'/g, "\\'") + '\')">' + tr('restockLabel') + '</button>' : '') +
           '<button class="btn small secondary" onclick="startEditQuickItem(' + argStr + ')">' + tr('editLabel') + '</button>' +
