@@ -64,6 +64,17 @@
     [data-theme="dark"] .tutorial-target-highlight { outline-color: var(--card); }
     [data-theme="dark"] .btn.secondary { background: var(--bg); color: var(--green-dark); border-color: var(--green-dark); }
     * { box-sizing: border-box; }
+    /* Disables the elastic "rubber-band" bounce Safari/WebKit shows when you
+       scroll past the very top or bottom of the page (macOS trackpad, iOS
+       swipe). Without this, scrolling up past the top of the app reveals a
+       flash of blank background above the header — it looks like a layout
+       bug, but it's really just WebKit's default overscroll behavior on a
+       document that's taller than one screen (which almost every tab here
+       is). This keeps the app feeling like a fixed, native screen instead
+       of a scrollable webpage.
+       (Supported in Safari 16+ / iOS 16+ and all modern Chromium/Firefox —
+       safe to rely on as the sole fix; no fallback needed.) */
+    html, body { overscroll-behavior-y: none; }
     body {
       margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent;
