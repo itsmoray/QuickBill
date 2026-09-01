@@ -337,6 +337,7 @@
     .sticky-continue-bar .cb-count { font-size: 11.5px; color: var(--muted); font-weight: 600; }
     .sticky-continue-bar .cb-amount { font-size: 17px; font-weight: 800; color: var(--green-dark); }
     .sticky-continue-bar .btn { width: auto; margin: 0; padding: 11px 18px; }
+    .hold-bill-btn-compact { padding: 11px 14px !important; font-size: 16px; flex: 0 0 auto; }
     .step-hint { font-size: 12.5px; color: var(--muted); margin: -8px 0 14px; }
     .back-to-items-link {
       background: none; border: none; color: var(--green-dark); font-weight: 700; font-size: 13px;
@@ -712,6 +713,26 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .section-title { font-size: 18px; font-weight: 700; margin: 4px 0 14px; }
+    .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 14px; flex-wrap: wrap; }
+    .section-title-row .section-title { margin: 0; }
+    .held-bills-btn {
+      background: var(--green-light); color: var(--green-dark); border: 1px solid transparent; border-radius: 20px;
+      padding: 6px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .held-bills-btn:active { border-color: var(--green); }
+    .held-bills-btn .hb-count {
+      background: var(--green); color: #fff; border-radius: 10px; min-width: 18px; height: 18px; line-height: 18px;
+      font-size: 11px; padding: 0 5px; display: inline-block; text-align: center;
+    }
+    .held-bill-row { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .held-bill-row:last-child { border-bottom: none; }
+    .held-bill-row .hbr-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .held-bill-row .hbr-name { font-weight: 600; font-size: 14px; }
+    .held-bill-row .hbr-amt { font-weight: 700; white-space: nowrap; }
+    .held-bill-row .hbr-bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
+    .held-bill-row .hbr-meta { font-size: 11.5px; color: var(--muted); }
+    .held-bill-row .hbr-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+    .held-bill-row .hbr-actions .btn.small { margin: 0; padding: 7px 12px; font-size: 12.5px; }
     .customer-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; gap: 10px; transition: background 0.15s ease; }
     .customer-row:active { background: var(--bg); }
     .customer-row .name { font-weight: 600; }
@@ -1120,10 +1141,25 @@
       </div>
     </div>
 
+    <!-- Held Bills: bills parked mid-sale (via "Hold Bill") so the counter can
+         start a new customer without losing what was already rung up. -->
+    <div class="mini-modal-backdrop" id="heldBillsBackdrop" onclick="if(event.target===this)closeHeldBillsModal()">
+      <div class="mini-modal">
+        <h3 data-i18n="heldBillsLabel">Held Bills</h3>
+        <div id="heldBillsList"></div>
+        <button class="btn secondary" onclick="closeHeldBillsModal()" data-i18n="closeLabel">Close</button>
+      </div>
+    </div>
+
     <div class="tab-content-wrapper" id="tabContentWrapper">
     <!-- TAB: BILLING -->
     <div class="tab-content" id="tab-billing">
-      <div class="section-title" data-i18n="newBill">New Bill</div>
+      <div class="section-title-row">
+        <div class="section-title" data-i18n="newBill">New Bill</div>
+        <button class="held-bills-btn hidden" id="heldBillsBtn" onclick="openHeldBillsModal()" title="Held Bills">
+          <span class="icon">⏸</span> <span data-i18n="heldBillsLabel">Held Bills</span> <span class="hb-count" id="heldBillsCount">0</span>
+        </button>
+      </div>
 
       <!-- Two clear steps: pick items first, then review & take payment -->
       <div class="billing-subnav" id="billingSubnav">
@@ -1170,6 +1206,7 @@
             <div class="cb-count" id="itemsContinueCount">0 items</div>
             <div class="cb-amount" id="itemsContinueTotal">₹0.00</div>
           </div>
+          <button class="btn secondary hold-bill-btn-compact" onclick="holdCurrentBill()" title="Hold Bill">⏸</button>
           <button class="btn" id="goToCheckoutBtn" onclick="switchBillingStep('checkout')" data-i18n="reviewPayArrow">Review &amp; Pay →</button>
         </div>
       </div>
@@ -1238,6 +1275,7 @@
             <div class="amount" id="totalDisplay">₹0.00</div>
           </div>
           <button class="btn" id="completeBillBtn" onclick="completeBill()" data-i18n="completeBill">Complete Bill</button>
+          <button class="btn secondary" id="holdBillBtnCheckout" onclick="holdCurrentBill()" data-i18n="holdBillLabel">Hold Bill</button>
         </div>
       </div>
       </div><!-- /#billingGrid -->
@@ -1662,7 +1700,14 @@ var I18N = {
     pinMismatch: 'PINs do not match.', pinMustBe4Digits: 'PIN must be exactly 4 digits.', pinSetSuccess: 'Quick Unlock PIN set.',
     pinRemovedSuccess: 'Quick Unlock PIN removed.', lockAppLabel: 'Lock App', enterPinToUnlock: 'Enter PIN to unlock', wrongPin: 'Incorrect PIN.',
     unlockBtn: 'Unlock', useFullLoginInstead: 'Use full login instead', lockedForLabel: 'Locked for',
-    cancel: 'Cancel', closeLabel: 'Close'
+    cancel: 'Cancel', closeLabel: 'Close',
+    // Hold Bill
+    holdBillLabel: 'Hold Bill', heldBillsLabel: 'Held Bills', noHeldBills: 'No held bills',
+    billHeldMsg: 'Bill held ({count} item(s)). Start a new one anytime.',
+    finishOrHoldCurrentFirst: 'Finish or hold your current bill first.',
+    confirmDeleteHeldBill: 'Delete this held bill? This cannot be undone.',
+    resumeLabel: 'Resume',
+    heldMinsAgo: 'Held {mins} min(s) ago', heldTimeShort: 'Held at {time}'
   },
   ml: {
     signInSub: 'ബില്ലിംഗ് തുടങ്ങാൻ സൈൻ ഇൻ ചെയ്യുക', username: 'യൂസർനെയിം', password: 'പാസ്‌വേഡ്', login: 'ലോഗിൻ',
@@ -1812,7 +1857,13 @@ var I18N = {
     pinMismatch: 'PIN പൊരുത്തപ്പെടുന്നില്ല.', pinMustBe4Digits: 'PIN കൃത്യമായി 4 അക്കം ആയിരിക്കണം.', pinSetSuccess: 'ക്വിക്ക് അൺലോക്ക് PIN സെറ്റ് ചെയ്തു.',
     pinRemovedSuccess: 'ക്വിക്ക് അൺലോക്ക് PIN നീക്കം ചെയ്തു.', lockAppLabel: 'ആപ്പ് ലോക്ക് ചെയ്യുക', enterPinToUnlock: 'അൺലോക്ക് ചെയ്യാൻ PIN നൽകുക', wrongPin: 'PIN തെറ്റാണ്.',
     unlockBtn: 'അൺലോക്ക്', useFullLoginInstead: 'പകരം പൂർണ്ണ ലോഗിൻ ഉപയോഗിക്കുക', lockedForLabel: 'ലോക്ക് ചെയ്തിരിക്കുന്നു',
-    cancel: 'റദ്ദാക്കുക', closeLabel: 'അടയ്ക്കുക'
+    cancel: 'റദ്ദാക്കുക', closeLabel: 'അടയ്ക്കുക',
+    holdBillLabel: 'ബിൽ ഹോൾഡ് ചെയ്യുക', heldBillsLabel: 'ഹോൾഡ് ചെയ്ത ബില്ലുകൾ', noHeldBills: 'ഹോൾഡ് ചെയ്ത ബില്ലുകൾ ഇല്ല',
+    billHeldMsg: 'ബിൽ ഹോൾഡ് ചെയ്തു ({count} ഇനങ്ങൾ). എപ്പോൾ വേണമെങ്കിലും പുതിയത് തുടങ്ങാം.',
+    finishOrHoldCurrentFirst: 'ദയവായി നിലവിലെ ബിൽ പൂർത്തിയാക്കുക അല്ലെങ്കിൽ ഹോൾഡ് ചെയ്യുക.',
+    confirmDeleteHeldBill: 'ഈ ഹോൾഡ് ചെയ്ത ബിൽ ഡിലീറ്റ് ചെയ്യണോ? ഇത് തിരികെ ചെയ്യാൻ കഴിയില്ല.',
+    resumeLabel: 'തുടരുക',
+    heldMinsAgo: '{mins} മിനിറ്റ് മുമ്പ് ഹോൾഡ് ചെയ്തു', heldTimeShort: '{time}-ന് ഹോൾഡ് ചെയ്തു'
   }
 };
 
@@ -2459,6 +2510,7 @@ function showApp() {
   loadCustomers();
   loadUpiSettings();
   restoreDraftBillIfAny();
+  renderHeldBillsBadge_();
   refreshQuickUnlockUI();
   updatePendingSyncBadge_();
   updateOfflineUI_();
@@ -2622,7 +2674,147 @@ function restoreDraftBillIfAny() {
   }
 }
 
-// ---------- UPI PAYMENT: SETTINGS + CHECKOUT QR ----------
+// ---------- HELD BILLS ----------
+// Lets the counter park a bill mid-sale (e.g. a customer steps away, or
+// another customer needs to be rung up first) without losing what's
+// already been added, then start a fresh bill immediately. Held bills live
+// in localStorage only — same trust boundary as the draft-recovery cart
+// above, just supporting more than one parked bill at a time, and shown to
+// the user explicitly (a draft is a silent safety net; a held bill is a
+// deliberate action the counter took).
+var HELD_BILLS_KEY = 'quickbillHeldBillsV1';
+
+function getHeldBills_() {
+  try {
+    var raw = localStorage.getItem(HELD_BILLS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+function saveHeldBills_(list) {
+  try { localStorage.setItem(HELD_BILLS_KEY, JSON.stringify(list)); } catch (e) { /* storage full/unavailable — non-critical */ }
+}
+
+// Mirrors computeDiscountAmount()/updateTotals()'s maths, just against a
+// stored snapshot instead of the live form — used to show each held bill's
+// total in the list without touching the bill currently in progress.
+function calcHeldBillTotal_(held) {
+  var subtotal = held.items.reduce(function (s, it) { return s + it.lineTotal; }, 0);
+  var raw = Number(held.discountValue) || 0;
+  var discount = held.discountType === 'percent' ? Math.min(subtotal * (raw / 100), subtotal) : Math.min(raw, subtotal);
+  return { subtotal: subtotal, discount: discount, total: Math.max(subtotal - discount, 0) };
+}
+
+function holdCurrentBill() {
+  if (currentBillItems.length === 0) { showToast(tr('addAtLeastOneItem')); return; }
+  var held = {
+    id: 'H' + Date.now() + Math.floor(Math.random() * 1000),
+    items: currentBillItems.slice(),
+    customerName: document.getElementById('custName').value.trim(),
+    customerPhone: document.getElementById('custPhone').value.trim(),
+    paymentMode: document.getElementById('paymentMode').value,
+    discountType: discountType,
+    discountValue: Number(document.getElementById('discount').value) || 0,
+    heldAt: Date.now()
+  };
+  var list = getHeldBills_();
+  list.push(held);
+  saveHeldBills_(list);
+
+  // Same reset as after completing a bill — the counter is free to start
+  // the next customer right away.
+  currentBillItems = [];
+  clearDraftBill();
+  document.getElementById('custName').value = '';
+  document.getElementById('custPhone').value = '';
+  document.getElementById('custId').value = '';
+  document.getElementById('discount').value = 0;
+  document.getElementById('paymentMode').value = 'Cash';
+  onPaymentModeChange();
+  setDiscountType('flat');
+  renderBillItems();
+  switchBillingStep('items');
+  renderHeldBillsBadge_();
+  showToast(tr('billHeldMsg', { count: held.items.length }));
+}
+
+// Only one bill can be "in progress" at a time (same rule the draft-recovery
+// flow already follows) — simpler and safer than silently merging two
+// carts. If the counter needs to juggle a third customer, they hold the
+// current one first, same as they just did for this one.
+function resumeHeldBill(id) {
+  if (currentBillItems.length > 0) { showToast(tr('finishOrHoldCurrentFirst')); return; }
+  var list = getHeldBills_();
+  var idx = -1;
+  for (var i = 0; i < list.length; i++) { if (list[i].id === id) { idx = i; break; } }
+  if (idx === -1) return;
+  var held = list[idx];
+  list.splice(idx, 1);
+  saveHeldBills_(list);
+
+  currentBillItems = held.items.slice();
+  document.getElementById('custName').value = held.customerName || '';
+  document.getElementById('custPhone').value = held.customerPhone || '';
+  document.getElementById('paymentMode').value = held.paymentMode || 'Cash';
+  onPaymentModeChange();
+  setDiscountType(held.discountType || 'flat');
+  document.getElementById('discount').value = held.discountValue || 0;
+  renderBillItems();
+  switchTab('billing');
+  switchBillingStep('items');
+  closeHeldBillsModal();
+  renderHeldBillsBadge_();
+}
+
+function deleteHeldBill(id) {
+  if (!confirm(tr('confirmDeleteHeldBill'))) return;
+  var list = getHeldBills_().filter(function (h) { return h.id !== id; });
+  saveHeldBills_(list);
+  renderHeldBillsModalList_();
+  renderHeldBillsBadge_();
+}
+
+function openHeldBillsModal() {
+  renderHeldBillsModalList_();
+  document.getElementById('heldBillsBackdrop').classList.add('open');
+}
+function closeHeldBillsModal() {
+  document.getElementById('heldBillsBackdrop').classList.remove('open');
+}
+
+function renderHeldBillsModalList_() {
+  var list = getHeldBills_().slice().sort(function (a, b) { return b.heldAt - a.heldAt; });
+  var container = document.getElementById('heldBillsList');
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state">' + tr('noHeldBills') + '</div>';
+    return;
+  }
+  container.innerHTML = list.map(function (h) {
+    var totals = calcHeldBillTotal_(h);
+    var name = h.customerName || tr('walkInCustomer');
+    var mins = Math.max(1, Math.round((Date.now() - h.heldAt) / 60000));
+    var timeLabel = mins < 60 ? tr('heldMinsAgo', { mins: mins })
+      : tr('heldTimeShort', { time: new Date(h.heldAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+    return '<div class="held-bill-row">' +
+      '<div class="hbr-top"><span class="hbr-name">' + name + '</span><span class="hbr-amt">₹' + totals.total.toFixed(2) + '</span></div>' +
+      '<div class="hbr-bottom">' +
+      '<span class="hbr-meta">' + trCount(h.items.length) + ' • ' + timeLabel + '</span>' +
+      '<span class="hbr-actions">' +
+      '<button class="btn small secondary" onclick="resumeHeldBill(\'' + h.id + '\')" data-i18n="resumeLabel">Resume</button>' +
+      '<button class="del-btn" onclick="deleteHeldBill(\'' + h.id + '\')" title="' + tr('deleteLabel') + '">✕</button>' +
+      '</span></div></div>';
+  }).join('');
+}
+
+function renderHeldBillsBadge_() {
+  var count = getHeldBills_().length;
+  var btn = document.getElementById('heldBillsBtn');
+  if (!btn) return;
+  btn.classList.toggle('hidden', count === 0);
+  var countEl = document.getElementById('heldBillsCount');
+  if (countEl) countEl.innerText = count;
+}
+
+
 // Any logged-in user can read the UPI ID (needed to show the QR at checkout),
 // but only a Manager can change it (enforced server-side in Code.js too).
 function loadUpiSettings() {
