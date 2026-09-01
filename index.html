@@ -225,12 +225,23 @@
     .success-msg { color: var(--green-dark); font-size: 13px; margin-top: 10px; }
 
     /* ---------- APP SHELL ---------- */
-    /* padding-top reserves room for the topbar, which is position:fixed
-       (not sticky) so it can never be scrolled out of view. */
-    #appScreen { display: none; min-height: 100vh; padding-bottom: 112px; padding-top: var(--topbar-h); }
+    /* The topbar used to be position:fixed to keep it pinned during scroll,
+       but Safari has a well-known rendering bug where position:fixed
+       elements visually detach and drift during elastic/rubber-band
+       overscroll (scrolling past the top, or a fast scroll/bounce) — the
+       header would appear to scroll away with a gap opening up above it,
+       even though it's supposed to be pinned. position:sticky doesn't have
+       this problem (it stays part of normal document flow instead of being
+       pulled out of it), so it holds firm through Safari's bounce/rubber-
+       band scrolling. It still stays fixed to the top of the screen during
+       normal scrolling, so nothing about the pinned look changes. Since the
+       topbar now takes up real space in the flow instead of being pulled
+       out of it, #appScreen no longer needs artificial top padding to make
+       room for it. */
+    #appScreen { display: none; min-height: 100vh; padding-bottom: 112px; }
     .topbar {
       background: var(--green); color: #fff; padding: 14px 16px; display: flex; justify-content: space-between;
-      align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 30; gap: 10px;
+      align-items: center; position: sticky; top: 0; left: 0; right: 0; z-index: 30; gap: 10px;
       min-height: var(--topbar-h); box-sizing: border-box;
     }
     .topbar .title { font-weight: 700; font-size: 16px; }
