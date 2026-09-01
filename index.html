@@ -335,11 +335,11 @@
     /* Quick items grid */
     .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
     .quick-item-btn {
-      background: var(--green-light); border: 1.5px solid transparent; border-radius: 10px; padding: 10px 6px;
-      text-align: center; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--green-dark);
+      background: var(--green-light); border: 1.5px solid transparent; border-radius: 10px; padding: 8px 4px;
+      text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--green-dark);
     }
     .quick-item-btn:active { border-color: var(--green); }
-    .quick-item-btn .price { font-size: 11px; color: var(--muted); font-weight: 400; display: block; margin-top: 2px; }
+    .quick-item-btn .price { font-size: 10.5px; color: var(--muted); font-weight: 400; display: block; margin-top: 2px; }
     .quick-item-btn { position: relative; }
     .low-stock-dot { position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
     .low-stock-tag { font-size: 10px; font-weight: 700; color: var(--red); margin-left: 6px; }
@@ -827,9 +827,24 @@
       #billingStepItems, #billingStepCheckout.billing-step {
         display: block !important;
       }
+      /* The right column itself no longer scrolls as a whole — that was the
+         confusing part: once a bill had enough items, the entire Current
+         Bill + Customer & Payment + Total column got capped and scrolled
+         internally, with no obvious sign of it (Total and Complete Bill
+         could end up hidden below the fold inside a scrollbar most people
+         never noticed). Now only the item list itself scrolls (bounded,
+         with a visible top/bottom border — same treatment as the item list
+         in the Bill Details modal, .bd-items-wrap), while Customer &
+         Payment, Total and Complete Bill always sit right below it in
+         normal page flow, so the whole page's own (obvious) scrollbar is
+         the only thing that ever moves them. The column still sticks to
+         the top of the viewport as you scroll the page. */
       #billingStepCheckout {
         position: sticky; top: calc(var(--topbar-h) + 20px);
-        max-height: calc(100vh - var(--topbar-h) - 40px); overflow-y: auto; padding-right: 2px;
+      }
+      #currentBillReviewCard #billItemsList {
+        max-height: 340px; overflow-y: auto;
+        border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
       }
       /* Mobile-only step-navigation chrome — not needed when both panes show at once */
       #billingSubnav, #itemsContinueBar, .back-to-items-link, #fabAddBtn { display: none !important; }
@@ -837,8 +852,10 @@
          that's now always visible in the right-hand cart column */
       #itemsAddedSoFarCard { display: none; }
 
-      /* Quick Add grid gets more breathing room in the wider left pane */
-      #tab-billing .quick-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+      /* Quick Add grid: slightly smaller, denser tiles so more fit per row
+         and the section reads as a tidy grid instead of a few oversized
+         buttons with a lot of empty padding around them. */
+      #tab-billing .quick-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 
       /* Inline "+ Add Item Manually" button replaces the mobile floating + */
       .desktop-manual-add-btn { display: block; margin-top: 12px; }
