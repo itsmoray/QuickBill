@@ -568,6 +568,53 @@
     .bsm-void-row .btn { margin-top: 0; width: 100%; }
     .bsm-done-btn { margin-top: 16px; }
 
+    /* ---------- BILL DETAIL MODAL (Bill History: view/edit/print/share any past bill) ----------
+       Reuses .bill-success-backdrop/.bill-success-modal for the same centered
+       popup feel, with its own inner layout for navigation + a scrollable item list. */
+    .bd-modal { max-width: 420px; }
+    .bd-close-btn {
+      position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%;
+      border: none; background: var(--bg); color: var(--muted); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .bd-nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
+    .bd-nav-btn {
+      width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--card);
+      font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      color: var(--text); transition: opacity 0.15s ease;
+    }
+    .bd-nav-btn:disabled { opacity: 0.35; cursor: default; }
+    .bd-nav-pos { font-size: 12.5px; color: var(--muted); font-weight: 600; text-align: center; flex: 1; }
+    .bd-billid { text-align: center; font-size: 12.5px; color: var(--muted); font-weight: 600; letter-spacing: 0.2px; }
+    .bd-status-pill { display: inline-block; margin-left: 6px; }
+    .bd-meta { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .bd-items-wrap { max-height: 220px; overflow-y: auto; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+    .bd-item-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 2px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+    .bd-item-row:last-child { border-bottom: none; }
+    .bd-item-row .bd-item-name { font-weight: 600; }
+    .bd-item-row .bd-item-meta { font-size: 11.5px; color: var(--muted); display: block; }
+    .bd-item-row .bd-item-amt { font-weight: 700; white-space: nowrap; }
+    .bd-totals { margin-bottom: 16px; }
+    .bd-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .bd-actions .btn { margin-top: 0; flex: 1; min-width: 100px; padding: 11px 6px; font-size: 12.5px; }
+    .bd-void-row { margin-top: 8px; }
+    .bd-void-row .btn { margin-top: 0; width: 100%; }
+    .bd-loading { text-align: center; padding: 30px 0; color: var(--muted); }
+
+    /* Print: only the receipt prints — everything else in the app is hidden. */
+    .print-only { display: none; }
+    @media print {
+      body * { visibility: hidden; }
+      #printReceiptArea, #printReceiptArea * { visibility: visible; }
+      #printReceiptArea { display: block !important; position: absolute; top: 0; left: 0; width: 100%; padding: 16px; }
+      #printReceiptArea .pr-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+      #printReceiptArea .pr-line { font-size: 13px; margin: 2px 0; }
+      #printReceiptArea .pr-sep { border-top: 1px dashed #000; margin: 8px 0; }
+      #printReceiptArea .pr-row { display: flex; justify-content: space-between; font-size: 13px; margin: 3px 0; }
+      #printReceiptArea .pr-item-meta { font-size: 11px; color: #444; }
+      #printReceiptArea .pr-total { font-weight: 800; font-size: 15px; }
+    }
+
     /* ---------- UPI SETTINGS (inside Settings panel, Manager only) ---------- */
     .upi-settings-note { font-size: 12px; color: var(--muted); margin: 2px 2px 12px; line-height: 1.5; }
     .upi-settings-savemsg { font-size: 12.5px; color: var(--green-dark); margin-top: 8px; min-height: 16px; }
@@ -594,6 +641,8 @@
     .bill-item-row .name { font-weight: 600; font-size: 14px; }
     .bill-item-row .meta { font-size: 12px; color: var(--muted); }
     .bill-item-row .amt { font-weight: 700; margin-right: 10px; }
+    .bill-item-row.clickable { cursor: pointer; }
+    .report-table tbody tr.clickable-row { cursor: pointer; }
     .del-btn { background: none; border: none; color: var(--red); font-size: 18px; cursor: pointer; }
 
     .empty-state { text-align: center; color: var(--muted); padding: 24px 8px; font-size: 14px; }
@@ -1267,7 +1316,7 @@
         </div>
         <div class="form-row">
           <div class="field-inline"><label data-i18n="stockOptional">Stock qty (optional — leave blank to not track)</label><input type="number" id="qiStock" min="0" step="1"></div>
-          <div class="field-inline"><label data-i18n="lowStockAt">Low-stock alert at</label><input type="number" id="qiLowStockThreshold" min="0" step="1"></div>
+          <div class="field-inline"><label data-i18n="lowStockAt">Low-stock alert at</label><input type="number" id="qiLowStockThreshold" min="0" step="1" value="5"></div>
         </div>
         <button class="btn secondary" id="qiSubmitBtn" onclick="submitQuickItemForm(this)" data-i18n="addQuickItemBtn">+ Add Quick Item</button>
         <button class="btn secondary hidden" id="qiCancelBtn" style="margin-top:8px" onclick="cancelQuickItemEdit()" data-i18n="cancelEdit">Cancel Edit</button>
@@ -1368,6 +1417,20 @@
       </div>
     </div>
 
+    <!-- Bill Detail modal: opened by tapping any bill row in the Day tab's
+         list or the Reports tab's daily bill table. Lets staff step through
+         every bill in that list with the ‹ › arrows, and view/edit/print/
+         share/void whichever one is showing. -->
+    <div class="bill-success-backdrop" id="billDetailBackdrop" onclick="if (event.target === this) closeBillDetailModal()">
+      <div class="bill-success-modal bd-modal" id="billDetailModal" style="position:relative">
+        <button type="button" class="bd-close-btn" onclick="closeBillDetailModal()" aria-label="Close">✕</button>
+        <div class="bsm-title" data-i18n="billDetails">Bill Details</div>
+        <div id="billDetailBody">
+          <div class="bd-loading" id="billDetailLoading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
     <div class="bottom-nav" id="bottomNav">
       <button class="nav-btn active" data-tab="billing" onclick="switchTab('billing')">
         <span class="icon-wrap"><span class="icon">🧾</span></span>
@@ -1427,6 +1490,7 @@ var I18N = {
     totalPayable: 'Total Payable', completeBill: 'Complete Bill', lastBill: 'Last Bill', shareBill: '📤 Share Bill',
     billCompleted: 'Bill Completed', done: '✓ Done',
     editThisBill: '✏️ Edit This Bill', voidThisBill: '🗑 Void This Bill', billId: 'Bill ID', customer: 'Customer',
+    billDetails: 'Bill Details', printBill: '🖨️ Print', billPositionLabel: '{i} of {n}', discount: 'Discount',
     items: 'Items', discountPercentPh: 'e.g. 10 for 10%',
     scanToPay: 'Scan to Pay via UPI', upiQrHint: "Customer scans this with any UPI app to pay",
     upiNotConfigured: 'UPI ID not set up yet. Ask a Manager to add it from Settings → Payment (UPI).',
@@ -1591,6 +1655,7 @@ var I18N = {
     totalPayable: 'അടയ്‌ക്കേണ്ട ആകെ തുക', completeBill: 'ബിൽ പൂർത്തിയാക്കുക', lastBill: 'അവസാന ബിൽ', shareBill: '📤 ബിൽ ഷെയർ ചെയ്യുക',
     billCompleted: 'ബിൽ പൂർത്തിയായി', done: '✓ ശരി',
     editThisBill: '✏️ ഈ ബിൽ എഡിറ്റ് ചെയ്യുക', voidThisBill: '🗑 ഈ ബിൽ റദ്ദാക്കുക', billId: 'ബിൽ ഐഡി', customer: 'കസ്റ്റമർ',
+    billDetails: 'ബിൽ വിവരങ്ങൾ', printBill: '🖨️ പ്രിന്റ് ചെയ്യുക', billPositionLabel: '{n}-ൽ {i}', discount: 'കിഴിവ്',
     items: 'ഇനങ്ങൾ', discountPercentPh: 'ഉദാ: 10% ആണെങ്കിൽ 10',
     scanToPay: 'UPI വഴി പണം നൽകാൻ സ്കാൻ ചെയ്യുക', upiQrHint: 'കസ്റ്റമർ ഏതെങ്കിലും UPI ആപ്പ് ഉപയോഗിച്ച് ഇത് സ്കാൻ ചെയ്ത് പണം നൽകാം',
     upiNotConfigured: 'UPI ഐഡി ഇതുവരെ സെറ്റ് ചെയ്തിട്ടില്ല. സെറ്റിംഗ്സ് → പേയ്‌മെന്റ് (UPI) എന്നതിൽ നിന്ന് ഒരു മാനേജർ ഇത് ചേർക്കാൻ ആവശ്യപ്പെടുക.',
@@ -1965,6 +2030,24 @@ var entryMode = 'piece';
 var creditType = 'Credit';
 var discountType = 'flat';
 var lastBill = null; // { billId, items, customerName, customerPhone, paymentMode, subtotal, discount, total }
+
+// ---------- BILL DETAIL MODAL STATE (Bill History: navigate/edit/print/share any past bill) ----------
+var _billDetailList = [];      // whichever bill-summary array is currently backing the modal (Day tab's today list, or a Reports date's list)
+var _billDetailIndex = 0;      // position of the bill currently shown, within _billDetailList
+var _billDetailContext = '';   // 'day' | 'report' — where the list came from, so Edit knows whether the day is open
+var _billDetailContextDate = ''; // yyyy-MM-dd the list belongs to
+var _currentDetailBill = null; // full bill (with items) for whichever bill is currently shown, from getBillDetails
+
+// Today's date as yyyy-MM-dd using the device's local date (matches what a
+// <input type="date"> shows/stores) — used to decide whether a bill is from
+// today (editable) or an earlier day (view/print/share/void only, since
+// saveBill() requires the day to be open, and only today is ever open).
+function todayDateInputStr_() {
+  var d = new Date();
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + mm + '-' + dd;
+}
 // Cached from the backend after login (see loadUpiSettings()). Used to build the
 // checkout QR without a round-trip on every keystroke/total change.
 var upiSettings = { upiId: '', payeeName: '' };
@@ -2820,12 +2903,13 @@ function loadTodayBillsForDay() {
       }
       var el = document.getElementById('dayBillsList');
       if (!el) return; // tab not in DOM yet on first load, harmless no-op
+      window._dayBillsCache = list; // backs the Bill Detail modal's ‹ › navigation
       if (list.length === 0) { el.innerHTML = '<div class="empty-state">' + tr('noBillsToday') + '</div>'; return; }
-      el.innerHTML = list.map(function (b) {
+      el.innerHTML = list.map(function (b, idx) {
         var statusClass = (b.status || '').toLowerCase().replace(' ', '');
         var pill = b.status === 'Void' ? ' <span class="pill ' + statusClass + '">' + trStatus(b.status) + '</span>' : '';
         var meta = b.time + ' • ' + b.staff + ' • ' + trPaymentMode(b.paymentMode);
-        return '<div class="bill-item-row"><div class="info"><div class="name">' + (b.customer || tr('walkInCustomer')) + pill + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + Number(b.total).toFixed(2) + '</div></div>';
+        return '<div class="bill-item-row clickable" onclick="openBillDetailModal(\'day\', ' + idx + ')"><div class="info"><div class="name">' + (b.customer || tr('walkInCustomer')) + pill + '</div><div class="meta">' + meta + '</div></div><div class="amt">₹' + Number(b.total).toFixed(2) + '</div></div>';
       }).join('');
     })
     .catch(function () {});
@@ -3308,22 +3392,23 @@ function renderLastBillCard() {
     '<div class="big-total"><div class="label">' + tr('total') + '</div><div class="amount">₹' + Number(lastBill.total).toFixed(2) + '</div></div>';
 }
 
-function buildReceiptText() {
-  if (!lastBill) return '';
+function buildReceiptText(bill) {
+  bill = bill || lastBill;
+  if (!bill) return '';
   var lines = [];
   lines.push('🧾 QuickBill Receipt');
-  lines.push('Bill: ' + lastBill.billId);
-  lines.push(tr('customer') + ': ' + (lastBill.customerName || tr('walkInCustomer')));
+  lines.push('Bill: ' + bill.billId);
+  lines.push(tr('customer') + ': ' + (bill.customerName || tr('walkInCustomer')));
   lines.push('--------------------------');
-  lastBill.items.forEach(function (it) {
+  bill.items.forEach(function (it) {
     var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
     lines.push(it.name + ' (' + qtyStr + ') = ₹' + Number(it.lineTotal).toFixed(2));
   });
   lines.push('--------------------------');
-  lines.push('Subtotal: ₹' + Number(lastBill.subtotal).toFixed(2));
-  if (Number(lastBill.discount) > 0) lines.push('Discount: -₹' + Number(lastBill.discount).toFixed(2));
-  lines.push('Total: ₹' + Number(lastBill.total).toFixed(2));
-  lines.push('Payment: ' + lastBill.paymentMode);
+  lines.push('Subtotal: ₹' + Number(bill.subtotal).toFixed(2));
+  if (Number(bill.discount) > 0) lines.push('Discount: -₹' + Number(bill.discount).toFixed(2));
+  lines.push('Total: ₹' + Number(bill.total).toFixed(2));
+  lines.push('Payment: ' + bill.paymentMode);
   lines.push('');
   lines.push('Thank you for shopping with us!');
   return lines.join('\n');
@@ -3347,18 +3432,20 @@ function loadJsPDF_() {
   return _jsPDFLoadPromise;
 }
 
-// Renders the last bill as a simple one-page PDF receipt and returns a Blob.
-function buildReceiptPDFBlob() {
-  if (!lastBill || !window.jspdf) return null;
-  var doc = new window.jspdf.jsPDF({ unit: 'pt', format: [280, 500 + lastBill.items.length * 16] });
+// Renders a bill (defaults to the last one completed) as a simple one-page
+// PDF receipt and returns a Blob.
+function buildReceiptPDFBlob(bill) {
+  bill = bill || lastBill;
+  if (!bill || !window.jspdf) return null;
+  var doc = new window.jspdf.jsPDF({ unit: 'pt', format: [280, 500 + bill.items.length * 16] });
   var x = 18, y = 28;
   doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
   doc.text('QuickBill Receipt', x, y); y += 20;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  doc.text('Bill: ' + lastBill.billId, x, y); y += 14;
-  doc.text(tr('customer') + ': ' + (lastBill.customerName || tr('walkInCustomer')), x, y); y += 10;
+  doc.text('Bill: ' + bill.billId, x, y); y += 14;
+  doc.text(tr('customer') + ': ' + (bill.customerName || tr('walkInCustomer')), x, y); y += 10;
   doc.setLineWidth(0.5); doc.line(x, y, 262, y); y += 16;
-  lastBill.items.forEach(function (it) {
+  bill.items.forEach(function (it) {
     var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
     doc.text(it.name, x, y);
     doc.text('₹' + Number(it.lineTotal).toFixed(2), 262, y, { align: 'right' });
@@ -3368,38 +3455,41 @@ function buildReceiptPDFBlob() {
     doc.setFontSize(10); doc.setTextColor(0);
   });
   doc.line(x, y, 262, y); y += 16;
-  doc.text('Subtotal', x, y); doc.text('₹' + Number(lastBill.subtotal).toFixed(2), 262, y, { align: 'right' }); y += 14;
-  if (Number(lastBill.discount) > 0) {
-    doc.text('Discount', x, y); doc.text('-₹' + Number(lastBill.discount).toFixed(2), 262, y, { align: 'right' }); y += 14;
+  doc.text('Subtotal', x, y); doc.text('₹' + Number(bill.subtotal).toFixed(2), 262, y, { align: 'right' }); y += 14;
+  if (Number(bill.discount) > 0) {
+    doc.text('Discount', x, y); doc.text('-₹' + Number(bill.discount).toFixed(2), 262, y, { align: 'right' }); y += 14;
   }
   doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-  doc.text('Total', x, y); doc.text('₹' + Number(lastBill.total).toFixed(2), 262, y, { align: 'right' }); y += 18;
+  doc.text('Total', x, y); doc.text('₹' + Number(bill.total).toFixed(2), 262, y, { align: 'right' }); y += 18;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-  doc.text('Payment: ' + lastBill.paymentMode, x, y); y += 20;
+  doc.text('Payment: ' + bill.paymentMode, x, y); y += 20;
   doc.setFontSize(9); doc.setTextColor(100);
   doc.text('Thank you for shopping with us!', x, y);
   return doc.output('blob');
 }
 
-function shareLastBillWhatsApp() {
-  if (!lastBill) return;
-  var btn = document.getElementById('shareBillBtn');
+// Shares any bill (PDF via native share sheet where supported, falling back
+// to a text WhatsApp message) — used both by the "Bill Completed" popup
+// (bill = lastBill) and the Bill Detail modal (bill = whichever past bill
+// is currently shown).
+function shareBillWhatsApp_(bill, btn) {
+  if (!bill) return;
   withLoading(btn, tr('preparingPDFLabel'), function () {
     return loadJsPDF_().catch(function () { /* fall through — buildReceiptPDFBlob() below returns null without window.jspdf, triggering the text-share fallback */ }).then(function () {
       return new Promise(function (resolve) {
         // Slight delay so the spinner actually shows even on very fast devices —
         // PDF generation itself can otherwise finish in the same tick.
         setTimeout(function () {
-          var blob = buildReceiptPDFBlob();
+          var blob = buildReceiptPDFBlob(bill);
           if (!blob) {
             showToast(tr('couldNotPreparePDF'));
-            var text = encodeURIComponent(buildReceiptText());
-            var phone = (lastBill.customerPhone || '').replace(/\D/g, '');
+            var text = encodeURIComponent(buildReceiptText(bill));
+            var phone = (bill.customerPhone || '').replace(/\D/g, '');
             window.open(phone ? ('https://wa.me/91' + phone + '?text=' + text) : ('https://wa.me/?text=' + text), '_blank');
             resolve();
             return;
           }
-          var filename = 'Receipt-' + lastBill.billId + '.pdf';
+          var filename = 'Receipt-' + bill.billId + '.pdf';
           var file = new File([blob], filename, { type: 'application/pdf' });
 
           // Web Share API (with file support) opens the phone's native share sheet —
@@ -3408,7 +3498,7 @@ function shareLastBillWhatsApp() {
             navigator.share({
               files: [file],
               title: 'QuickBill Receipt',
-              text: 'Receipt for Bill ' + lastBill.billId
+              text: 'Receipt for Bill ' + bill.billId
             }).catch(function (err) {
               if (err && err.name !== 'AbortError') showToast(tr('couldNotOpenShareMenu'));
             }).finally(resolve);
@@ -3421,7 +3511,7 @@ function shareLastBillWhatsApp() {
           document.body.appendChild(link); link.click(); link.remove();
           setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
           showToast(tr('pdfDownloadedAttach'));
-          var phone2 = (lastBill.customerPhone || '').replace(/\D/g, '');
+          var phone2 = (bill.customerPhone || '').replace(/\D/g, '');
           window.open(phone2 ? ('https://wa.me/91' + phone2) : 'https://wa.me/', '_blank');
           resolve();
         }
@@ -3430,6 +3520,37 @@ function shareLastBillWhatsApp() {
     });
   });
 }
+
+function shareLastBillWhatsApp() {
+  shareBillWhatsApp_(lastBill, document.getElementById('shareBillBtn'));
+}
+
+// Prints any bill (defaults to the last one completed) via the browser's
+// print dialog — only #printReceiptArea is visible while printing (see the
+// @media print rules), so it comes out as a clean, standalone receipt.
+function buildPrintReceiptHTML_(bill) {
+  var itemsHtml = bill.items.map(function (it) {
+    var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
+    return '<div class="pr-row"><span>' + it.name + '<span class="pr-item-meta"><br>' + qtyStr + '</span></span><span>₹' + Number(it.lineTotal).toFixed(2) + '</span></div>';
+  }).join('');
+  var discountHtml = Number(bill.discount) > 0
+    ? '<div class="pr-row"><span>' + tr('discount') + '</span><span>-₹' + Number(bill.discount).toFixed(2) + '</span></div>' : '';
+  return '<div class="pr-title">QuickBill Receipt</div>' +
+    '<div class="pr-line">' + tr('billId') + ': ' + bill.billId + '</div>' +
+    '<div class="pr-line">' + (bill.date ? bill.date + ' ' : '') + (bill.time || '') + '</div>' +
+    '<div class="pr-line">' + tr('customer') + ': ' + (bill.customerName || tr('walkInCustomer')) + '</div>' +
+    '<div class="pr-sep"></div>' + itemsHtml + '<div class="pr-sep"></div>' +
+    '<div class="pr-row"><span>' + tr('subtotal') + '</span><span>₹' + Number(bill.subtotal).toFixed(2) + '</span></div>' +
+    discountHtml +
+    '<div class="pr-row pr-total"><span>' + tr('total') + '</span><span>₹' + Number(bill.total).toFixed(2) + '</span></div>' +
+    '<div class="pr-line">' + trPaymentMode(bill.paymentMode) + '</div>';
+}
+function printBillReceipt_(bill) {
+  if (!bill) return;
+  document.getElementById('printReceiptArea').innerHTML = buildPrintReceiptHTML_(bill);
+  window.print();
+}
+function printLastBill() { printBillReceipt_(lastBill); }
 
 function editLastBill(btn) {
   if (!lastBill) return;
@@ -3443,6 +3564,8 @@ function editLastBill(btn) {
       document.getElementById('custPhone').value = lastBill.customerPhone || '';
       document.getElementById('paymentMode').value = lastBill.paymentMode || 'Cash';
       onPaymentModeChange();
+      setDiscountType('flat');
+      document.getElementById('discount').value = Number(lastBill.discount) || 0;
       renderBillItems();
       switchBillingStep('items');
       lastBill = null;
@@ -3466,6 +3589,125 @@ function voidLastBill(btn) {
         lastBill = null;
         renderLastBillCard();
         loadTodayBillsForDay();
+      } else showToast(trBackend(res.message));
+    })
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
+  });
+}
+
+// ---------- BILL DETAIL MODAL (Bill History: navigate/edit/print/share/void any past bill) ----------
+// Opened by tapping a bill row in the Day tab's list (context 'day', always
+// today) or the Reports tab's daily table (context 'report', whatever date
+// is selected there). _billDetailList is that same summary array — the ‹ ›
+// arrows just move the index and re-fetch full details, no extra list calls.
+function openBillDetailModal(context, index) {
+  _billDetailContext = context;
+  _billDetailList = context === 'day' ? (window._dayBillsCache || []) : (window._reportBillsCache || []);
+  _billDetailContextDate = context === 'day' ? todayDateInputStr_() : (window._reportBillsDate || '');
+  _billDetailIndex = index;
+  document.getElementById('billDetailBackdrop').classList.add('open');
+  renderBillDetailModal();
+}
+function closeBillDetailModal() {
+  document.getElementById('billDetailBackdrop').classList.remove('open');
+}
+function billDetailPrev() { // ‹ Older — steps to a higher index (lists are newest-first)
+  if (_billDetailIndex < _billDetailList.length - 1) { _billDetailIndex++; renderBillDetailModal(); }
+}
+function billDetailNext() { // Newer › — steps to a lower index
+  if (_billDetailIndex > 0) { _billDetailIndex--; renderBillDetailModal(); }
+}
+
+function renderBillDetailModal() {
+  var body = document.getElementById('billDetailBody');
+  var entry = _billDetailList[_billDetailIndex];
+  if (!entry) { closeBillDetailModal(); return; }
+  body.innerHTML = '<div class="bd-loading"><div class="spinner"></div></div>';
+  callAPI('getBillDetails', { token: session.token, billId: entry.billId })
+    .then(function (res) {
+      if (!res.success) { showToast(trBackend(res.message)); closeBillDetailModal(); return; }
+      var bill = res.bill;
+      _currentDetailBill = bill;
+      var isVoid = bill.status === 'Void';
+      var canEdit = !isVoid && _billDetailContext === 'day'; // only today's bills can be resaved after editing (saveBill requires an open day, and only today ever is)
+      var statusPill = isVoid ? ' <span class="pill void bd-status-pill">' + trStatus(bill.status) + '</span>' : '';
+      var itemsHtml = bill.items.map(function (it) {
+        var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
+        return '<div class="bd-item-row"><span class="bd-item-name">' + it.name + '<span class="bd-item-meta">' + qtyStr + '</span></span><span class="bd-item-amt">₹' + Number(it.lineTotal).toFixed(2) + '</span></div>';
+      }).join('');
+      var discountRow = Number(bill.discount) > 0
+        ? '<div class="stat-row"><span>' + tr('discount') + '</span><span class="val">-₹' + Number(bill.discount).toFixed(2) + '</span></div>' : '';
+      body.innerHTML =
+        '<div class="bd-nav-row">' +
+          '<button type="button" class="bd-nav-btn" onclick="billDetailPrev()" ' + (_billDetailIndex >= _billDetailList.length - 1 ? 'disabled' : '') + ' aria-label="Older">‹</button>' +
+          '<div class="bd-nav-pos">' + tr('billPositionLabel', { i: _billDetailIndex + 1, n: _billDetailList.length }) + '</div>' +
+          '<button type="button" class="bd-nav-btn" onclick="billDetailNext()" ' + (_billDetailIndex <= 0 ? 'disabled' : '') + ' aria-label="Newer">›</button>' +
+        '</div>' +
+        '<div class="bd-billid">' + tr('billId') + ': ' + bill.billId + statusPill + '</div>' +
+        '<div class="bd-meta">' + bill.date + ' • ' + bill.time + ' • ' + bill.staff + '</div>' +
+        '<div class="stat-row"><span>' + tr('customer') + '</span><span class="val">' + (bill.customerName || tr('walkInCustomer')) + '</span></div>' +
+        '<div class="stat-row"><span>' + tr('modeLabel') + '</span><span class="val">' + trPaymentMode(bill.paymentMode) + '</span></div>' +
+        '<div class="bd-items-wrap">' + itemsHtml + '</div>' +
+        '<div class="bd-totals">' +
+          '<div class="stat-row"><span>' + tr('subtotal') + '</span><span class="val">₹' + Number(bill.subtotal).toFixed(2) + '</span></div>' +
+          discountRow +
+          '<div class="big-total"><div class="label">' + tr('total') + '</div><div class="amount">₹' + Number(bill.total).toFixed(2) + '</div></div>' +
+        '</div>' +
+        '<div class="bd-actions">' +
+          '<button class="btn secondary" id="bdShareBtn" onclick="shareBillDetailWhatsApp(this)" data-i18n="shareBill">📤 Share Bill</button>' +
+          '<button class="btn secondary" onclick="printBillDetail()" data-i18n="printBill">🖨️ Print</button>' +
+          (canEdit ? '<button class="btn secondary" id="bdEditBtn" onclick="editBillFromDetail(this)" data-i18n="editThisBill">✏️ Edit This Bill</button>' : '') +
+        '</div>' +
+        (isVoid ? '' : '<div class="bd-void-row"><button class="btn danger" id="bdVoidBtn" onclick="voidBillFromDetail(this)" data-i18n="voidThisBill">🗑 Void This Bill</button></div>');
+    })
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') { showToast(tr('errorPrefix') + err.message); closeBillDetailModal(); } });
+}
+
+function shareBillDetailWhatsApp(btn) { shareBillWhatsApp_(_currentDetailBill, btn); }
+function printBillDetail() { printBillReceipt_(_currentDetailBill); }
+
+function editBillFromDetail(btn) {
+  var bill = _currentDetailBill;
+  if (!bill) return;
+  if (!confirm(tr('confirmEditLastBill'))) return;
+  withLoading(btn, tr('voidingLabel'), function () {
+  return callAPI('voidBill', { token: session.token, billId: bill.billId })
+    .then(function (res) {
+      if (!res.success) { showToast(trBackend(res.message)); return; }
+      currentBillItems = bill.items.map(function (it) {
+        return { name: it.name, qty: it.qty, weight: it.weight, unit: it.unit, price: Number(it.price), lineTotal: Number(it.lineTotal) };
+      });
+      document.getElementById('custName').value = bill.customerName || '';
+      document.getElementById('custPhone').value = bill.customerPhone || '';
+      document.getElementById('paymentMode').value = bill.paymentMode || 'Cash';
+      onPaymentModeChange();
+      setDiscountType('flat');
+      document.getElementById('discount').value = Number(bill.discount) || 0;
+      renderBillItems();
+      switchTab('billing');
+      switchBillingStep('items');
+      closeBillDetailModal();
+      showToast(tr('lastBillVoidedEdit'));
+      loadTodayBillsForDay();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    })
+    .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
+  });
+}
+
+function voidBillFromDetail(btn) {
+  var bill = _currentDetailBill;
+  if (!bill) return;
+  if (!confirm(tr('confirmVoidBill'))) return;
+  withLoading(btn, tr('voidingLabel'), function () {
+  return callAPI('voidBill', { token: session.token, billId: bill.billId })
+    .then(function (res) {
+      if (res.success) {
+        showToast(tr('billVoided'));
+        if (_billDetailList[_billDetailIndex]) _billDetailList[_billDetailIndex].status = 'Void';
+        renderBillDetailModal();
+        loadTodayBillsForDay();
+        if (_billDetailContext === 'report' && window._reportBillsDate) loadDailyReport();
       } else showToast(trBackend(res.message));
     })
     .catch(function (err) { if (err.message !== 'SESSION_EXPIRED') showToast(tr('errorPrefix') + err.message); });
@@ -3675,10 +3917,12 @@ function loadDailyReport(btn) {
               '<div style="background:var(--border);border-radius:6px;height:6px;overflow:hidden"><div style="background:var(--green);height:100%;width:' + pct + '%"></div></div></div>';
           }).join('') + '</div>';
       }
+      window._reportBillsCache = r.bills; // backs the Bill Detail modal's ‹ › navigation
+      window._reportBillsDate = date;
       if (r.bills.length > 0) {
         html += '<div class="report-table-wrap"><table class="report-table"><tr><th>' + tr('timeLabel') + '</th><th>' + tr('staffLabel') + '</th><th>' + tr('customer') + '</th><th>' + tr('modeLabel') + '</th><th>' + tr('totalLabel') + '</th></tr>' +
-          r.bills.map(function (b) {
-            return '<tr><td>' + b.time + '</td><td>' + b.staff + '</td><td>' + (b.customer || '-') + '</td><td>' + b.paymentMode + '</td><td>₹' + Number(b.total).toFixed(2) + '</td></tr>';
+          r.bills.map(function (b, idx) {
+            return '<tr class="clickable-row" onclick="openBillDetailModal(\'report\', ' + idx + ')"><td>' + b.time + '</td><td>' + b.staff + '</td><td>' + (b.customer || '-') + '</td><td>' + b.paymentMode + '</td><td>₹' + Number(b.total).toFixed(2) + '</td></tr>';
           }).join('') + '</table></div>';
       }
       el.innerHTML = html;
@@ -3884,7 +4128,7 @@ function cancelQuickItemEdit() {
   document.getElementById('qiPrice').value = '';
   document.getElementById('qiCategory').value = '';
   document.getElementById('qiStock').value = '';
-  document.getElementById('qiLowStockThreshold').value = '';
+  document.getElementById('qiLowStockThreshold').value = 5;
   document.getElementById('quickItemFormTitle').innerText = tr('addQuickItem');
   document.getElementById('qiSubmitBtn').innerText = tr('addQuickItemBtn');
   document.getElementById('qiCancelBtn').classList.add('hidden');
@@ -4145,5 +4389,8 @@ function positionTutorialStep() {
 }
 
   </script>
+  <!-- Populated just-in-time by printBillDetail() / printLastBill(); only this
+       prints (see the @media print rules), the rest of the app is hidden. -->
+  <div id="printReceiptArea" class="print-only"></div>
 </body>
 </html>
