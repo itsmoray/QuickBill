@@ -606,13 +606,22 @@
     @media print {
       body * { visibility: hidden; }
       #printReceiptArea, #printReceiptArea * { visibility: visible; }
-      #printReceiptArea { display: block !important; position: absolute; top: 0; left: 0; width: 100%; padding: 16px; }
-      #printReceiptArea .pr-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
-      #printReceiptArea .pr-line { font-size: 13px; margin: 2px 0; }
+      #printReceiptArea {
+        display: block !important; position: absolute; top: 0; left: 0; width: 320px; max-width: 100%;
+        margin: 0 auto; padding: 16px; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; color: #000;
+      }
+      #printReceiptArea .pr-logo { display: block; width: 44px; height: 44px; margin: 0 auto 8px; }
+      #printReceiptArea .pr-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; text-align: center; }
+      #printReceiptArea .pr-line { font-size: 12.5px; margin: 2px 0; }
       #printReceiptArea .pr-sep { border-top: 1px dashed #000; margin: 8px 0; }
-      #printReceiptArea .pr-row { display: flex; justify-content: space-between; font-size: 13px; margin: 3px 0; }
+      #printReceiptArea .pr-row {
+        display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+        font-size: 12.5px; margin: 4px 0;
+      }
+      #printReceiptArea .pr-row > span:first-child { flex: 1; word-break: break-word; }
+      #printReceiptArea .pr-row > span:last-child { white-space: nowrap; }
       #printReceiptArea .pr-item-meta { font-size: 11px; color: #444; }
-      #printReceiptArea .pr-total { font-weight: 800; font-size: 15px; }
+      #printReceiptArea .pr-total { font-weight: 800; font-size: 15px; border-top: 1px solid #000; padding-top: 6px; margin-top: 6px; }
     }
 
     /* ---------- UPI SETTINGS (inside Settings panel, Manager only) ---------- */
@@ -3414,6 +3423,39 @@ function buildReceiptText(bill) {
   return lines.join('\n');
 }
 
+// Preloaded once (non-blocking) so PDF/print receipts can embed the app logo
+// without making every share/print wait on an image fetch. If it hasn't
+// finished loading yet by the time someone shares or prints a bill, the
+// receipt still generates correctly — just without the logo that one time.
+var _logoDataUrl = null;
+// Promise version of the same preload so callers that are ABOUT to build a
+// receipt (print or PDF) can briefly await it instead of racing it — on a
+// slow first load the old fire-and-forget version could finish loading the
+// logo a moment too late, so the very first receipt of a session came out
+// with no logo even though every one after it had it.
+var _logoReadyPromise = new Promise(function (resolve) {
+  var img = new Image();
+  img.onload = function () {
+    try {
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      _logoDataUrl = canvas.toDataURL('image/png');
+    } catch (e) { /* canvas tainted or unsupported — receipts just won't have a logo */ }
+    resolve();
+  };
+  img.onerror = function () { resolve(); };
+  img.src = 'icon-192.png';
+});
+// Resolves as soon as the logo is ready, or after `ms` — whichever comes
+// first — so a slow/broken image load can never delay a receipt for long.
+function waitForLogo_(ms) {
+  return Promise.race([
+    _logoReadyPromise,
+    new Promise(function (resolve) { setTimeout(resolve, ms || 400); })
+  ]);
+}
+
 // Loads jsPDF from the CDN on first actual use instead of on every page load.
 // Resolves immediately (no re-fetch) once it's already been loaded once — the
 // service worker also caches the script itself after that first fetch, so
@@ -3434,34 +3476,54 @@ function loadJsPDF_() {
 
 // Renders a bill (defaults to the last one completed) as a simple one-page
 // PDF receipt and returns a Blob.
+//
+// IMPORTANT: never put the ₹ symbol (U+20B9) into doc.text() here. jsPDF's
+// built-in "helvetica" font only supports the WinAnsi character set, which
+// doesn't include ₹ — the symbol renders as a broken/superscript glyph AND
+// throws off the width calculation for every character after it on that
+// line (that's why amounts came out with weirdly spaced-out digits). "Rs."
+// is the safe, universally-supported stand-in for a generated PDF; the
+// in-app UI, the print receipt, and the WhatsApp text share all use real
+// system fonts and keep the ₹ symbol as normal.
 function buildReceiptPDFBlob(bill) {
   bill = bill || lastBill;
   if (!bill || !window.jspdf) return null;
-  var doc = new window.jspdf.jsPDF({ unit: 'pt', format: [280, 500 + bill.items.length * 16] });
-  var x = 18, y = 28;
+  var PAGE_W = 280;
+  var LOGO_SIZE = 34;
+  var doc = new window.jspdf.jsPDF({ unit: 'pt', format: [PAGE_W, 520 + bill.items.length * 16] });
+  var x = 18, y = 24, rightX = PAGE_W - 18, centerX = PAGE_W / 2;
+
+  if (_logoDataUrl) {
+    try {
+      doc.addImage(_logoDataUrl, 'PNG', (PAGE_W - LOGO_SIZE) / 2, y, LOGO_SIZE, LOGO_SIZE);
+      y += LOGO_SIZE + 8;
+    } catch (e) { /* non-critical — receipt still works without the logo */ }
+  }
   doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
-  doc.text('QuickBill Receipt', x, y); y += 20;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text('QuickBill Receipt', centerX, y, { align: 'center' }); y += 20;
+  doc.setDrawColor(22, 163, 74); doc.setLineWidth(1.2); doc.line(x, y, rightX, y); y += 14;
+
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(0);
   doc.text('Bill: ' + bill.billId, x, y); y += 14;
   doc.text(tr('customer') + ': ' + (bill.customerName || tr('walkInCustomer')), x, y); y += 10;
-  doc.setLineWidth(0.5); doc.line(x, y, 262, y); y += 16;
+  doc.setDrawColor(200); doc.setLineWidth(0.5); doc.line(x, y, rightX, y); y += 16;
   bill.items.forEach(function (it) {
-    var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
+    var qtyStr = it.qty ? (it.qty + ' x Rs.' + it.price) : (it.weight + ' @ Rs.' + it.price + '/kg');
     doc.text(it.name, x, y);
-    doc.text('₹' + Number(it.lineTotal).toFixed(2), 262, y, { align: 'right' });
+    doc.text('Rs.' + Number(it.lineTotal).toFixed(2), rightX, y, { align: 'right' });
     y += 12;
     doc.setFontSize(8); doc.setTextColor(120);
     doc.text(qtyStr, x, y); y += 14;
     doc.setFontSize(10); doc.setTextColor(0);
   });
-  doc.line(x, y, 262, y); y += 16;
-  doc.text('Subtotal', x, y); doc.text('₹' + Number(bill.subtotal).toFixed(2), 262, y, { align: 'right' }); y += 14;
+  doc.setDrawColor(200); doc.line(x, y, rightX, y); y += 16;
+  doc.text('Subtotal', x, y); doc.text('Rs.' + Number(bill.subtotal).toFixed(2), rightX, y, { align: 'right' }); y += 14;
   if (Number(bill.discount) > 0) {
-    doc.text('Discount', x, y); doc.text('-₹' + Number(bill.discount).toFixed(2), 262, y, { align: 'right' }); y += 14;
+    doc.text('Discount', x, y); doc.text('-Rs.' + Number(bill.discount).toFixed(2), rightX, y, { align: 'right' }); y += 14;
   }
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-  doc.text('Total', x, y); doc.text('₹' + Number(bill.total).toFixed(2), 262, y, { align: 'right' }); y += 18;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(22, 163, 74);
+  doc.text('Total', x, y); doc.text('Rs.' + Number(bill.total).toFixed(2), rightX, y, { align: 'right' }); y += 18;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0);
   doc.text('Payment: ' + bill.paymentMode, x, y); y += 20;
   doc.setFontSize(9); doc.setTextColor(100);
   doc.text('Thank you for shopping with us!', x, y);
@@ -3476,6 +3538,8 @@ function shareBillWhatsApp_(bill, btn) {
   if (!bill) return;
   withLoading(btn, tr('preparingPDFLabel'), function () {
     return loadJsPDF_().catch(function () { /* fall through — buildReceiptPDFBlob() below returns null without window.jspdf, triggering the text-share fallback */ }).then(function () {
+      return waitForLogo_(400);
+    }).then(function () {
       return new Promise(function (resolve) {
         // Slight delay so the spinner actually shows even on very fast devices —
         // PDF generation itself can otherwise finish in the same tick.
@@ -3528,27 +3592,41 @@ function shareLastBillWhatsApp() {
 // Prints any bill (defaults to the last one completed) via the browser's
 // print dialog — only #printReceiptArea is visible while printing (see the
 // @media print rules), so it comes out as a clean, standalone receipt.
+// IMPORTANT: same rule as buildReceiptPDFBlob() above — never put the ₹
+// symbol (U+20B9) here either. On screen, in the app's own UI, ₹ renders
+// fine because the browser uses whatever full-Unicode system font it
+// normally uses for text. But "Print" hands this HTML off to the device's
+// print engine / "Save as PDF" pipeline, which on a lot of Android phones
+// substitutes a restricted font that doesn't have the ₹ glyph — same
+// broken-glyph-plus-stretched-spacing failure as the PDF export used to
+// have. "Rs." is the safe stand-in here too.
 function buildPrintReceiptHTML_(bill) {
   var itemsHtml = bill.items.map(function (it) {
-    var qtyStr = it.qty ? (it.qty + ' x ₹' + it.price) : (it.weight + ' @ ₹' + it.price + '/kg');
-    return '<div class="pr-row"><span>' + it.name + '<span class="pr-item-meta"><br>' + qtyStr + '</span></span><span>₹' + Number(it.lineTotal).toFixed(2) + '</span></div>';
+    var qtyStr = it.qty ? (it.qty + ' x Rs.' + it.price) : (it.weight + ' @ Rs.' + it.price + '/kg');
+    return '<div class="pr-row"><span>' + it.name + '<span class="pr-item-meta"><br>' + qtyStr + '</span></span><span>Rs.' + Number(it.lineTotal).toFixed(2) + '</span></div>';
   }).join('');
   var discountHtml = Number(bill.discount) > 0
-    ? '<div class="pr-row"><span>' + tr('discount') + '</span><span>-₹' + Number(bill.discount).toFixed(2) + '</span></div>' : '';
-  return '<div class="pr-title">QuickBill Receipt</div>' +
+    ? '<div class="pr-row"><span>' + tr('discount') + '</span><span>-Rs.' + Number(bill.discount).toFixed(2) + '</span></div>' : '';
+  var logoHtml = _logoDataUrl ? '<img class="pr-logo" src="' + _logoDataUrl + '" alt="QuickBill">' : '';
+  return logoHtml + '<div class="pr-title">QuickBill Receipt</div>' +
     '<div class="pr-line">' + tr('billId') + ': ' + bill.billId + '</div>' +
     '<div class="pr-line">' + (bill.date ? bill.date + ' ' : '') + (bill.time || '') + '</div>' +
     '<div class="pr-line">' + tr('customer') + ': ' + (bill.customerName || tr('walkInCustomer')) + '</div>' +
     '<div class="pr-sep"></div>' + itemsHtml + '<div class="pr-sep"></div>' +
-    '<div class="pr-row"><span>' + tr('subtotal') + '</span><span>₹' + Number(bill.subtotal).toFixed(2) + '</span></div>' +
+    '<div class="pr-row"><span>' + tr('subtotal') + '</span><span>Rs.' + Number(bill.subtotal).toFixed(2) + '</span></div>' +
     discountHtml +
-    '<div class="pr-row pr-total"><span>' + tr('total') + '</span><span>₹' + Number(bill.total).toFixed(2) + '</span></div>' +
+    '<div class="pr-row pr-total"><span>' + tr('total') + '</span><span>Rs.' + Number(bill.total).toFixed(2) + '</span></div>' +
     '<div class="pr-line">' + trPaymentMode(bill.paymentMode) + '</div>';
 }
 function printBillReceipt_(bill) {
   if (!bill) return;
-  document.getElementById('printReceiptArea').innerHTML = buildPrintReceiptHTML_(bill);
-  window.print();
+  // Wait (briefly) for the logo so the very first print/PDF of a session
+  // doesn't come out logo-less just because the image hadn't finished
+  // loading yet.
+  waitForLogo_(400).then(function () {
+    document.getElementById('printReceiptArea').innerHTML = buildPrintReceiptHTML_(bill);
+    window.print();
+  });
 }
 function printLastBill() { printBillReceipt_(lastBill); }
 
