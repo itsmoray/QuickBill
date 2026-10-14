@@ -61,7 +61,7 @@
     }
     [data-theme="dark"] .login-card { background: var(--card); }
     [data-theme="dark"] .day-badge.open { background: var(--card); }
-    [data-theme="dark"] .tutorial-spotlight { --tour-ring: var(--card); }
+    [data-theme="dark"] .tutorial-ring { --tour-ring: var(--card); }
     [data-theme="dark"] .btn.secondary { background: var(--bg); color: var(--green-dark); border-color: var(--green-dark); }
     * { box-sizing: border-box; }
     /* Disables the elastic "rubber-band" bounce Safari/WebKit shows when you
@@ -809,18 +809,27 @@
        under the spotlight; the tour scrolls the page itself. */
     .tutorial-overlay { position: fixed; inset: 0; z-index: 300; touch-action: none; overscroll-behavior: contain; }
     .tutorial-overlay.hidden { display: none; }
+    /* Two boxes over the target: the dim layer has square corners (a rounded one leaves the far screen corners
+       undimmed, because the huge shadow inherits the radius), and the ring on top has the rounded, glowing outline. */
     .tutorial-spotlight {
-      --tour-ring: #fff; --tour-dim: rgba(15, 23, 42, 0.62);
+      --tour-dim: rgba(15, 23, 42, 0.62);
+      position: fixed; left: 0; top: 0; width: 0; height: 0; border-radius: 0; pointer-events: none;
+      box-shadow: 0 0 0 100vmax var(--tour-dim);
+      transition: left 0.45s cubic-bezier(.2,.8,.2,1), top 0.45s cubic-bezier(.2,.8,.2,1),
+                  width 0.45s cubic-bezier(.2,.8,.2,1), height 0.45s cubic-bezier(.2,.8,.2,1);
+    }
+    .tutorial-ring {
+      --tour-ring: #fff;
       position: fixed; left: 0; top: 0; width: 0; height: 0; border-radius: 16px; pointer-events: none;
-      box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px 6px rgba(22,163,74,0.45), 0 0 0 100vmax var(--tour-dim);
+      box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px 6px rgba(22,163,74,0.45);
       transition: left 0.45s cubic-bezier(.2,.8,.2,1), top 0.45s cubic-bezier(.2,.8,.2,1),
                   width 0.45s cubic-bezier(.2,.8,.2,1), height 0.45s cubic-bezier(.2,.8,.2,1), border-radius 0.3s ease;
       animation: tutorial-pulse 1.6s ease-in-out infinite;
     }
-    .tutorial-spotlight.no-target { box-shadow: 0 0 0 100vmax var(--tour-dim); animation: none; border-radius: 0; }
+    .tutorial-ring.no-target { display: none; }
     @keyframes tutorial-pulse {
-      0%, 100% { box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px 6px rgba(22,163,74,0.45), 0 0 0 100vmax var(--tour-dim); }
-      50% { box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 10px rgba(22,163,74,0.28), 0 0 32px 8px rgba(22,163,74,0.30), 0 0 0 100vmax var(--tour-dim); }
+      0%, 100% { box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px 6px rgba(22,163,74,0.45); }
+      50% { box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 10px rgba(22,163,74,0.28), 0 0 32px 8px rgba(22,163,74,0.30); }
     }
     /* The Review & Pay bar is hidden while the bill is empty — show it during the tour so the step has something to point at */
     @media (max-width: 899.98px) { body.tour-on #itemsContinueBar.hidden { display: flex !important; } }
@@ -4892,7 +4901,8 @@ function ensureTutorialOverlay() {
   var overlay = document.createElement('div');
   overlay.className = 'tutorial-overlay hidden';
   overlay.innerHTML =
-    '<div class="tutorial-spotlight no-target" id="tutorialSpotlight"></div>' +
+    '<div class="tutorial-spotlight" id="tutorialSpotlight"></div>' +
+    '<div class="tutorial-ring no-target" id="tutorialRing"></div>' +
     '<div class="tutorial-bubble" id="tutorialBubble" role="dialog" aria-live="polite" style="opacity:0">' +
       '<div class="tutorial-bubble-arrow" id="tutorialArrow"></div>' +
       '<div class="tutorial-bubble-body">' +
@@ -5096,6 +5106,7 @@ function positionTutorialStep(allowScroll) {
   var bubble = document.getElementById('tutorialBubble');
   var arrow = document.getElementById('tutorialArrow');
   var spot = document.getElementById('tutorialSpotlight');
+  var ring = document.getElementById('tutorialRing');
   var vw = tutorialOverlayEl.clientWidth, vh = tutorialOverlayEl.clientHeight;
   var edge = 12, gap = 14, pad = 8;
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -5104,7 +5115,7 @@ function positionTutorialStep(allowScroll) {
   bubble.style.width = bw + 'px';
   var bh = bubble.offsetHeight;
 
-  if (tutorialFirstPlacement) { bubble.style.transition = 'none'; spot.style.transition = 'none'; }
+  if (tutorialFirstPlacement) { bubble.style.transition = 'none'; spot.style.transition = 'none'; ring.style.transition = 'none'; }
 
   var target = resolveTutorialTarget(step);
   var rect = target ? target.getBoundingClientRect() : null;
@@ -5137,12 +5148,14 @@ function positionTutorialStep(allowScroll) {
     var sTop = Math.max(0, rect.top - pad), sLeft = Math.max(0, rect.left - pad);
     var sRight = Math.min(vw, rect.right + pad), sBottom = Math.min(vh, rect.bottom + pad);
     var br = parseFloat(window.getComputedStyle(target).borderTopLeftRadius) || 0;
-    spot.className = 'tutorial-spotlight';
-    spot.style.left = sLeft + 'px';
-    spot.style.top = sTop + 'px';
-    spot.style.width = Math.max(0, sRight - sLeft) + 'px';
-    spot.style.height = Math.max(0, sBottom - sTop) + 'px';
-    spot.style.borderRadius = Math.min(br + pad, (sRight - sLeft) / 2, (sBottom - sTop) / 2) + 'px';
+    ring.className = 'tutorial-ring';
+    [spot, ring].forEach(function (el) {
+      el.style.left = sLeft + 'px';
+      el.style.top = sTop + 'px';
+      el.style.width = Math.max(0, sRight - sLeft) + 'px';
+      el.style.height = Math.max(0, sBottom - sTop) + 'px';
+    });
+    ring.style.borderRadius = Math.min(br + pad, (sRight - sLeft) / 2, (sBottom - sTop) / 2) + 'px';
 
     place = pickTutorialPlacement(sTop, sLeft, sRight, sBottom, vw, vh, bw, bh, edge, gap);
     var cx = (sLeft + sRight) / 2, cy = (sTop + sBottom) / 2;
@@ -5171,7 +5184,7 @@ function positionTutorialStep(allowScroll) {
     }
   } else {
     // No target: dim everything, no cutout, bubble in the middle.
-    spot.className = 'tutorial-spotlight no-target';
+    ring.className = 'tutorial-ring no-target';
     spot.style.left = (vw / 2) + 'px';
     spot.style.top = (vh / 2) + 'px';
     spot.style.width = '0px';
@@ -5188,6 +5201,7 @@ function positionTutorialStep(allowScroll) {
     void bubble.offsetWidth; // commit the un-animated position before animations are switched back on
     bubble.style.transition = '';
     spot.style.transition = '';
+    ring.style.transition = '';
     tutorialFirstPlacement = false;
   }
 }
