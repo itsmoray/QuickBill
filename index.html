@@ -4881,6 +4881,26 @@ var tutorialObserver = null;     // re-positions the spotlight if the target res
 var tutorialObservedEl = null;
 var tutorialRaf = 0;
 var tutorialResizeTimer = null;
+var tutorialReady = false;       // true once the current step has been positioned (tab animation finished)
+var tutorialPollTimer = null;
+var tutorialLastSig = '';
+
+// Fingerprint of where the target is on screen. Content that loads in after the
+// step was positioned (sales chart, day status, ledger…) pushes the target around
+// without resizing it, so the tour re-checks this a few times a second.
+function tutorialSig(el, vw, vh) {
+  var r = el ? el.getBoundingClientRect() : null;
+  var pos = (r && r.width >= 2 && r.height >= 2) ? [r.left, r.top, r.width, r.height].map(Math.round).join(',') : 'none';
+  return pos + '|' + vw + 'x' + vh;
+}
+
+function pollTutorialTarget() {
+  if (!tutorialActive || !tutorialReady || !tutorialOverlayEl) return;
+  var step = tutorialSteps[tutorialStep];
+  if (!step) return;
+  var sig = tutorialSig(resolveTutorialTarget(step), tutorialOverlayEl.clientWidth, tutorialOverlayEl.clientHeight);
+  if (sig !== tutorialLastSig) positionTutorialStep(true);
+}
 
 function isDesktopLayout() {
   return window.matchMedia('(min-width: 900px)').matches;
@@ -4978,6 +4998,9 @@ function startTutorial() {
   tutorialActive = true;
   tutorialStep = 0;
   tutorialFirstPlacement = true;
+  tutorialReady = false;
+  clearInterval(tutorialPollTimer);
+  tutorialPollTimer = setInterval(pollTutorialTarget, 200);
   if (typeof closeManualAddCardInstant === 'function') closeManualAddCardInstant();
   document.body.classList.add('tour-on');
   tutorialOverlayEl.classList.remove('hidden');
@@ -4992,6 +5015,8 @@ function endTutorial(skipRestore) {
   var wasActive = tutorialActive;
   tutorialActive = false;
   tutorialToken++;
+  tutorialReady = false;
+  clearInterval(tutorialPollTimer);
   clearTutorialTimers();
   cancelAnimationFrame(tutorialRaf);
   if (tutorialObserver) { tutorialObserver.disconnect(); }
@@ -5032,6 +5057,7 @@ function showTutorialStep(i) {
   var token = ++tutorialToken;
   clearTutorialTimers();
 
+  tutorialReady = false;
   var bubble = document.getElementById('tutorialBubble');
   bubble.style.opacity = '0';
   renderTutorialText();
@@ -5046,6 +5072,7 @@ function showTutorialStep(i) {
   tutorialTimers.push(setTimeout(function () {
     if (token !== tutorialToken) return;
     positionTutorialStep(true);
+    tutorialReady = true;
     bubble.style.opacity = '1';
     var nextBtn = document.getElementById('tutorialNextBtn');
     if (nextBtn && nextBtn.focus) { try { nextBtn.focus({ preventScroll: true }); } catch (e) { nextBtn.focus(); } }
@@ -5196,6 +5223,7 @@ function positionTutorialStep(allowScroll) {
 
   bubble.style.left = left + 'px';
   bubble.style.top = top + 'px';
+  tutorialLastSig = tutorialSig(target, vw, vh);
 
   if (tutorialFirstPlacement) {
     void bubble.offsetWidth; // commit the un-animated position before animations are switched back on
