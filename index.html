@@ -61,7 +61,7 @@
     }
     [data-theme="dark"] .login-card { background: var(--card); }
     [data-theme="dark"] .day-badge.open { background: var(--card); }
-    [data-theme="dark"] .tutorial-target-highlight { outline-color: var(--card); }
+    [data-theme="dark"] .tutorial-spotlight { --tour-ring: var(--card); }
     [data-theme="dark"] .btn.secondary { background: var(--bg); color: var(--green-dark); border-color: var(--green-dark); }
     * { box-sizing: border-box; }
     /* Disables the elastic "rubber-band" bounce Safari/WebKit shows when you
@@ -424,6 +424,10 @@
     }
     .fab-cart-btn.hidden { display: none !important; }
     .fab-cart-btn:active { transform: scale(0.92); }
+    /* Once the bill has items the sticky Review & Pay bar appears at bottom:98px and the + button used to sit right on
+       top of its button. Lift the + above the bar while the bar is showing (also during the tutorial, which shows the bar). */
+    .fab-cart-btn { transition: transform 0.15s ease, bottom 0.2s ease; }
+    .fab-cart-btn.above-bar, body.tour-on .fab-cart-btn { bottom: 176px; }
 
     .cart-sheet-backdrop {
       position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 39;
@@ -794,36 +798,54 @@
     .tag-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; text-align: center; cursor: pointer; font-weight: 600; font-size: 14px; }
     .tag-btn.selected { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
 
-    /* ---------- TUTORIAL WALKTHROUGH ---------- */
-    .tutorial-overlay { position: fixed; inset: 0; z-index: 300; }
+    /* ---------- TUTORIAL WALKTHROUGH ----------
+       The tour never touches the real page elements any more. A single
+       "spotlight" box is drawn over the target's measured rectangle: its
+       huge outer box-shadow is the dimmed backdrop, its inner shadows are
+       the glowing ring. (The old approach forced position:relative onto the
+       target, which yanked fixed/sticky things like the nav bar, the + button
+       and the Review & Pay bar out of place while they were highlighted.)
+       The overlay itself swallows taps and scrolling, so the page cannot move
+       under the spotlight; the tour scrolls the page itself. */
+    .tutorial-overlay { position: fixed; inset: 0; z-index: 300; touch-action: none; overscroll-behavior: contain; }
     .tutorial-overlay.hidden { display: none; }
-    .tutorial-mask { position: fixed; background: rgba(15, 23, 42, 0.62); transition: all 0.5s cubic-bezier(.2,.8,.2,1); }
-    .tutorial-target-highlight {
-      position: relative !important; z-index: 301 !important;
-      outline: 3px solid #fff; outline-offset: 3px; border-radius: 16px;
-      box-shadow: 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px rgba(22,163,74,0.5);
+    .tutorial-spotlight {
+      --tour-ring: #fff; --tour-dim: rgba(15, 23, 42, 0.62);
+      position: fixed; left: 0; top: 0; width: 0; height: 0; border-radius: 16px; pointer-events: none;
+      box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px 6px rgba(22,163,74,0.45), 0 0 0 100vmax var(--tour-dim);
+      transition: left 0.45s cubic-bezier(.2,.8,.2,1), top 0.45s cubic-bezier(.2,.8,.2,1),
+                  width 0.45s cubic-bezier(.2,.8,.2,1), height 0.45s cubic-bezier(.2,.8,.2,1), border-radius 0.3s ease;
       animation: tutorial-pulse 1.6s ease-in-out infinite;
-      transition: box-shadow 0.5s ease;
     }
+    .tutorial-spotlight.no-target { box-shadow: 0 0 0 100vmax var(--tour-dim); animation: none; border-radius: 0; }
     @keyframes tutorial-pulse {
-      0%, 100% { box-shadow: 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px rgba(22,163,74,0.5); }
-      50% { box-shadow: 0 0 0 10px rgba(22,163,74,0.28), 0 0 32px rgba(22,163,74,0.35); }
+      0%, 100% { box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 6px rgba(22,163,74,0.55), 0 0 26px 6px rgba(22,163,74,0.45), 0 0 0 100vmax var(--tour-dim); }
+      50% { box-shadow: 0 0 0 3px var(--tour-ring), 0 0 0 10px rgba(22,163,74,0.28), 0 0 32px 8px rgba(22,163,74,0.30), 0 0 0 100vmax var(--tour-dim); }
     }
+    /* The Review & Pay bar is hidden while the bill is empty — show it during the tour so the step has something to point at */
+    @media (max-width: 899.98px) { body.tour-on #itemsContinueBar.hidden { display: flex !important; } }
+    /* Extra scroll room while the tour runs, so any card (even one at the very bottom of a page) can be scrolled up
+       far enough to leave space for the bubble. Removed again when the tour ends. */
+    body.tour-on #appScreen { padding-bottom: 75vh !important; }
     .tutorial-bubble {
-      position: fixed; z-index: 302; background: var(--card); border-radius: 16px; padding: 16px 18px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.3); max-width: 320px;
-      transition: top 0.5s cubic-bezier(.2,.8,.2,1), left 0.5s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
+      position: fixed; left: 0; top: 0; z-index: 302; background: var(--card); border-radius: 16px; padding: 16px 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3); max-width: 360px;
+      transition: top 0.45s cubic-bezier(.2,.8,.2,1), left 0.45s cubic-bezier(.2,.8,.2,1), opacity 0.3s ease;
     }
+    /* only the text/buttons scroll if the screen is very short — the arrow sits outside this wrapper so it is never clipped */
+    .tutorial-bubble-body { max-height: calc(100vh - 56px); overflow-y: auto; }
     .tutorial-bubble-arrow { position: absolute; width: 16px; height: 16px; background: var(--card); transform: rotate(45deg); }
     .tutorial-bubble-arrow.arrow-up { top: -8px; }
     .tutorial-bubble-arrow.arrow-down { bottom: -8px; }
+    .tutorial-bubble-arrow.arrow-left { left: -8px; }
+    .tutorial-bubble-arrow.arrow-right { right: -8px; }
     .tutorial-step-count { font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .tutorial-bubble h4 { margin: 0 0 6px; font-size: 16px; }
     .tutorial-bubble p { margin: 0 0 14px; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
-    .tutorial-controls { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .tutorial-skip { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; text-decoration: underline; padding: 4px; white-space: nowrap; }
-    .tutorial-nav-btns { display: flex; gap: 8px; }
-    .tutorial-btn-secondary, .tutorial-btn-primary { border: none; border-radius: 10px; padding: 9px 16px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+    .tutorial-controls { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .tutorial-skip { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; text-decoration: underline; padding: 8px 4px; white-space: nowrap; }
+    .tutorial-nav-btns { display: flex; gap: 8px; margin-left: auto; }
+    .tutorial-btn-secondary, .tutorial-btn-primary { border: none; border-radius: 10px; padding: 10px 16px; min-height: 40px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
     .tutorial-btn-secondary { background: var(--bg); color: var(--text); }
     .tutorial-btn-primary { background: var(--green); color: #fff; }
 
@@ -1749,6 +1771,8 @@ var I18N = {
     tut13t: 'Outstanding Balances', tut13x: "See every customer's current balance at a glance.",
     tut14t: 'Daily Report', tut14x: 'Pick any date to see total sales, expenses and every bill from that day — download it as Excel too.',
     tut15t: 'Monthly Report', tut15x: "Get a full month's sales, expenses and net profit in one view.",
+    tut16t: 'Manage Staff (Admin)', tut16x: 'As a Manager, add staff logins here and control who can access QuickBill.',
+    tut17t: 'Manage Quick Items (Inventory)', tut17x: "Add, edit or mark items low-stock — they'll show up in the Quick Add grid for everyone.",
 
     // Backend (Apps Script) error messages — matched verbatim against res.message
     // by trBackend() below and swapped for the localized text at display time.
@@ -1918,6 +1942,8 @@ var I18N = {
     tut13t: 'ബാക്കിയുള്ള ബാലൻസുകൾ', tut13x: 'ഓരോ കസ്റ്റമറുടെയും നിലവിലെ ബാലൻസ് ഒറ്റനോട്ടത്തിൽ കാണുക.',
     tut14t: 'ദിവസ റിപ്പോർട്ട്', tut14x: 'ഏതെങ്കിലും തീയതി തിരഞ്ഞെടുത്ത് ആ ദിവസത്തെ ആകെ വിൽപ്പന, ചെലവ്, എല്ലാ ബില്ലുകളും കാണുക — എക്സൽ ആയി ഡൗൺലോഡ് ചെയ്യാനും കഴിയും.',
     tut15t: 'മാസ റിപ്പോർട്ട്', tut15x: 'ഒരു മുഴുവൻ മാസത്തെ വിൽപ്പന, ചെലവ്, അറ്റാദായം ഒറ്റ കാഴ്ചയിൽ കാണുക.',
+    tut16t: 'സ്റ്റാഫിനെ നിയന്ത്രിക്കുക (അഡ്മിൻ)', tut16x: 'മാനേജർ എന്ന നിലയിൽ, ഇവിടെ സ്റ്റാഫ് ലോഗിനുകൾ ചേർക്കുകയും QuickBill ആർക്കൊക്കെ ഉപയോഗിക്കാമെന്ന് നിയന്ത്രിക്കുകയും ചെയ്യുക.',
+    tut17t: 'ക്വിക്ക് ഇനങ്ങൾ നിയന്ത്രിക്കുക (ഇൻവെന്ററി)', tut17x: 'ഇനങ്ങൾ ചേർക്കുക, എഡിറ്റ് ചെയ്യുക, അല്ലെങ്കിൽ സ്റ്റോക്ക് കുറവെന്ന് അടയാളപ്പെടുത്തുക — അവ എല്ലാവർക്കും ക്വിക്ക് ആഡ് ഗ്രിഡിൽ കാണാം.',
 
     beInvalidLogin: 'ഉപയോക്തൃനാമമോ പാസ്‌വേഡോ തെറ്റാണ്.',
     beItemNameRequired: 'ഇനത്തിന്റെ പേര് ആവശ്യമാണ്.',
@@ -2577,7 +2603,7 @@ function doLogout() {
   if (session.token) callAPI('logout', { token: session.token }).catch(function () {});
   localStorage.removeItem('grocerySession');
   session = { token: null, role: null, fullName: null };
-  endTutorial();
+  endTutorial(true);
   hideLockScreen_(); // in case the device was mid-lock — a real logout always wins
   document.getElementById('appScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
@@ -3006,7 +3032,6 @@ function updateUpiQr() {
 
 // ---------- TABS ----------
 function switchTab(tab) {
-  var current = document.querySelector('.tab-content:not(.hidden)');
   var next = document.getElementById('tab-' + tab);
   closeHamburgerMenu();
 
@@ -3021,12 +3046,19 @@ function switchTab(tab) {
   var menuBtn = document.querySelector('.menu-item[data-tab="' + tab + '"]');
   if (menuBtn) menuBtn.classList.add('active');
 
-  if (current === next) { runTabLoaders(tab); return; }
-
-  if (current) {
-    current.classList.add('tab-leaving');
-    setTimeout(function () { current.classList.add('hidden'); current.classList.remove('tab-leaving'); }, 240);
-  }
+  // Every visible panel other than the target fades out — not just the first
+  // one found. With quick successive switches (tapping through tabs fast, or
+  // the tutorial's Next button) an earlier panel can still be mid-fade, and
+  // only hiding "the first visible one" left two tabs on screen at once.
+  var visible = Array.prototype.slice.call(document.querySelectorAll('.tab-content:not(.hidden)'));
+  if (next._hideTimer) { clearTimeout(next._hideTimer); next._hideTimer = null; next.classList.remove('tab-leaving'); }
+  visible.forEach(function (t) {
+    if (t === next) return;
+    if (t._hideTimer) clearTimeout(t._hideTimer);
+    t.classList.add('tab-leaving');
+    t._hideTimer = setTimeout(function () { t.classList.add('hidden'); t.classList.remove('tab-leaving'); t._hideTimer = null; }, 240);
+  });
+  if (visible.indexOf(next) !== -1) { runTabLoaders(tab); return; }
   next.classList.remove('hidden');
   next.classList.add('tab-entering');
   // force reflow so the transition actually plays
@@ -3805,6 +3837,8 @@ function updateTotals() {
   document.getElementById('itemsContinueCount').innerText = trCount(count);
   document.getElementById('itemsContinueTotal').innerText = '₹' + rawSubtotal.toFixed(2);
   document.getElementById('itemsContinueBar').classList.toggle('hidden', count === 0);
+  var fabEl = document.getElementById('fabAddBtn');
+  if (fabEl) fabEl.classList.toggle('above-bar', count > 0);
   var badge = document.getElementById('billingItemCountBadge');
   badge.innerText = count;
   badge.classList.toggle('hidden', count === 0);
@@ -4802,12 +4836,16 @@ function deleteQI(btn, name) {
 // ---------- TUTORIAL WALKTHROUGH ----------
 // Interactive guided tour: dims the screen, spotlights one
 // section at a time, and shows a speech-bubble explanation.
+// The spotlight is a separate box drawn over the target's measured
+// rectangle (see the CSS) — the real page elements are never modified.
 // ======================================================
+// `only: 'mobile' | 'desktop'` limits a step to one layout. `target` may be a
+// selector, or { mobile, desktop } selectors when the control differs per layout.
 var tutorialBaseSteps = [
   { tab: 'billing', billingStep: 'items', target: '#quickItemsCard', titleKey: 'tut1t', textKey: 'tut1x' },
-  { tab: 'billing', billingStep: 'items', target: '#manualAddCard', titleKey: 'tut2t', textKey: 'tut2x' },
-  { tab: 'billing', billingStep: 'items', target: '#itemsAddedSoFarCard', titleKey: 'tut3t', textKey: 'tut3x' },
-  { tab: 'billing', billingStep: 'items', target: '#itemsContinueBar', titleKey: 'tut4t', textKey: 'tut4x' },
+  { tab: 'billing', billingStep: 'items', target: { mobile: '#fabAddBtn', desktop: '.desktop-manual-add-btn' }, titleKey: 'tut2t', textKey: 'tut2x' },
+  { tab: 'billing', billingStep: 'items', target: '#itemsAddedSoFarCard', only: 'mobile', titleKey: 'tut3t', textKey: 'tut3x' },
+  { tab: 'billing', billingStep: 'items', target: '#itemsContinueBar', only: 'mobile', titleKey: 'tut4t', textKey: 'tut4x' },
   { tab: 'billing', billingStep: 'checkout', target: '#currentBillReviewCard', titleKey: 'tut5t', textKey: 'tut5x' },
   { tab: 'billing', billingStep: 'checkout', target: '#billDetailsCard', titleKey: 'tut6t', textKey: 'tut6x' },
   { tab: 'billing', billingStep: 'checkout', target: '#billTotalsCard', titleKey: 'tut7t', textKey: 'tut7x' },
@@ -4823,13 +4861,28 @@ var tutorialBaseSteps = [
 
 var tutorialActive = false;
 var tutorialStep = 0;
+var tutorialSteps = [];          // steps for the layout the tour started in (see buildTutorialSteps)
+var tutorialLayoutDesktop = false;
 var tutorialOverlayEl = null;
+var tutorialToken = 0;           // bumped on every step change / end so stale timers do nothing
+var tutorialTimers = [];
+var tutorialRestore = null;      // where the user was before the tour — put back when it ends
+var tutorialFirstPlacement = false;
+var tutorialObserver = null;     // re-positions the spotlight if the target resizes (data loading in)
+var tutorialObservedEl = null;
+var tutorialRaf = 0;
+var tutorialResizeTimer = null;
+
+function isDesktopLayout() {
+  return window.matchMedia('(min-width: 900px)').matches;
+}
 
 function buildTutorialSteps() {
-  var steps = tutorialBaseSteps.slice();
+  var layout = isDesktopLayout() ? 'desktop' : 'mobile';
+  var steps = tutorialBaseSteps.filter(function (st) { return !st.only || st.only === layout; });
   if (session.role === 'Manager') {
-    steps.push({ tab: 'admin', target: '#addStaffCard', title: 'Manage Staff (Admin)', text: 'As a Manager, add staff logins here and control who can access QuickBill.' });
-    steps.push({ tab: 'inventory', target: '#addQuickItemCard', title: 'Manage Quick Items (Inventory)', text: "Add, edit or mark items low-stock — they'll show up in the Quick Add grid for everyone." });
+    steps.push({ tab: 'admin', target: '#addStaffCard', titleKey: 'tut16t', textKey: 'tut16x' });
+    steps.push({ tab: 'inventory', target: '#addQuickItemCard', titleKey: 'tut17t', textKey: 'tut17x' });
   }
   return steps;
 }
@@ -4839,27 +4892,67 @@ function ensureTutorialOverlay() {
   var overlay = document.createElement('div');
   overlay.className = 'tutorial-overlay hidden';
   overlay.innerHTML =
-    '<div class="tutorial-mask tm-top"></div>' +
-    '<div class="tutorial-mask tm-bottom"></div>' +
-    '<div class="tutorial-mask tm-left"></div>' +
-    '<div class="tutorial-mask tm-right"></div>' +
-    '<div class="tutorial-bubble" id="tutorialBubble">' +
+    '<div class="tutorial-spotlight no-target" id="tutorialSpotlight"></div>' +
+    '<div class="tutorial-bubble" id="tutorialBubble" role="dialog" aria-live="polite" style="opacity:0">' +
       '<div class="tutorial-bubble-arrow" id="tutorialArrow"></div>' +
-      '<div class="tutorial-step-count" id="tutorialStepCount"></div>' +
-      '<h4 id="tutorialTitle"></h4>' +
-      '<p id="tutorialText"></p>' +
-      '<div class="tutorial-controls">' +
-        '<button class="tutorial-skip" onclick="endTutorial()" id="tutorialSkipBtn">' + tr('tutorialSkip') + '</button>' +
-        '<div class="tutorial-nav-btns">' +
-          '<button class="tutorial-btn-secondary" id="tutorialBackBtn" onclick="prevTutorialStep()">' + tr('tutorialBack') + '</button>' +
-          '<button class="tutorial-btn-primary" id="tutorialNextBtn" onclick="nextTutorialStep()">' + tr('tutorialNext') + '</button>' +
+      '<div class="tutorial-bubble-body">' +
+        '<div class="tutorial-step-count" id="tutorialStepCount"></div>' +
+        '<h4 id="tutorialTitle"></h4>' +
+        '<p id="tutorialText"></p>' +
+        '<div class="tutorial-controls">' +
+          '<button class="tutorial-skip" onclick="endTutorial()" id="tutorialSkipBtn">' + tr('tutorialSkip') + '</button>' +
+          '<div class="tutorial-nav-btns">' +
+            '<button class="tutorial-btn-secondary" id="tutorialBackBtn" onclick="prevTutorialStep()">' + tr('tutorialBack') + '</button>' +
+            '<button class="tutorial-btn-primary" id="tutorialNextBtn" onclick="nextTutorialStep()">' + tr('tutorialNext') + '</button>' +
+          '</div>' +
         '</div>' +
       '</div>' +
     '</div>';
   document.body.appendChild(overlay);
   tutorialOverlayEl = overlay;
-  window.addEventListener('resize', function () { if (tutorialActive) positionTutorialStep(); });
+
+  // The page must not scroll under the spotlight — the tour scrolls it itself.
+  function stop(e) { e.preventDefault(); }
+  overlay.addEventListener('wheel', stop, { passive: false });
+  overlay.addEventListener('touchmove', stop, { passive: false });
+
+  window.addEventListener('resize', function () {
+    if (!tutorialActive) return;
+    clearTimeout(tutorialResizeTimer);
+    tutorialResizeTimer = setTimeout(onTutorialResize, 120);
+  });
+  window.addEventListener('orientationchange', function () {
+    if (!tutorialActive) return;
+    clearTimeout(tutorialResizeTimer);
+    tutorialResizeTimer = setTimeout(onTutorialResize, 350);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!tutorialActive) return;
+    if (e.key === 'Escape') { endTutorial(); e.preventDefault(); }
+    else if (e.key === 'ArrowRight') { nextTutorialStep(); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { prevTutorialStep(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'PageUp' || e.key === 'PageDown' || e.key === 'Home' || e.key === 'End' || e.key === ' ') {
+      if (!(e.target && e.target.tagName === 'BUTTON' && e.key === ' ')) e.preventDefault();
+    }
+  });
   return overlay;
+}
+
+// Rotating the phone or resizing the window can cross the phone/laptop
+// breakpoint, where a couple of steps differ — rebuild the list and stay on
+// the same (or the next available) step instead of pointing at a hidden element.
+function onTutorialResize() {
+  if (!tutorialActive) return;
+  var nowDesktop = isDesktopLayout();
+  if (nowDesktop !== tutorialLayoutDesktop) {
+    var curNum = parseInt(String((tutorialSteps[tutorialStep] || {}).titleKey || '').replace(/\D/g, ''), 10) || 0;
+    tutorialSteps = buildTutorialSteps();
+    tutorialLayoutDesktop = nowDesktop;
+    var idx = tutorialSteps.findIndex(function (st) { return (parseInt(st.titleKey.replace(/\D/g, ''), 10) || 0) >= curNum; });
+    showTutorialStep(idx === -1 ? tutorialSteps.length - 1 : idx);
+    return;
+  }
+  positionTutorialStep(true);
 }
 
 function toggleTutorial() {
@@ -4869,126 +4962,254 @@ function toggleTutorial() {
 
 function startTutorial() {
   ensureTutorialOverlay();
+  tutorialSteps = buildTutorialSteps();
+  tutorialLayoutDesktop = isDesktopLayout();
+  tutorialRestore = { tab: currentTab, billingStep: billingStep };
   tutorialActive = true;
   tutorialStep = 0;
+  tutorialFirstPlacement = true;
+  if (typeof closeManualAddCardInstant === 'function') closeManualAddCardInstant();
+  document.body.classList.add('tour-on');
   tutorialOverlayEl.classList.remove('hidden');
   var menuBtn = document.getElementById('tutorialMenuItem');
   if (menuBtn) menuBtn.classList.add('active');
   showTutorialStep(0);
 }
 
-function endTutorial() {
+// skipRestore is true on logout / session expiry, where the app screen is
+// going away and there is nothing to navigate back to.
+function endTutorial(skipRestore) {
+  var wasActive = tutorialActive;
   tutorialActive = false;
+  tutorialToken++;
+  clearTutorialTimers();
+  cancelAnimationFrame(tutorialRaf);
+  if (tutorialObserver) { tutorialObserver.disconnect(); }
+  tutorialObservedEl = null;
+  document.body.classList.remove('tour-on');
   if (tutorialOverlayEl) tutorialOverlayEl.classList.add('hidden');
   var menuBtn = document.getElementById('tutorialMenuItem');
   if (menuBtn) menuBtn.classList.remove('active');
-  document.querySelectorAll('.tutorial-target-highlight').forEach(function (el) { el.classList.remove('tutorial-target-highlight'); });
+  // Put the user back where they started (the tour wanders through every tab).
+  if (wasActive && !skipRestore && tutorialRestore) {
+    var back = tutorialRestore;
+    switchTab(back.tab);
+    switchBillingStep(back.billingStep);
+  }
+  tutorialRestore = null;
+}
+
+function clearTutorialTimers() {
+  tutorialTimers.forEach(function (t) { clearTimeout(t); });
+  tutorialTimers = [];
 }
 
 function nextTutorialStep() {
-  var steps = buildTutorialSteps();
-  if (tutorialStep >= steps.length - 1) { endTutorial(); return; }
+  if (!tutorialActive) return;
+  if (tutorialStep >= tutorialSteps.length - 1) { endTutorial(); return; }
   showTutorialStep(tutorialStep + 1);
 }
 
 function prevTutorialStep() {
-  if (tutorialStep <= 0) return;
+  if (!tutorialActive || tutorialStep <= 0) return;
   showTutorialStep(tutorialStep - 1);
 }
 
 function showTutorialStep(i) {
-  var steps = buildTutorialSteps();
-  var step = steps[i];
+  var step = tutorialSteps[i];
   if (!step) { endTutorial(); return; }
   tutorialStep = i;
-  document.querySelectorAll('.tutorial-target-highlight').forEach(function (el) { el.classList.remove('tutorial-target-highlight'); });
+  var token = ++tutorialToken;
+  clearTutorialTimers();
+
+  var bubble = document.getElementById('tutorialBubble');
+  bubble.style.opacity = '0';
+  renderTutorialText();
+
+  var tabChanged = !!step.tab && step.tab !== currentTab;
   if (step.tab) switchTab(step.tab);
   if (step.tab === 'billing' && step.billingStep) switchBillingStep(step.billingStep);
-  // small delay so the tab content is rendered/visible before we measure positions
-  setTimeout(positionTutorialStep, 60);
+
+  // Wait for the tab fade/slide (≈320ms) to finish before measuring — measuring
+  // mid-animation put the spotlight a few pixels off the real position.
+  var wait = tabChanged ? 420 : 140;
+  tutorialTimers.push(setTimeout(function () {
+    if (token !== tutorialToken) return;
+    positionTutorialStep(true);
+    bubble.style.opacity = '1';
+    var nextBtn = document.getElementById('tutorialNextBtn');
+    if (nextBtn && nextBtn.focus) { try { nextBtn.focus({ preventScroll: true }); } catch (e) { nextBtn.focus(); } }
+  }, wait));
+  // A second pass catches content that arrives after the tab opens
+  // (day status, credit ledger, reports load from the server).
+  tutorialTimers.push(setTimeout(function () {
+    if (token === tutorialToken) positionTutorialStep(true);
+  }, wait + 800));
 }
 
-function setMask(top, left, right, bottom) {
-  var vw = window.innerWidth, vh = window.innerHeight;
-  document.querySelector('.tm-top').style.cssText = 'top:0;left:0;width:' + vw + 'px;height:' + Math.max(0, top) + 'px;';
-  document.querySelector('.tm-bottom').style.cssText = 'top:' + Math.max(0, bottom) + 'px;left:0;width:' + vw + 'px;height:' + Math.max(0, vh - bottom) + 'px;';
-  document.querySelector('.tm-left').style.cssText = 'top:' + Math.max(0, top) + 'px;left:0;width:' + Math.max(0, left) + 'px;height:' + Math.max(0, bottom - top) + 'px;';
-  document.querySelector('.tm-right').style.cssText = 'top:' + Math.max(0, top) + 'px;left:' + Math.max(0, right) + 'px;width:' + Math.max(0, vw - right) + 'px;height:' + Math.max(0, bottom - top) + 'px;';
-}
-
-function positionTutorialStep() {
-  if (!tutorialActive) return;
-  var steps = buildTutorialSteps();
-  var step = steps[tutorialStep];
+function renderTutorialText() {
+  var step = tutorialSteps[tutorialStep];
   if (!step) return;
-
-  var bubbleEl = document.getElementById('tutorialBubble');
-  bubbleEl.style.opacity = '0';
-  setTimeout(function () { bubbleEl.style.opacity = '1'; }, 60);
-
-  document.getElementById('tutorialStepCount').innerText = tr('tutorialStepCount', { n: tutorialStep + 1, total: steps.length });
-  document.getElementById('tutorialTitle').innerText = tr(step.titleKey);
-  document.getElementById('tutorialText').innerText = tr(step.textKey);
-  document.getElementById('tutorialBackBtn').innerText = tr('tutorialBack');
-  document.getElementById('tutorialSkipBtn').innerText = tr('tutorialSkip');
+  document.getElementById('tutorialStepCount').textContent = tr('tutorialStepCount', { n: tutorialStep + 1, total: tutorialSteps.length });
+  document.getElementById('tutorialTitle').textContent = tr(step.titleKey);
+  document.getElementById('tutorialText').textContent = tr(step.textKey);
+  document.getElementById('tutorialBackBtn').textContent = tr('tutorialBack');
+  document.getElementById('tutorialSkipBtn').textContent = tr('tutorialSkip');
   document.getElementById('tutorialBackBtn').style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
-  document.getElementById('tutorialNextBtn').innerText = tutorialStep === steps.length - 1 ? tr('tutorialFinish') : tr('tutorialNext');
+  document.getElementById('tutorialNextBtn').textContent = tutorialStep === tutorialSteps.length - 1 ? tr('tutorialFinish') : tr('tutorialNext');
+}
 
-  var target = document.querySelector(step.target);
+function resolveTutorialTarget(step) {
+  var sel = step.target;
+  if (sel && typeof sel === 'object') sel = isDesktopLayout() ? sel.desktop : sel.mobile;
+  return sel ? document.querySelector(sel) : null;
+}
+
+// Page scrolling can't bring a fixed element (nav bar, + button) or a
+// bottom-sticky bar into a better position, so the tour doesn't try.
+function isPinnedForTour(el) {
+  for (var n = el; n && n !== document.body; n = n.parentElement) {
+    var cs = window.getComputedStyle(n);
+    if (cs.position === 'fixed') return true;
+    if (cs.position === 'sticky' && cs.bottom !== 'auto') return true;
+    if (n.classList && n.classList.contains('topbar')) return true;
+  }
+  return false;
+}
+
+// Where the bubble goes relative to the spotlight: below, above, beside it,
+// or docked to the bottom of the screen when the target is too tall for any of those.
+function pickTutorialPlacement(sTop, sLeft, sRight, sBottom, vw, vh, bw, bh, edge, gap) {
+  if (vh - sBottom >= bh + gap + edge) return 'below';
+  if (sTop >= bh + gap + edge) return 'above';
+  if (vw - sRight >= bw + gap + edge) return 'right';
+  if (sLeft >= bw + gap + edge) return 'left';
+  return 'dock';
+}
+
+function positionTutorialStep(allowScroll) {
+  if (!tutorialActive || !tutorialOverlayEl) return;
+  var step = tutorialSteps[tutorialStep];
+  if (!step) return;
+  renderTutorialText();
+
   var bubble = document.getElementById('tutorialBubble');
   var arrow = document.getElementById('tutorialArrow');
-  var vw = window.innerWidth, vh = window.innerHeight;
-  var pad = 8;
+  var spot = document.getElementById('tutorialSpotlight');
+  var vw = tutorialOverlayEl.clientWidth, vh = tutorialOverlayEl.clientHeight;
+  var edge = 12, gap = 14, pad = 8;
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-  if (!target) {
-    setMask(vh, 0, vw, vh); // dim everything, no cutout
-    bubble.style.width = Math.min(320, vw - 32) + 'px';
-    bubble.style.left = '50%';
-    bubble.style.top = '50%';
-    bubble.style.transform = 'translate(-50%, -50%)';
-    arrow.style.display = 'none';
-    return;
-  }
+  var bw = Math.min(vw - edge * 2, isDesktopLayout() ? 340 : 320);
+  bubble.style.width = bw + 'px';
+  var bh = bubble.offsetHeight;
 
-  if (target.scrollIntoView) target.scrollIntoView({ block: 'center' });
+  if (tutorialFirstPlacement) { bubble.style.transition = 'none'; spot.style.transition = 'none'; }
 
-  requestAnimationFrame(function () {
-    var rect = target.getBoundingClientRect();
-    var top = rect.top - pad, left = rect.left - pad, right = rect.right + pad, bottom = rect.bottom + pad;
-    setMask(top, left, right, bottom);
-    target.classList.add('tutorial-target-highlight');
+  var target = resolveTutorialTarget(step);
+  var rect = target ? target.getBoundingClientRect() : null;
+  // Missing or not rendered (display:none) → fall back to a centred bubble.
+  if (rect && (rect.width < 2 || rect.height < 2)) { target = null; rect = null; }
+  observeTutorialTarget(target);
 
-    var bubbleWidth = Math.min(320, vw - 32);
-    bubble.style.transform = 'none';
-    bubble.style.width = bubbleWidth + 'px';
-    arrow.style.display = 'block';
+  var left, top, place = 'center';
 
-    var spaceBelow = vh - bottom;
-    var spaceAbove = top;
-    var bubbleLeft = Math.min(Math.max(14, rect.left), vw - bubbleWidth - 14);
-    bubble.style.left = bubbleLeft + 'px';
-
-    if (spaceBelow >= spaceAbove) {
-      bubble.style.top = Math.min(bottom + 14, vh - 40) + 'px';
-      arrow.className = 'tutorial-bubble-arrow arrow-up';
-    } else {
-      bubble.style.top = '-9999px'; // measure height first
-      arrow.className = 'tutorial-bubble-arrow arrow-down';
+  if (target) {
+    // Bring the target (and room for the bubble) into view — only if it isn't already comfortably placed.
+    if (allowScroll && !isPinnedForTour(target)) {
+      var topbar = document.querySelector('.topbar');
+      var safeTop = topbar ? topbar.getBoundingClientRect().bottom : 0;
+      var fullyVisible = rect.top >= safeTop && rect.bottom <= vh;
+      var curPlace = pickTutorialPlacement(Math.max(safeTop, rect.top - pad), rect.left - pad, rect.right + pad, Math.min(vh, rect.bottom + pad), vw, vh, bw, bh, edge, gap);
+      if (!(fullyVisible && curPlace !== 'dock')) {
+        var room = vh - safeTop - edge * 2;
+        var groupH = rect.height + gap + bh;
+        var desiredTop = groupH <= room ? safeTop + edge + (room - groupH) / 2 : safeTop + edge;
+        var delta = rect.top - desiredTop;
+        if (Math.abs(delta) > 1) {
+          window.scrollTo(0, Math.max(0, window.pageYOffset + delta));
+          rect = target.getBoundingClientRect();
+        }
+      }
     }
 
-    requestAnimationFrame(function () {
-      var bh = bubble.offsetHeight;
-      if (spaceBelow < spaceAbove) {
-        bubble.style.top = Math.max(14, top - 14 - bh) + 'px';
+    // Spotlight rectangle, clipped to what is actually on screen.
+    var sTop = Math.max(0, rect.top - pad), sLeft = Math.max(0, rect.left - pad);
+    var sRight = Math.min(vw, rect.right + pad), sBottom = Math.min(vh, rect.bottom + pad);
+    var br = parseFloat(window.getComputedStyle(target).borderTopLeftRadius) || 0;
+    spot.className = 'tutorial-spotlight';
+    spot.style.left = sLeft + 'px';
+    spot.style.top = sTop + 'px';
+    spot.style.width = Math.max(0, sRight - sLeft) + 'px';
+    spot.style.height = Math.max(0, sBottom - sTop) + 'px';
+    spot.style.borderRadius = Math.min(br + pad, (sRight - sLeft) / 2, (sBottom - sTop) / 2) + 'px';
+
+    place = pickTutorialPlacement(sTop, sLeft, sRight, sBottom, vw, vh, bw, bh, edge, gap);
+    var cx = (sLeft + sRight) / 2, cy = (sTop + sBottom) / 2;
+    if (place === 'right' || place === 'left') {
+      top = clamp(cy - bh / 2, edge, Math.max(edge, vh - bh - edge));
+      left = place === 'right' ? sRight + gap : sLeft - gap - bw;
+    } else {
+      left = clamp(cx - bw / 2, edge, Math.max(edge, vw - bw - edge));
+      if (place === 'below') top = sBottom + gap;
+      else if (place === 'above') top = sTop - gap - bh;
+      else top = Math.max(edge, vh - bh - edge - 4); // dock: tall target, bubble sits over its lower part
+    }
+
+    arrow.style.left = ''; arrow.style.top = '';
+    if (place === 'dock') {
+      arrow.style.display = 'none';
+    } else {
+      arrow.style.display = 'block';
+      if (place === 'below' || place === 'above') {
+        arrow.className = 'tutorial-bubble-arrow ' + (place === 'below' ? 'arrow-up' : 'arrow-down');
+        arrow.style.left = clamp(cx - left - 8, 16, Math.max(16, bw - 32)) + 'px';
+      } else {
+        arrow.className = 'tutorial-bubble-arrow ' + (place === 'right' ? 'arrow-left' : 'arrow-right');
+        arrow.style.top = clamp(cy - top - 8, 16, Math.max(16, bh - 32)) + 'px';
       }
-      // final clamp so it never runs off-screen
-      var curTop = parseFloat(bubble.style.top) || 14;
-      if (curTop + bh > vh - 14) bubble.style.top = Math.max(14, vh - bh - 14) + 'px';
-      var arrowLeft = Math.max(16, Math.min(bubbleWidth - 32, (rect.left + rect.width / 2) - bubbleLeft - 8));
-      arrow.style.left = arrowLeft + 'px';
-    });
-  });
+    }
+  } else {
+    // No target: dim everything, no cutout, bubble in the middle.
+    spot.className = 'tutorial-spotlight no-target';
+    spot.style.left = (vw / 2) + 'px';
+    spot.style.top = (vh / 2) + 'px';
+    spot.style.width = '0px';
+    spot.style.height = '0px';
+    arrow.style.display = 'none';
+    left = (vw - bw) / 2;
+    top = Math.max(edge, (vh - bh) / 2);
+  }
+
+  bubble.style.left = left + 'px';
+  bubble.style.top = top + 'px';
+
+  if (tutorialFirstPlacement) {
+    void bubble.offsetWidth; // commit the un-animated position before animations are switched back on
+    bubble.style.transition = '';
+    spot.style.transition = '';
+    tutorialFirstPlacement = false;
+  }
 }
+
+// Re-run the positioning whenever the target changes size (e.g. the day
+// status card fills in once the server replies), so the spotlight never
+// ends up wrapped around an empty box.
+function observeTutorialTarget(el) {
+  if (typeof ResizeObserver === 'undefined') return;
+  if (el === tutorialObservedEl) return;
+  tutorialObservedEl = el;
+  if (!tutorialObserver) {
+    tutorialObserver = new ResizeObserver(function () {
+      if (!tutorialActive) return;
+      cancelAnimationFrame(tutorialRaf);
+      tutorialRaf = requestAnimationFrame(function () { positionTutorialStep(true); });
+    });
+  }
+  tutorialObserver.disconnect();
+  if (el) tutorialObserver.observe(el);
+}
+
 
   </script>
   <!-- Populated just-in-time by printBillDetail() / printLastBill(); only this
